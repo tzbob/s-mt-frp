@@ -13,12 +13,11 @@ import mtfrp.server.MtFrpServer
 
 object PageCompiler extends Directives {
 
-  def makeRoute(prog: MtFrpServer)(clientStream: => prog.ClientEventStream,
-    url: String): Route = {
+  def makeRoute(prog: MtFrpServer)(url: String): Route = {
 
     lazy val stream = {
       import prog._
-      val stream = clientStream
+      val stream = prog.main
       val span = document.find("#span")
       stream.exp onValue fun { (str: Rep[String]) =>
         for { s <- span } s setInnerHTML str

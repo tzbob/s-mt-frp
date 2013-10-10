@@ -40,6 +40,7 @@ object Demo extends App with SimpleRoutingApp {
      * 	client-sided bridge Exps
      *  server-sided bridge Routes
      *  an actual Exp representing the signal
+     *
      */
     def main: ClientEventStream =
       serverModification.toClient map { x: Rep[String] =>
@@ -71,7 +72,7 @@ object Demo extends App with SimpleRoutingApp {
 
   val prog = new RoundTrip {}
 
-  val programRoute = PageCompiler.makeRoute(prog)(prog.main, "")
+  val programRoute = PageCompiler.makeRoute(prog)("")
 
   implicit val system = ActorSystem("simple-routing-app")
   startServer("localhost", port = 8080)(programRoute)

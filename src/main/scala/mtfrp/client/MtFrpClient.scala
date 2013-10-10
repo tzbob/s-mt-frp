@@ -24,15 +24,18 @@ import spray.routing.Route
 
 trait MtFrpClient extends BaconLibExp with FunctionsExp with BrowserExp with JSExp {
 
+  def main: ClientEventStream
+
   implicit class ElementOpsInnerHTML(e: Exp[Element]) {
     def setInnerHTML(value: Rep[String]): Rep[Unit] =
       foreign"$e.innerHTML = $value".withEffect()
   }
 
   private[mtfrp] object ClientEventStream extends Directives {
+    // TODO find a better spot?
     implicit val observing = new Observing {}
 
-    def fromStream(stream: EventStream[String], existingRoute: Option[Route] = None): ClientEventStream = {
+    def fromStream(stream: EventStream[String], route: Option[Route] = None): ClientEventStream = {
       val genUrl = URLEncoder encode UUID.randomUUID.toString
       val bus = bacon.Bus[String]
 
@@ -56,7 +59,8 @@ trait MtFrpClient extends BaconLibExp with FunctionsExp with BrowserExp with JSE
           $bus.push(e.data) 
         }""".withEffect()
 
-      new ClientEventStream(existingRoute.map(_ ~ initRoute) getOrElse initRoute, initExp, bus)
+      val newRoute = route.map(_ ~ initRoute) getOrElse initRoute
+      new ClientEventStream(newRoute, initExp, bus)
     }
   }
 

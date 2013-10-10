@@ -38,14 +38,15 @@ trait MtFrpServer extends MtFrpClient with AjaxExp with CPSExp {
     }
   }
 
-  // fix for serialization --- needed for recursive function check??
+  // fix for serialization --- needed for recursion check??
   private def makeInitExp(stream: ClientEventStream, genUrl: String) =
     stream.exp onValue fun { value =>
       foreign"$$.post($genUrl, $value)".withEffect()
     }
 
   implicit class ReactiveToServer(stream: ClientEventStream) {
-    def toServer: ServerEventStream = ServerEventStream fromClientEventStream stream
+    def toServer: ServerEventStream =
+      ServerEventStream fromClientEventStream stream
   }
 
   class ServerEventStream private (
@@ -56,7 +57,8 @@ trait MtFrpServer extends MtFrpClient with AjaxExp with CPSExp {
     def map(modifier: String => String): ServerEventStream =
       new ServerEventStream(initRoute, initExp, stream.map(modifier))
 
-    def toClient: ClientEventStream = ClientEventStream fromStream (stream, Some(initRoute))
+    def toClient: ClientEventStream =
+      ClientEventStream fromStream (stream, Some(initRoute))
   }
 
 }
