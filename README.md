@@ -11,7 +11,7 @@
 
 ## Frameworks used
 
-[http://spray.io/](Spray)
-[https://github.com/nafg/reactive/tree/master/reactive-core](Reactive-Core)
-[https://github.com/js-scala/js-scala](JS-Scala)
-[https://github.com/baconjs/bacon.js](Bacon-JS)
+[Spray](http://spray.io/)
+[Reactive-Core](https://github.com/nafg/reactive/tree/master/reactive-core)
+[JS-Scala](https://github.com/js-scala/js-scala)
+[Bacon-JS](https://github.com/baconjs/bacon.js)
