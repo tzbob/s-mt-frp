@@ -3,29 +3,36 @@ package mtfrp.server
 import java.net.URLEncoder
 import java.util.UUID
 
-import scala.js.exp.AjaxExp
-import scala.js.exp.CPSExp
-
 import mtfrp.client.MtFrpClient
 import reactive.EventSource
 import reactive.EventStream
+import spray.json.JsonReader
+import spray.json.JsonWriter
+import spray.json.pimpString
 import spray.routing.Directive.pimpApply
 import spray.routing.Directives
 import spray.routing.Route
 import spray.routing.directives.CompletionMagnet.fromObject
 
-trait MtFrpServer extends MtFrpClient with AjaxExp with CPSExp {
+trait MtFrpServer
+    extends MtFrpClient
+    with JSJsonWriterContext {
+  import spray.json._
+  import DefaultJsonProtocol._
+
+  private def ajaxPost(url: Rep[String], value: Rep[String]): Rep[Unit] =
+    foreign"$$.post($url, $value)".withEffect()
 
   private[mtfrp] object ServerEventStream extends Directives {
-    def fromClientEventStream(stream: ClientEventStream): ServerEventStream = {
+    def fromClientEventStream[T: JsonReader: JSJsonWriter: Manifest](stream: ClientEventStream[T]): ServerEventStream[T] = {
       val genUrl = URLEncoder encode UUID.randomUUID.toString
-      val source = new EventSource[String]
+      val source = new EventSource[T]
 
       val initRoute = path(genUrl) {
         post {
           entity(as[String]) { data =>
             complete {
-              source fire data
+              source fire data.asJson.convertTo[T]
               "OK"
             }
           }
@@ -39,26 +46,29 @@ trait MtFrpServer extends MtFrpClient with AjaxExp with CPSExp {
   }
 
   // fix for serialization --- needed for recursion check??
-  private def makeInitExp(stream: ClientEventStream, genUrl: String) =
+  private def makeInitExp[T: JSJsonWriter: Manifest](stream: ClientEventStream[T], genUrl: String) =
     stream.exp onValue fun { value =>
-      foreign"$$.post($genUrl, $value)".withEffect()
+      ajaxPost(genUrl, implicitly[JSJsonWriter[T]] write value)
     }
 
-  implicit class ReactiveToServer(stream: ClientEventStream) {
-    def toServer: ServerEventStream =
+  implicit class ReactiveToServer[T: JsonReader: JSJsonWriter: Manifest](stream: ClientEventStream[T]) {
+    def toServer: ServerEventStream[T] =
       ServerEventStream fromClientEventStream stream
   }
 
-  class ServerEventStream private (
+  implicit class ReactiveToClient[T: JsonWriter: JSJsonReader: Manifest](ses: ServerEventStream[T]) {
+    def toClient: ClientEventStream[T] =
+      ClientEventStream fromStream (ses.stream, Some(ses.initRoute))
+  }
+
+  class ServerEventStream[T] private (
       val initRoute: Route,
       val initExp: Exp[Unit],
-      val stream: EventStream[String]) {
+      val stream: EventStream[T]) {
 
-    def map(modifier: String => String): ServerEventStream =
+    def map[A](modifier: T => A): ServerEventStream[A] =
       new ServerEventStream(initRoute, initExp, stream.map(modifier))
 
-    def toClient: ClientEventStream =
-      ClientEventStream fromStream (stream, Some(initRoute))
   }
 
 }
