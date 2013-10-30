@@ -1,17 +1,15 @@
 package mtfrp.client
 
-import java.io.PrintWriter
-import java.io.StringWriter
+import java.io.{ PrintWriter, StringWriter }
+
 import scala.xml.Unparsed
+
 import mtfrp.GenMtFrpServer
-import spray.http.MediaTypes
-import spray.routing.Directive.pimpApply
-import spray.routing.Directives
-import spray.routing.Route
-import spray.routing.directives.CompletionMagnet.fromObject
 import mtfrp.server.MtFrpServer
-import forest.JSGenForest
-import forest.ForestExp
+import spray.http.MediaTypes
+import spray.routing.{ Directives, Route }
+import spray.routing.Directive.pimpApply
+import spray.routing.directives.CompletionMagnet.fromObject
 
 object PageCompiler extends Directives {
 
@@ -21,7 +19,9 @@ object PageCompiler extends Directives {
       val signal = prog.main
 
       signal.exp onValue fun { (str: Rep[Element]) =>
+        // clean body
         document.body.setInnerHTML("")
+        // fill body
         document.body.appendChild(str)
       }
 

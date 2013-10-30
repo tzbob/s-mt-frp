@@ -1,9 +1,9 @@
 package mtfrp.client
 
-import spray.routing.Route
-import scala.virtualization.lms.common.Base
 import scala.js.exp.JSExp
+
 import mtfrp.client.frp.BaconLibExp
+import spray.routing.Route
 
 trait ClientSignalLib { self: BaconLibExp with JSExp with ClientEventStreamLib =>
   class ClientSignal[T: Manifest] private[client] (

@@ -2,21 +2,14 @@ package mtfrp.client
 
 import java.net.URLEncoder
 import java.util.UUID
+
 import scala.js.exp.JSExp
-import reactive.EventStream
-import reactive.Observing
-import spray.http.CacheDirectives
-import spray.http.ChunkedResponseStart
-import spray.http.HttpHeaders
-import spray.http.HttpResponse
-import spray.http.MediaType
-import spray.http.MessageChunk
-import spray.json._
-import spray.json.JsonWriter
-import spray.routing.Directives
-import spray.routing.RequestContext
-import spray.routing.Route
+
 import mtfrp.client.frp.BaconLibExp
+import reactive.{ EventStream, Observing }
+import spray.http.{ CacheDirectives, ChunkedResponseStart, HttpHeaders, HttpResponse, MediaType, MessageChunk }
+import spray.json.{ JsonWriter, _ }
+import spray.routing.{ Directives, RequestContext, Route }
 
 trait ClientEventStreamLib {
   self: JSJsonReaderContext with BaconLibExp with JSExp with ClientSignalLib =>

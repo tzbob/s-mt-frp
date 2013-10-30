@@ -1,29 +1,15 @@
 package mtfrp
 
-import scala.js.gen.js.GenAjax
-import scala.js.gen.js.GenCPS
-import scala.js.gen.js.GenCastChecked
-import scala.js.gen.js.GenDebug
-import scala.js.gen.js.GenFFI
-import scala.js.gen.js.GenFunctions
-import scala.js.gen.js.GenJS
-import scala.js.gen.js.GenJSLib
+import scala.js.gen.js.{GenFunctions, GenJS}
 import scala.js.gen.js.dom.GenBrowser
-import scala.js.gen.js.dom.GenElementOps
-import scala.js.gen.js.dom.GenSelectorOps
-import scala.xml.Unparsed
+
 import akka.actor.ActorSystem
-import mtfrp.client.frp.GenBaconLib
-import mtfrp.client.MtFrpClient
-import mtfrp.client.PageCompiler
-import mtfrp.server.MtFrpServer
-import reactive.EventStream
-import reactive.Timer
-import spray.routing.SimpleRoutingApp
-import scala.js.gen.js.GenStruct
-import forest.Forest
-import forest.ForestExp
 import forest.JSGenForest
+import mtfrp.client.{MtFrpClient, PageCompiler}
+import mtfrp.client.frp.GenBaconLib
+import mtfrp.server.MtFrpServer
+import spray.json.DefaultJsonProtocol.{IntJsonFormat, StringJsonFormat}
+import spray.routing.SimpleRoutingApp
 
 trait GenMtFrpClient extends GenBaconLib with GenFunctions with GenBrowser with GenJS with JSGenForest {
   val IR: MtFrpClient
@@ -46,8 +32,10 @@ object Demo extends App with SimpleRoutingApp {
      *  an actual Exp representing the signal
      *
      */
-    def main: ClientSignal[Element] =
-      serverCounter.toClient.hold("click the button!") map template
+    def main: ClientSignal[Element] = counterText map template
+
+    def counterText: ClientSignal[String] =
+      serverCounter.toClient.hold("click the button!")
 
     def template(counterText: Rep[String]): Rep[Element] = el('div)(
       el('h1)("Demo page"),

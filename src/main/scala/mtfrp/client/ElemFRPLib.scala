@@ -1,6 +1,7 @@
 package mtfrp.client
 
 import scala.js.exp.dom.BrowserExp
+
 import mtfrp.client.frp.BaconLib
 
 trait ElemFRPLib { self: BrowserExp with ClientEventStreamLib with BaconLib =>

@@ -1,8 +1,7 @@
 package mtfrp.server
 
 import scala.js.exp.FFIExp
-import scala.js.language.JS
-import scala.js.language.Casts
+import scala.js.language.{Casts, JS}
 
 trait JSJsonWriterContext { self: JS with FFIExp with Casts =>
 

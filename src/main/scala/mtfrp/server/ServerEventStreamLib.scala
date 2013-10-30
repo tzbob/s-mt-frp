@@ -1,19 +1,17 @@
 package mtfrp.server
 
-import mtfrp.client.ClientEventStreamLib
-import scala.js.exp.JSExp
-import spray.json.JsonReader
-import reactive.EventSource
 import java.net.URLEncoder
-import spray.routing.Route
-import spray.routing.Directives
-import spray.json.JsonWriter
-import reactive.EventStream
 import java.util.UUID
-import scala.js.exp.FFIExp
-import spray.json._
-import mtfrp.client.JSJsonReaderContext
+
+import scala.js.exp.{FFIExp, JSExp}
+
+import mtfrp.client.{ClientEventStreamLib, JSJsonReaderContext}
 import mtfrp.client.frp.BaconLib
+import reactive.{EventSource, EventStream}
+import spray.json.{JsonReader, JsonWriter, pimpString}
+import spray.routing.{Directives, Route}
+import spray.routing.Directive.pimpApply
+import spray.routing.directives.CompletionMagnet.fromObject
 
 trait ServerEventStreamLib {
   self: JSJsonWriterContext with JSJsonReaderContext with ClientEventStreamLib with JSExp with FFIExp with BaconLib =>

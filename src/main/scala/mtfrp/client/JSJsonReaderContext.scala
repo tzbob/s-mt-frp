@@ -1,9 +1,7 @@
 package mtfrp.client
 
 import scala.js.exp.FFIExp
-import scala.js.language.Records
-import scala.js.language.JS
-import scala.js.language.Casts
+import scala.js.language.{Casts, JS}
 
 trait JSJsonReaderContext { self: JS with FFIExp with Casts =>
 
