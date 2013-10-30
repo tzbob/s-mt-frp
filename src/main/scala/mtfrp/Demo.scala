@@ -13,7 +13,7 @@ import scala.js.gen.js.dom.GenElementOps
 import scala.js.gen.js.dom.GenSelectorOps
 import scala.xml.Unparsed
 import akka.actor.ActorSystem
-import mtfrp.client.GenBaconLib
+import mtfrp.client.frp.GenBaconLib
 import mtfrp.client.MtFrpClient
 import mtfrp.client.PageCompiler
 import mtfrp.server.MtFrpServer

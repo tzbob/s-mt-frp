@@ -1,4 +1,4 @@
-package mtfrp.client
+package mtfrp.client.frp
 
 import scala.js.language.Proxy
 

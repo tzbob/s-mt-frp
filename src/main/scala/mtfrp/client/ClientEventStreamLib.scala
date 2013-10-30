@@ -16,8 +16,10 @@ import spray.json.JsonWriter
 import spray.routing.Directives
 import spray.routing.RequestContext
 import spray.routing.Route
+import mtfrp.client.frp.BaconLibExp
 
-trait ClientEventStreamLib { self: JSJsonReaderContext with BaconLibExp with JSExp with ClientSignalLib =>
+trait ClientEventStreamLib {
+  self: JSJsonReaderContext with BaconLibExp with JSExp with ClientSignalLib =>
 
   private def eventSource(url: Rep[String], callback: Rep[Record { val data: String } => Unit]): Rep[Unit] =
     foreign"""new EventSource($url).onmessage = $callback""".withEffect()

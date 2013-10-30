@@ -7,7 +7,6 @@ import scala.js.exp.dom.BrowserExp
 import scala.js.language.Casts
 import scala.virtualization.lms.common.FunctionsExp
 import scala.virtualization.lms.common.StructExp
-
 import akka.actor.actorRef2Scala
 import forest.ForestExp
 import reactive.EventStream
@@ -16,6 +15,7 @@ import spray.http.HttpEntity.apply
 import spray.json._
 import spray.json.JsonWriter
 import spray.routing.Directive.pimpApply
+import mtfrp.client.frp.BaconLibExp
 
 trait MtFrpClient
     extends BaconLibExp
@@ -26,20 +26,7 @@ trait MtFrpClient
     with ForestExp
     with JSJsonReaderContext
     with ClientEventStreamLib
-    with ClientSignalLib {
-  import spray.json.DefaultJsonProtocol._
-
+    with ClientSignalLib
+    with ElemFRPLib {
   def main: ClientSignal[Element]
-
-  implicit class ElementOpsInnerHTML(e: Exp[Element]) {
-    def setInnerHTML(value: Rep[String]): Rep[Unit] =
-      foreign"$e.innerHTML = $value".withEffect()
-
-    def toStream(ev: EventDef)(implicit m: Manifest[ev.Type]): ClientEventStream[ev.Type] = {
-      val bus = bacon.Bus[ev.Type]
-      e.on(ev)(bus push _)
-      ClientEventStream(bus)
-    }
-  }
-
 }
