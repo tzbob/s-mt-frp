@@ -21,8 +21,11 @@ import reactive.EventStream
 import reactive.Timer
 import spray.routing.SimpleRoutingApp
 import scala.js.gen.js.GenStruct
+import forest.Forest
+import forest.ForestExp
+import forest.JSGenForest
 
-trait GenMtFrpClient extends GenBaconLib with GenFunctions with GenBrowser with GenJS {
+trait GenMtFrpClient extends GenBaconLib with GenFunctions with GenBrowser with GenJS with JSGenForest {
   val IR: MtFrpClient
 }
 
@@ -43,33 +46,37 @@ object Demo extends App with SimpleRoutingApp {
      *  an actual Exp representing the signal
      *
      */
-    def main: ClientEventStream[String] =
-      serverModification.toClient map { x: Rep[String] =>
-        "client map: " + x
-      }
+    def main: ClientSignal[Element] =
+      serverCounter.toClient.hold("click the button!") map template
 
-    def serverModification =
-      inputOnServer map ("server map: " + _ / 1000)
+    def template(counterText: Rep[String]): Rep[Element] = el('div)(
+      el('h1)("Demo page"),
+      el('h2)("How?"),
+      el('p, 'style -> "width:400px;")(s"""
+              The current implementation will naively replace the contents of body
+              everytime the main ClientSignal updates.
+	          """),
+      el('p)("Enjoy the counter: " + counterText),
+      plus,
+      min
+    )
 
-    def inputOnServer =
-      clientInput.toServer
+    def serverCounter: ServerEventStream[String] = {
+      val minMap = min.toStream(Click) map (_ => -1)
+      inputOnServer.fold(0)(_ + _) map ("server map: " + _)
+    }
 
-    def clientInput =
-      new Timer(0, 1000) map (_.toInt) toClient
+    def inputOnServer: ServerEventStream[Int] = clientInput.toServer
+
+    def clientInput: ClientEventStream[Int] = {
+      val plusMap = plus.toStream(Click) map (_ => 1)
+      val minMap = min.toStream(Click) map (_ => -1)
+      plusMap.merge(minMap)
+    }
+
+    lazy val plus: Rep[Element] = el('button)("+1")
+    lazy val min: Rep[Element] = el('button)("-1")
   }
-
-  def generatHTML(js: String) =
-    <html>
-      <head>
-        <title>Demo</title>
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-        <script src="http://cdnjs.cloudflare.com/ajax/libs/bacon.js/0.6.8/Bacon.min.js"></script>
-      </head>
-      <body>
-        <button id="btn">Hit me!</button>
-        <script type="text/javascript">{ Unparsed(js) }</script>
-      </body>
-    </html>
 
   val prog = new RoundTrip {}
 

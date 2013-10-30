@@ -10,19 +10,22 @@ import spray.routing.Directives
 import spray.routing.Route
 import spray.routing.directives.CompletionMagnet.fromObject
 import mtfrp.server.MtFrpServer
+import forest.JSGenForest
+import forest.ForestExp
 
 object PageCompiler extends Directives {
 
   def makeRoute(prog: MtFrpServer)(url: String): Route = {
-
-    lazy val stream = {
+    lazy val signal = {
       import prog._
-      val stream = prog.main
-      val span = document.find("#span")
-      stream.exp onValue fun { (str: Rep[String]) =>
-        for { s <- span } s setInnerHTML str
+      val signal = prog.main
+
+      signal.exp onValue fun { (str: Rep[Element]) =>
+        document.body.setInnerHTML("")
+        document.body.appendChild(str)
       }
-      stream
+
+      signal
     }
 
     val gen = new GenMtFrpServer {
@@ -30,7 +33,7 @@ object PageCompiler extends Directives {
     }
 
     val sw = new StringWriter
-    gen.emitExecution(stream.exp, new PrintWriter(sw))
+    gen.emitExecution(signal.exp, new PrintWriter(sw))
     val js = sw.toString
 
     val html =
@@ -41,18 +44,22 @@ object PageCompiler extends Directives {
           <script src="http://cdnjs.cloudflare.com/ajax/libs/bacon.js/0.6.8/Bacon.min.js"></script>
         </head>
         <body>
-          <span id="span">default text</span>
           <script type="text/javascript">{ Unparsed(js) }</script>
         </body>
       </html>
 
     println(html)
 
-    path(url) {
+    val rootRoute = path(url) {
       get {
         respondWithMediaType(MediaTypes.`text/html`)(complete(html))
       }
-    } ~ stream.initRoute
+    }
+
+    signal.initRoute match {
+      case Some(route) => rootRoute ~ route
+      case None        => rootRoute
+    }
   }
 
 }

@@ -17,8 +17,7 @@ import spray.routing.directives.CompletionMagnet.fromObject
 trait MtFrpServer
     extends MtFrpClient
     with JSJsonWriterContext {
-  import spray.json._
-  import DefaultJsonProtocol._
+  import spray.json.DefaultJsonProtocol._
 
   private def ajaxPost(url: Rep[String], value: Rep[String]): Rep[Unit] =
     foreign"$$.post($url, $value)".withEffect()
@@ -41,7 +40,12 @@ trait MtFrpServer
 
       val initExp = makeInitExp(stream, genUrl)
 
-      new ServerEventStream(initRoute ~ stream.initRoute, initExp, source)
+      val newRoute = stream.initRoute match {
+        case Some(route) => initRoute ~ route
+        case None        => initRoute
+      }
+
+      new ServerEventStream(Some(newRoute), source)
     }
   }
 
@@ -58,17 +62,18 @@ trait MtFrpServer
 
   implicit class ReactiveToClient[T: JsonWriter: JSJsonReader: Manifest](ses: ServerEventStream[T]) {
     def toClient: ClientEventStream[T] =
-      ClientEventStream fromStream (ses.stream, Some(ses.initRoute))
+      ClientEventStream fromStream (ses.stream, ses.initRoute)
   }
 
   class ServerEventStream[T] private (
-      val initRoute: Route,
-      val initExp: Exp[Unit],
+      val initRoute: Option[Route],
       val stream: EventStream[T]) {
 
     def map[A](modifier: T => A): ServerEventStream[A] =
-      new ServerEventStream(initRoute, initExp, stream.map(modifier))
+      new ServerEventStream(initRoute, stream.map(modifier))
 
+    def fold[A](start: A)(stepper: (A, T) => A): ServerEventStream[A] =
+      new ServerEventStream(initRoute, stream.foldLeft(start)(stepper))
   }
 
 }
