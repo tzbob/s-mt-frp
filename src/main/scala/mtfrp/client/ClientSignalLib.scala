@@ -6,7 +6,7 @@ import mtfrp.client.frp.BaconLibExp
 import spray.routing.Route
 
 trait ClientSignalLib { self: BaconLibExp with JSExp with ClientEventStreamLib =>
-  class ClientSignal[T: Manifest] private[client] (
+  class ClientSignal[T: Manifest] private[mtfrp] (
       val initRoute: Option[Route],
       val exp: Exp[Property[T]]) {
 

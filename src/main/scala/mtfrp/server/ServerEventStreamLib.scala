@@ -3,6 +3,7 @@ package mtfrp.server
 import java.net.URLEncoder
 import java.util.UUID
 
+import scala.annotation.implicitNotFound
 import scala.js.exp.{FFIExp, JSExp}
 
 import mtfrp.client.{ClientEventStreamLib, JSJsonReaderContext}
@@ -14,7 +15,7 @@ import spray.routing.Directive.pimpApply
 import spray.routing.directives.CompletionMagnet.fromObject
 
 trait ServerEventStreamLib {
-  self: JSJsonWriterContext with JSJsonReaderContext with ClientEventStreamLib with JSExp with FFIExp with BaconLib =>
+  self: JSJsonWriterContext with JSJsonReaderContext with ClientEventStreamLib with JSExp with FFIExp with BaconLib with ServerSignalLib =>
 
   private def ajaxPost(url: Rep[String], value: Rep[String]): Rep[Unit] =
     foreign"$$.post($url, $value)".withEffect()
@@ -66,10 +67,19 @@ trait ServerEventStreamLib {
       val initRoute: Option[Route],
       val stream: EventStream[T]) {
 
+    private def innerMap[A](streamF: EventStream[T] => EventStream[A]) =
+      new ServerEventStream(initRoute, streamF(stream))
+
     def map[A](modifier: T => A): ServerEventStream[A] =
-      new ServerEventStream(initRoute, stream.map(modifier))
+      innerMap(_ map modifier)
 
     def fold[A](start: A)(stepper: (A, T) => A): ServerEventStream[A] =
-      new ServerEventStream(initRoute, stream.foldLeft(start)(stepper))
+      innerMap(_.foldLeft(start)(stepper))
+
+    def filter(pred: T => Boolean): ServerEventStream[T] =
+      innerMap(_ filter pred)
+
+    def hold(initial: T): ServerSignal[T] =
+      new ServerSignal(initRoute, stream hold initial)
   }
 }

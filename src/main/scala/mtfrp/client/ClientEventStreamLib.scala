@@ -62,14 +62,20 @@ trait ClientEventStreamLib {
       val initRoute: Option[Route],
       val exp: Exp[BaconStream[T]]) {
 
+    private def innerMap[A: Manifest](expF: Exp[BaconStream[T]] => Exp[BaconStream[A]]) =
+      new ClientEventStream(initRoute, expF(exp))
+
     def map[A: Manifest](modifier: Rep[T] => Rep[A]): ClientEventStream[A] =
-      new ClientEventStream(initRoute, exp.map(fun(modifier)))
+      innerMap(x => x.map(fun(modifier)))
 
     def fold[A: Manifest](start: A)(stepper: (Rep[A], Rep[T]) => Rep[A]): ClientEventStream[A] =
-      new ClientEventStream(initRoute, exp.fold(start)(fun(stepper)))
+      innerMap(_.fold(start)(fun(stepper)))
 
     def merge[A >: T: Manifest](stream: ClientEventStream[A]): ClientEventStream[A] =
-      new ClientEventStream(initRoute, exp.merge(stream.exp))
+      innerMap(_.merge(stream.exp))
+
+    def filter(pred: Rep[T] => Rep[Boolean]): ClientEventStream[T] =
+      innerMap(_.filter(fun(pred)))
 
     def hold(initial: Rep[T]): ClientSignal[T] =
       new ClientSignal(initRoute, exp.toProperty(initial))

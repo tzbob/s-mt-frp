@@ -1,7 +1,7 @@
 package mtfrp.client
 
 import scala.js.exp.FFIExp
-import scala.js.language.{Casts, JS}
+import scala.js.language.{ Casts, JS }
 
 trait JSJsonReaderContext { self: JS with FFIExp with Casts =>
 
@@ -19,6 +19,10 @@ trait JSJsonReaderContext { self: JS with FFIExp with Casts =>
 
   implicit object IntJSJsonReader extends JSJsonReader[Int] {
     def read(raw: Rep[String]) = browserJSONParse(raw).as[Int]
+  }
+
+  implicit object ListJSJsonReader extends JSJsonReader[List[String]] {
+    def read(raw: Rep[String]) = browserJSONParse(raw).as[List[String]]
   }
 
 }

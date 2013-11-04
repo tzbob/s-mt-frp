@@ -9,6 +9,8 @@ trait ElemFRPLib { self: BrowserExp with ClientEventStreamLib with BaconLib =>
     def setInnerHTML(value: Rep[String]): Rep[Unit] =
       foreign"$e.innerHTML = $value".withEffect()
 
+    def innerHTML: Rep[String] = foreign"$e.innerHTML".withEffect()
+
     def toStream(ev: EventDef)(implicit m: Manifest[ev.Type]): ClientEventStream[ev.Type] = {
       val bus = bacon.Bus[ev.Type]
       e.on(ev)(bus push _)
