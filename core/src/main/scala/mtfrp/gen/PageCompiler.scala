@@ -1,39 +1,33 @@
-package mtfrp.client
+package mtfrp.gen
 
-import java.io.{ PrintWriter, StringWriter }
-
-import scala.xml.Unparsed
-
-import mtfrp.GenMtFrpServer
-import mtfrp.server.MtFrpServer
+import spray.routing.Directives
+import spray.routing.Route
 import spray.http.MediaTypes
-import spray.routing.{ Directives, Route }
-import spray.routing.Directive.pimpApply
-import spray.routing.directives.CompletionMagnet.fromObject
+import mtfrp.lang.MtFrpProg
+import java.io.StringWriter
+import java.io.PrintWriter
+import scala.xml.Unparsed
+import mtfrp.exp.MtFrpProgExp
 
-object PageCompiler extends Directives {
+object PageCompiler {
+  import Directives._
 
-  def makeRoute(prog: MtFrpServer)(url: String): Route = {
+  def makeRoute(prog: MtFrpProgExp)(url: String): Route = {
     lazy val signal = {
       import prog._
       val signal = prog.main
-
-      signal.exp onValue fun { (str: Rep[Element]) =>
+      signal.rep onValue fun { (str: Rep[Element]) =>
         // clean body
-        document.body.setInnerHTML("")
+        document.body.firstChild.foreach(_.remove())
         // fill body
         document.body.appendChild(str)
       }
-
       signal
     }
 
-    val gen = new GenMtFrpServer {
-      val IR: prog.type = prog
-    }
-
     val sw = new StringWriter
-    gen.emitExecution(signal.exp, new PrintWriter(sw))
+    val gen = new GenMtFrp { val IR: prog.type = prog }
+    gen.emitExecution(signal.rep, new PrintWriter(sw))
     val js = sw.toString
 
     val html =
