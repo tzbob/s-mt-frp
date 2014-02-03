@@ -12,9 +12,9 @@ import spray.routing.{ Directives, RequestContext, Route }
 import spray.routing.Directives._
 import scala.js.language.dom.EventOps
 
-trait ClientEventLib extends JSJsonReaderContext with BaconLib with EventSources
+trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
     with JS with JSLiteral with EventOps {
-  self: ServerEventLib =>
+  self: ServerEventLib with ClientSignalLib =>
 
   private def initEventSource[T: JSJsonReader: Manifest](bus: Rep[Bus[T]], url: String): Rep[EventSource] = {
     val source = EventSource(url)
@@ -47,7 +47,7 @@ trait ClientEventLib extends JSJsonReaderContext with BaconLib with EventSources
       new ClientEvent(None, stream, None)
 
     def apply[T: JsonWriter: JSJsonReader: Manifest](serverStream: ServerEvent[T]) = {
-      val genUrl = URLEncoder encode UUID.randomUUID.toString
+      val genUrl = URLEncoder encode (UUID.randomUUID.toString, "UTF-8")
       val bus = Bus[T]()
       initEventSource(bus, genUrl)
 
@@ -59,16 +59,8 @@ trait ClientEventLib extends JSJsonReaderContext with BaconLib with EventSources
     }
   }
 
-  implicit class ReactiveTargetOps(e: Exp[EventTarget]) {
-    def toStream(ev: EventDef)(implicit m: Manifest[ev.Type]): ClientEvent[ev.Type] = {
-      val bus = Bus[ev.Type]()
-      e.on(ev) { bus push _ }
-      ClientEvent(bus)
-    }
-  }
-
-  implicit class ReactiveToClient[T: JsonWriter: JSJsonReader: Manifest](evt: ServerEvent[T]) {
-    def toClient: ClientEvent[T] = ClientEvent(evt)
+  implicit class ReactiveToServer[T: JsonReader: JSJsonWriter: Manifest](evt: ClientEvent[T]) {
+    def toServer: ServerEvent[T] = ServerEvent(evt)
   }
 
   class ClientEvent[T: Manifest] private (
@@ -96,7 +88,7 @@ trait ClientEventLib extends JSJsonReaderContext with BaconLib with EventSources
     def filter(pred: Rep[T] => Rep[Boolean]): ClientEvent[T] =
       this.copy(rep = rep.filter(fun(pred)))
 
-    def combine(stream: ClientEvent[T])(f: (Rep[T], Rep[T]) => Rep[T]): ClientEvent[T] = {
+    def combine[A: Manifest](stream: ClientEvent[T])(f: (Rep[T], Rep[T]) => Rep[A]): ClientEvent[A] = {
       val rep = this.rep.combine(stream.rep)(fun(f))
       val route = this.route match {
         case None    => stream.route
@@ -105,7 +97,7 @@ trait ClientEventLib extends JSJsonReaderContext with BaconLib with EventSources
       this.copy(route = route, rep = rep)
     }
 
-    //    def hold(initial: Rep[T]): ClientSignal[T] =
-    //      new ClientSignal(route, rep.toProperty(initial))
+    def hold(initial: Rep[T]): ClientSignal[T] =
+      new ClientSignal(route, rep.toProperty(initial))
   }
 }

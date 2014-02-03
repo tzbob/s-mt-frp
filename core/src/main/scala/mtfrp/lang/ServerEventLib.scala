@@ -9,7 +9,7 @@ import reactive.{ EventStream, Observing }
 import spray.json.{ JsonReader, JsonWriter, pimpString }
 import spray.routing.{ Directives, Route }
 
-trait ServerEventLib extends JSJsonWriterContext
+trait ServerEventLib extends JSJsonWriterLib
     with JSExp with XMLHttpRequests {
   self: ClientEventLib =>
 
@@ -19,7 +19,7 @@ trait ServerEventLib extends JSJsonWriterContext
       new ServerEvent(None, stream, None)
 
     def apply[T: JsonReader: JSJsonWriter: Manifest](stream: ClientEvent[T]): ServerEvent[T] = {
-      val genUrl = URLEncoder encode UUID.randomUUID.toString
+      val genUrl = URLEncoder encode (UUID.randomUUID.toString, "UTF-8")
       val source = new reactive.EventSource[T]
 
       val initRoute = path(genUrl) {
@@ -52,8 +52,8 @@ trait ServerEventLib extends JSJsonWriterContext
       req.send(value.toJSONString)
     }
 
-  implicit class ReactiveToServer[T: JsonReader: JSJsonWriter: Manifest](evt: ClientEvent[T]) {
-    def toServer: ServerEvent[T] = ServerEvent(evt)
+  implicit class ReactiveToClient[T: JsonWriter: JSJsonReader: Manifest](evt: ServerEvent[T]) {
+    def toClient: ClientEvent[T] = ClientEvent(evt)
   }
 
   class ServerEvent[T] private (val route: Option[Route],

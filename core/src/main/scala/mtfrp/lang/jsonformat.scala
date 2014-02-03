@@ -1,0 +1,51 @@
+package mtfrp.lang
+
+import scala.js.language.JS
+
+trait JSJsonReaderLib extends JS {
+
+  protected[mtfrp] def parse[T](raw: Rep[String]): Rep[T]
+
+  trait JSJsonReader[T] extends Serializable {
+    def read(raw: Rep[String]): Rep[T]
+  }
+
+  implicit object StringJSJsonReader extends JSJsonReader[String] {
+    def read(raw: Rep[String]) = raw
+  }
+
+  implicit object IntJSJsonReader extends JSJsonReader[Int] {
+    def read(raw: Rep[String]) = parse[Int](raw)
+  }
+
+  implicit object ListJSJsonReader extends JSJsonReader[List[String]] {
+    def read(raw: Rep[String]) = parse[List[String]](raw)
+  }
+
+}
+
+trait JSJsonWriterLib extends JS {
+
+  protected[mtfrp] def stringify[T](raw: Rep[T]): Rep[String]
+
+  implicit class ToJsonRep[T: JSJsonWriter](x: Rep[T]) {
+    def toJSONString: Rep[String] = implicitly[JSJsonWriter[T]].write(x)
+  }
+
+  trait JSJsonWriter[T] extends Serializable {
+    def write(raw: Rep[T]): Rep[String]
+  }
+
+  implicit object StringJSJSonWriter extends JSJsonWriter[String] {
+    def write(raw: Rep[String]): Rep[String] = raw
+  }
+
+  implicit object IntJSJsonWriter extends JSJsonWriter[Int] {
+    def write(raw: Rep[Int]): Rep[String] = stringify(raw)
+  }
+
+}
+
+trait JSJsonFormatLib extends JSJsonReaderLib with JSJsonWriterLib {
+  trait JSJsonFormat[T] extends JSJsonReader[T] with JSJsonWriter[T]
+}

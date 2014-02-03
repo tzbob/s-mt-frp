@@ -5,7 +5,7 @@ import reactive.Signal
 import spray.routing.Route
 
 trait ServerSignalLib {
-  self: JSJsonWriterContext with JSJsonReaderContext with JSExp with FFIExp =>
+  self: JSJsonWriterLib with JSExp with FFIExp =>
 
   //  private def syncAjaxGet(url: Rep[String]): Rep[String] =
   //    foreign"""$$.ajax({type: "GET", url: $url, async: false}).responseText""".withEffect()

@@ -6,7 +6,7 @@ object SMTFRPBuild extends Build {
     version := "0.1",
     scalaVersion := "2.10.2-RC1",
     scalaOrganization := "org.scala-lang.virtualized",
-    scalacOptions ++= Seq("-deprecation", "-unchecked", "-Xexperimental", "-Yvirtualize"),
+    scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature", "-Xexperimental", "-Yvirtualize"),
     resolvers ++= Seq(
       Resolver.sonatypeRepo("snapshots"),
       "spray repo" at "http://repo.spray.io/")
@@ -14,13 +14,12 @@ object SMTFRPBuild extends Build {
 
   lazy val deps = Seq(
     "org.scalatest" % "scalatest_2.10" % "2.0.M5b" % "test",
+    "io.spray" % "spray-testkit" % "1.2-M8" % "test",
     "EPFL" %% "js-scala" % "0.4-SNAPSHOT",
-    "io.spray" % "spray-can" % "1.1-M8",
-    "io.spray" % "spray-routing" % "1.1-M8",
-    "io.spray" % "spray-testkit" % "1.1-M8",
+    "io.spray" % "spray-can" % "1.2-M8",
+    "io.spray" % "spray-routing" % "1.2-M8",
     "io.spray" %% "spray-json" % "1.2.5",
-    "com.typesafe.akka" %% "akka-actor" % "2.1.4",
-    "com.typesafe.akka" %% "akka-testkit" % "2.1.4",
+    "com.typesafe.akka" %% "akka-actor" % "2.2.3",
     "js-scala" %% "forest" % "0.5-SNAPSHOT",
     "cc.co.scala-reactive" %% "reactive-core" % "0.4.0-SNAPSHOT"
   )

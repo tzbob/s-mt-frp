@@ -1,24 +1,21 @@
 package mtfrp.gen
 
-import mtfrp.exp.JSJsonReaderContextExp
-import scala.js.gen.js.dom.GenBrowser
-import scala.js.gen.js.GenJSLib
-import mtfrp.exp.MtFrpProgExp
-import mtfrp.exp.ClientEventLibExp
-import scala.js.gen.js.dom.GenEventOps
-import scala.js.gen.js.GenJS
-import scala.js.gen.js.GenJSLiteral
-import mtfrp.exp.JSJsonWriterContextExp
-import mtfrp.exp.ServerEventLibExp
-import mtfrp.exp.ClientSignalLibExp
-import scala.js.gen.js.GenFFI
+import scala.js.gen.js.{GenAdts, GenFFI, GenJS, GenJSLiteral}
+import scala.js.gen.js.dom.{GenBrowser, GenEventOps}
+
+import forest.JSGenForest
+import mtfrp.exp.{ClientEventLibExp, ClientSignalLibExp, FrpLibExp, JSJsonFormatLibExp, JSJsonReaderLibExp, JSJsonWriterLibExp, MtFrpProgExp, ServerEventLibExp}
 
 trait GenJSJsonReaderContext extends GenJS with GenFFI {
-  val IR: JSJsonReaderContextExp
+  val IR: JSJsonReaderLibExp
 }
 
 trait GenJSJsonWriterContext extends GenJS with GenFFI {
-  val IR: JSJsonWriterContextExp
+  val IR: JSJsonWriterLibExp
+}
+
+trait GenJSJsonFormat extends GenJSJsonReaderContext with GenJSJsonWriterContext {
+  val IR: JSJsonFormatLibExp
 }
 
 trait GenClientEventLib
@@ -47,10 +44,17 @@ trait GenServerEventLib
   val IR: ServerEventLibExp
 }
 
-trait GenMtFrp
+trait GenFrpLib
     extends GenClientEventLib
     with GenServerEventLib
-    with GenClientSignalLib
-    with GenBrowser {
+    with GenClientSignalLib {
+  val IR: FrpLibExp
+}
+
+trait GenMtFrp
+    extends GenBrowser
+    with JSGenForest
+    with GenFrpLib
+    with GenAdts {
   val IR: MtFrpProgExp
 }

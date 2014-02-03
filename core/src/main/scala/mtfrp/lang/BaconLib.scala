@@ -16,7 +16,7 @@ trait BaconLib extends Proxy {
     def fold[A](start: A)(stepper: Rep[((A, T)) => A]): Rep[BaconStream[A]]
     def merge[A >: T](stream: Rep[BaconStream[A]]): Rep[BaconStream[A]]
     def filter(pred: Rep[T => Boolean]): Rep[BaconStream[T]]
-    def combine(stream: Rep[BaconStream[T]])(f: Rep[((T, T)) => T]): Rep[BaconStream[T]]
+    def combine[A](stream: Rep[BaconStream[T]])(f: Rep[((T, T)) => A]): Rep[BaconStream[A]]
     def toProperty(initial: Rep[T]): Rep[Property[T]]
   }
   implicit def repToBaconStream[T: Manifest](x: Rep[BaconStream[T]]): BaconStream[T] =
