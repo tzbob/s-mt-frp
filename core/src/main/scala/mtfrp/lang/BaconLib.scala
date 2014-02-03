@@ -16,7 +16,8 @@ trait BaconLib extends Proxy {
     def fold[A](start: A)(stepper: Rep[((A, T)) => A]): Rep[BaconStream[A]]
     def merge[A >: T](stream: Rep[BaconStream[A]]): Rep[BaconStream[A]]
     def filter(pred: Rep[T => Boolean]): Rep[BaconStream[T]]
-    def combine[A](stream: Rep[BaconStream[T]])(f: Rep[((T, T)) => A]): Rep[BaconStream[A]]
+    def combine[A](stream: Rep[BaconStream[T]])(f: Rep[((T, T)) => A]): Rep[Property[A]]
+    def skipUntil(stream: Rep[BaconStream[_]]): Rep[BaconStream[T]]
     def toProperty(initial: Rep[T]): Rep[Property[T]]
   }
   implicit def repToBaconStream[T: Manifest](x: Rep[BaconStream[T]]): BaconStream[T] =
@@ -35,6 +36,8 @@ trait BaconLib extends Proxy {
   trait Property[T] {
     def map[A](modifier: Rep[T => A]): Rep[Property[A]]
     def onValue(handler: Rep[T => Unit]): Rep[Unit]
+    def sampledBy(stream: Rep[BaconStream[_]]): Rep[BaconStream[T]]
+    def changes(): Rep[BaconStream[T]]
   }
   implicit def repToProperty[T: Manifest](x: Rep[Property[T]]): Property[T] =
     repProxy[Property[T]](x)

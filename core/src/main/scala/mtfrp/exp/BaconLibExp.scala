@@ -7,5 +7,5 @@ trait BaconLibExp extends BaconLib with ProxyExp with FFIExp {
   case object BaconVar extends Exp[Bacon]
   val bacon = BaconVar
 
-  def newBus[T: Manifest]() = foreign"new Bacon.Bus()"[Bus[T]]
+  def newBus[T: Manifest]() = foreign"new Bacon.Bus()".withEffect[Bus[T]]()
 }

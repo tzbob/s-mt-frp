@@ -11,6 +11,7 @@ trait FrpLib
 
 trait MtFrpProg
     extends FrpExtensions
+    with JSJsonFormatLib
     with Forest
     with Browser
     with Adts

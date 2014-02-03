@@ -6,7 +6,8 @@ object SMTFRPBuild extends Build {
     version := "0.1",
     scalaVersion := "2.10.2-RC1",
     scalaOrganization := "org.scala-lang.virtualized",
-    scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature", "-Xexperimental", "-Yvirtualize"),
+    scalacOptions ++= Seq("-deprecation", "-unchecked", "-Xexperimental", "-Yvirtualize"),
+    cancelable := true,
     resolvers ++= Seq(
       Resolver.sonatypeRepo("snapshots"),
       "spray repo" at "http://repo.spray.io/")

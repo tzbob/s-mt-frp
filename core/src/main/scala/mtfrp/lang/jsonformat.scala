@@ -4,29 +4,29 @@ import scala.js.language.JS
 
 trait JSJsonReaderLib extends JS {
 
-  protected[mtfrp] def parse[T](raw: Rep[String]): Rep[T]
+  def parse[T: Manifest](raw: Rep[String]): Rep[T]
 
   trait JSJsonReader[T] extends Serializable {
     def read(raw: Rep[String]): Rep[T]
   }
 
   implicit object StringJSJsonReader extends JSJsonReader[String] {
-    def read(raw: Rep[String]) = raw
+    def read(raw: Rep[String]) = parse(raw)
   }
 
   implicit object IntJSJsonReader extends JSJsonReader[Int] {
-    def read(raw: Rep[String]) = parse[Int](raw)
+    def read(raw: Rep[String]) = parse(raw)
   }
 
   implicit object ListJSJsonReader extends JSJsonReader[List[String]] {
-    def read(raw: Rep[String]) = parse[List[String]](raw)
+    def read(raw: Rep[String]) = parse(raw)
   }
 
 }
 
 trait JSJsonWriterLib extends JS {
 
-  protected[mtfrp] def stringify[T](raw: Rep[T]): Rep[String]
+  def stringify[T](raw: Rep[T]): Rep[String]
 
   implicit class ToJsonRep[T: JSJsonWriter](x: Rep[T]) {
     def toJSONString: Rep[String] = implicitly[JSJsonWriter[T]].write(x)
@@ -37,7 +37,7 @@ trait JSJsonWriterLib extends JS {
   }
 
   implicit object StringJSJSonWriter extends JSJsonWriter[String] {
-    def write(raw: Rep[String]): Rep[String] = raw
+    def write(raw: Rep[String]): Rep[String] = stringify(raw)
   }
 
   implicit object IntJSJsonWriter extends JSJsonWriter[Int] {

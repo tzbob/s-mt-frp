@@ -18,7 +18,7 @@ object PageCompiler {
       val signal = prog.main
       signal.rep onValue fun { (str: Rep[Element]) =>
         // clean body
-        document.body.firstChild.foreach(_.remove())
+        document.body.setInnerHTML("")
         // fill body
         document.body.appendChild(str)
       }
@@ -56,7 +56,7 @@ object PageCompiler {
       }
     }
 
-    signal.initRoute match {
+    signal.route match {
       case Some(route) => rootRoute ~ route
       case None        => rootRoute
     }

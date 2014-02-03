@@ -46,6 +46,9 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
     def apply[T: Manifest](stream: Rep[BaconStream[T]]): ClientEvent[T] =
       new ClientEvent(None, stream, None)
 
+    def apply[T: Manifest](route: Option[Route], stream: Rep[BaconStream[T]]): ClientEvent[T] =
+      new ClientEvent(route, stream, None)
+
     def apply[T: JsonWriter: JSJsonReader: Manifest](serverStream: ServerEvent[T]) = {
       val genUrl = URLEncoder encode (UUID.randomUUID.toString, "UTF-8")
       val bus = Bus[T]()
@@ -89,7 +92,7 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
       this.copy(rep = rep.filter(fun(pred)))
 
     def combine[A: Manifest](stream: ClientEvent[T])(f: (Rep[T], Rep[T]) => Rep[A]): ClientEvent[A] = {
-      val rep = this.rep.combine(stream.rep)(fun(f))
+      val rep = this.rep.combine(stream.rep)(fun(f)).changes
       val route = this.route match {
         case None    => stream.route
         case Some(r) => stream.route.map(_ ~ r)
@@ -97,7 +100,11 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
       this.copy(route = route, rep = rep)
     }
 
+    def skipUntil(event: ClientEvent[_]): ClientEvent[T] =
+      copy(rep = rep skipUntil event.rep)
+
     def hold(initial: Rep[T]): ClientSignal[T] =
       new ClientSignal(route, rep.toProperty(initial))
+
   }
 }
