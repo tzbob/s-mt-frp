@@ -9,13 +9,8 @@ trait EchoProg extends MtFrpProg {
 
   case class EchoData(name: String, text: String) extends Adt
   val ClientEchoData = adt[EchoData]
-  implicit def pointOps(p: Rep[EchoData]) = adtOps(p)
-
+  implicit def echoDataOps(p: Rep[EchoData]) = adtOps(p)
   implicit val echoFormat = jsonFormat2(EchoData)
-  implicit object EchoDataJSJSonFormat extends JSJsonFormat[EchoData] {
-    def write(raw: Rep[EchoData]): Rep[String] = stringify(raw)
-    def read(raw: Rep[String]) = parse[EchoData](raw)
-  }
 
   def main: ClientSignal[Element] =
     inputOnServer.toClient.hold(ClientEchoData("<>", "<>")) map template

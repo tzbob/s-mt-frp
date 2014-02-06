@@ -7,12 +7,12 @@ import forest.ForestExp
 import mtfrp.gen.GenMtFrp
 import mtfrp.lang.{ ClientEventLib, ClientSignalLib, DocumentOpsExtended, FrpLib, JSJsonFormatLib, JSJsonReaderLib, JSJsonWriterLib, MtFrpProg, ServerEventLib }
 
-trait JSJsonReaderLibExp extends JSJsonReaderLib with JSExp with FFIExp {
+trait JSJsonReaderLibExp extends JSJsonReaderLib with JSExp with FFIExp with AdtsExp {
   def parse[T: Manifest](raw: Rep[String]): Rep[T] =
     foreign"JSON.parse($raw)".withEffect[T]()
 }
 
-trait JSJsonWriterLibExp extends JSJsonWriterLib with JSExp with FFIExp {
+trait JSJsonWriterLibExp extends JSJsonWriterLib with JSExp with FFIExp with AdtsExp {
   def stringify[T](raw: Rep[T]): Rep[String] =
     foreign"JSON.stringify($raw)".withEffect[String]()
 }

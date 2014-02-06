@@ -1,16 +1,16 @@
 package mtfrp.gen
 
-import scala.js.gen.js.{GenAdts, GenFFI, GenJS, GenJSLiteral}
-import scala.js.gen.js.dom.{GenBrowser, GenEventOps}
+import scala.js.gen.js.{ GenAdts, GenFFI, GenJS, GenJSLiteral }
+import scala.js.gen.js.dom.{ GenBrowser, GenEventOps }
 
 import forest.JSGenForest
-import mtfrp.exp.{ClientEventLibExp, ClientSignalLibExp, FrpLibExp, JSJsonFormatLibExp, JSJsonReaderLibExp, JSJsonWriterLibExp, MtFrpProgExp, ServerEventLibExp}
+import mtfrp.exp.{ ClientEventLibExp, ClientSignalLibExp, FrpLibExp, JSJsonFormatLibExp, JSJsonReaderLibExp, JSJsonWriterLibExp, MtFrpProgExp, ServerEventLibExp }
 
-trait GenJSJsonReaderContext extends GenJS with GenFFI {
+trait GenJSJsonReaderContext extends GenJS with GenFFI with GenAdts {
   val IR: JSJsonReaderLibExp
 }
 
-trait GenJSJsonWriterContext extends GenJS with GenFFI {
+trait GenJSJsonWriterContext extends GenJS with GenFFI with GenAdts {
   val IR: JSJsonWriterLibExp
 }
 
