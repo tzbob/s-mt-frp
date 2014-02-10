@@ -15,10 +15,10 @@ object SMTFRPBuild extends Build {
 
   lazy val deps = Seq(
     "org.scalatest" % "scalatest_2.10" % "2.0.M5b" % "test",
-    "io.spray" % "spray-testkit" % "1.2-M8" % "test",
+    "io.spray" % "spray-testkit" % "1.2.0" % "test",
     "EPFL" %% "js-scala" % "0.4-SNAPSHOT",
-    "io.spray" % "spray-can" % "1.2-M8",
-    "io.spray" % "spray-routing" % "1.2-M8",
+    "io.spray" % "spray-can" % "1.2.0",
+    "io.spray" % "spray-routing" % "1.2.0",
     "io.spray" %% "spray-json" % "1.2.5",
     "com.typesafe.akka" %% "akka-actor" % "2.2.3",
     "js-scala" %% "forest" % "0.5-SNAPSHOT",

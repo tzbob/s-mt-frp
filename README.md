@@ -5,6 +5,7 @@
 1. publish-local lms: https://github.com/TiarkRompf/virtualization-lms-core
 2. publish-local JS-Scala: https://github.com/js-scala/js-scala
 3. publish-local reactive-core: https://github.com/nafg/reactive/tree/master/reactive-core
+4. publish-local JS-Scala version of Forest: https://github.com/js-scala/forest
 
 ## Run
 
