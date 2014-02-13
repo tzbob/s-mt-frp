@@ -2,16 +2,14 @@ package mtfrp.lang
 
 import java.net.URLEncoder
 import java.util.UUID
-
 import scala.js.exp.JSExp
-
 import reactive.{ EventStream, Observing }
 import spray.json.{ JsonReader, JsonWriter, pimpString }
 import spray.routing.{ Directives, Route }
 
 trait ServerEventLib extends JSJsonWriterLib
     with JSExp with XMLHttpRequests {
-  self: ClientEventLib =>
+  self: ClientEventLib with ServerSignalLib =>
 
   private[mtfrp] object ServerEvent extends Directives {
 
@@ -75,7 +73,10 @@ trait ServerEventLib extends JSJsonWriterLib
     def filter(pred: T => Boolean): ServerEvent[T] =
       this.copy(stream = this.stream filter pred)
 
-    //    def hold(initial: T): ServerSignal[T] =
-    //      new ServerSignal(route, stream hold initial)
+    def hold(initial: T): ServerSignal[T] = ServerSignal(initial, this)
+
+    def fhold[A](start: A)(stepper: (A, T) => A): ServerSignal[A] =
+      fold(start)(stepper) hold start
+
   }
 }

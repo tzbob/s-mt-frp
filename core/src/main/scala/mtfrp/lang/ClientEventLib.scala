@@ -100,11 +100,7 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
       this.copy(route = route, rep = rep)
     }
 
-    def skipUntil(event: ClientEvent[_]): ClientEvent[T] =
-      copy(rep = rep skipUntil event.rep)
-
-    def hold(initial: Rep[T]): ClientSignal[T] =
-      new ClientSignal(route, rep.toProperty(initial))
+    def hold(initial: Rep[T]): ClientSignal[T] = ClientSignal(initial, this)
 
   }
 }

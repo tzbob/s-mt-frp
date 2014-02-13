@@ -8,6 +8,7 @@ trait FrpLib
   extends ClientEventLib
   with ServerEventLib
   with ClientSignalLib
+  with ServerSignalLib
 
 trait MtFrpProg
     extends FrpExtensions

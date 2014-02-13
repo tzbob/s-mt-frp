@@ -1,11 +1,11 @@
 package mtfrp.lang
 
-import scala.js.exp.{ FFIExp, JSExp }
-import reactive.Signal
+import scala.js.language.JS
+import reactive.{ Observing, Signal }
 import spray.routing.Route
 
-trait ServerSignalLib {
-  self: JSJsonWriterLib with JSExp with FFIExp =>
+trait ServerSignalLib extends JS with ServerEventLib {
+  self: ClientSignalLib =>
 
   //  private def syncAjaxGet(url: Rep[String]): Rep[String] =
   //    foreign"""$$.ajax({type: "GET", url: $url, async: false}).responseText""".withEffect()
@@ -30,14 +30,26 @@ trait ServerSignalLib {
   //
   //  }
 
-  class ServerSignal[T] private[lang] (
-      val initRoute: Option[Route],
-      val signal: Signal[T]) {
+  object ServerSignal {
+    def apply[T](init: T, stepper: ServerEvent[T]) =
+      new ServerSignal(stepper.route, stepper.stream hold init, stepper.observing)
+  }
+
+  class ServerSignal[T] private (
+      val route: Option[Route],
+      val signal: Signal[T],
+      val observing: Option[Observing]) {
+
+    def copy[A](
+      route: Option[Route] = this.route,
+      signal: Signal[A] = this.signal,
+      observing: Option[Observing] = this.observing): ServerSignal[A] =
+      new ServerSignal(route, signal, observing)
 
     def map[A](modifier: T => A): ServerSignal[A] =
-      new ServerSignal(initRoute, signal.map(modifier))
+      this.copy(signal = this.signal map modifier)
 
     def fold[A](start: A)(stepper: (A, T) => A): ServerSignal[A] =
-      new ServerSignal(initRoute, signal.foldLeft(start)(stepper))
+      this.copy(signal = this.signal.foldLeft(start)(stepper))
   }
 }

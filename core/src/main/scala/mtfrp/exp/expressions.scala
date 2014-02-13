@@ -2,10 +2,10 @@ package mtfrp.exp
 
 import scala.js.exp.{ AdtsExp, FFIExp, JSExp, JSLibExp, JSLiteralExp }
 import scala.js.exp.dom.{ BrowserExp, ElementOpsExp, EventOpsExp }
-
 import forest.ForestExp
 import mtfrp.gen.GenMtFrp
 import mtfrp.lang.{ ClientEventLib, ClientSignalLib, DocumentOpsExtended, FrpLib, JSJsonFormatLib, JSJsonReaderLib, JSJsonWriterLib, MtFrpProg, ServerEventLib }
+import mtfrp.lang.ServerSignalLib
 
 trait JSJsonReaderLibExp extends JSJsonReaderLib with JSExp with FFIExp with AdtsExp {
   def parse[T: Manifest](raw: Rep[String]): Rep[T] =
@@ -46,7 +46,7 @@ trait ClientSignalLibExp
     extends ClientSignalLib
     with BaconLibExp
     with JSExp {
-  self: ServerEventLibExp with ClientEventLibExp =>
+  self: ServerSignalLibExp =>
 }
 
 trait ServerEventLibExp
@@ -54,7 +54,13 @@ trait ServerEventLibExp
     with JSJsonWriterLibExp
     with JSExp
     with XMLHttpRequestsExp {
-  self: ClientEventLibExp =>
+  self: ClientEventLibExp with ServerSignalLibExp =>
+}
+
+trait ServerSignalLibExp
+    extends ServerSignalLib
+    with JSExp {
+  self: ClientSignalLibExp =>
 }
 
 trait FrpLibExp
@@ -62,6 +68,7 @@ trait FrpLibExp
   with ClientEventLibExp
   with ServerEventLibExp
   with ClientSignalLibExp
+  with ServerSignalLibExp
 
 trait FrpExtensionsExp
   extends FrpLibExp
