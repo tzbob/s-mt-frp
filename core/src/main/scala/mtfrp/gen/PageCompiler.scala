@@ -1,36 +1,36 @@
 package mtfrp.gen
 
-import spray.routing.Directives
-import spray.routing.Route
-import spray.http.MediaTypes
-import mtfrp.lang.MtFrpProg
-import java.io.StringWriter
-import java.io.PrintWriter
+import java.io.{ PrintWriter, StringWriter }
+import java.net.URLEncoder
+import java.util.UUID
+
 import scala.xml.Unparsed
+
 import mtfrp.exp.MtFrpProgExp
+import spray.http.{ HttpCookie, MediaTypes }
+import spray.httpx.marshalling.ToResponseMarshallable.isMarshallable
+import spray.routing.Directive.pimpApply
+import spray.routing.{ Route, Directives }
 
 object PageCompiler {
   import Directives._
 
   def makeRoute(prog: MtFrpProgExp)(url: String): Route = {
-    lazy val signal = {
-      import prog._
-      val signal = prog.main
-      signal.rep onValue fun { (str: Rep[Element]) =>
-        // clean body
-        document.body.setInnerHTML("")
-        // fill body
-        document.body.appendChild(str)
-      }
-      signal
-    }
-
-    val sw = new StringWriter
+    lazy val signal = prog.mainGen
     val gen = new GenMtFrp { val IR: prog.type = prog }
-    gen.emitExecution(signal.rep, new PrintWriter(sw))
-    val js = sw.toString
+    val block = gen.reifyBlock(signal.rep)
 
-    val html =
+    /*
+     * TODO
+     *  generate frpID for setCookie
+     */
+
+    def html = {
+      val sw = new StringWriter
+      val out = new PrintWriter(sw)
+      gen.emitSource(Nil, block, "", out)
+      val js = sw.toString
+
       <html>
         <head>
           <title>Chat</title>
@@ -42,23 +42,23 @@ object PageCompiler {
           <link rel="shortcut icon" href="images/favicon.ico"/>
         </head>
         <body>
-          <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-          <script src="http://cdnjs.cloudflare.com/ajax/libs/bacon.js/0.6.8/Bacon.min.js"></script>
-          <script type="text/javascript">{ Unparsed(js) }</script>
+          <script src="//cdnjs.cloudflare.com/ajax/libs/bacon.js/0.7.2/bacon.min.js"></script>
+          <script type="text/javascript">({ Unparsed(js) })()</script>
         </body>
       </html>
+    }
 
-    println(html)
-
-    val rootRoute = path(url) {
+    val pageRoute = path(url) {
       get {
-        respondWithMediaType(MediaTypes.`text/html`)(complete(html))
+        setCookie(HttpCookie("frpID", content = URLEncoder encode (UUID.randomUUID.toString, "UTF-8"))) {
+          respondWithMediaType(MediaTypes.`text/html`)(complete(html))
+        }
       }
     }
 
     signal.route match {
-      case Some(route) => rootRoute ~ route
-      case None        => rootRoute
+      case Some(route) => pageRoute ~ route
+      case None        => pageRoute
     }
   }
 

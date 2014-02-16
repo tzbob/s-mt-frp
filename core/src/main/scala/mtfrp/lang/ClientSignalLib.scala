@@ -1,15 +1,24 @@
 package mtfrp.lang
 
 import scala.js.language.JS
+import spray.json._
 import spray.routing.Route
 import reactive.Observing
+import spray.json.JsonWriter
 
-trait ClientSignalLib extends JS with BaconLib with ClientEventLib {
+trait ClientSignalLib extends JS with BaconLib with ClientEventLib with DelayedEval {
   self: ServerSignalLib =>
 
   object ClientSignal {
     def apply[T: Manifest](init: Rep[T], stepper: ClientEvent[T]) =
       new ClientSignal(stepper.route, stepper.rep toProperty init, stepper.observing)
+
+    def apply[T: JsonWriter: JSJsonReader: Manifest](serverSignal: ServerSignal[T]) = {
+      def json() = unit(serverSignal.signal.now.toJson.compactPrint)
+      val currentState = implicitly[JSJsonReader[T]] read delayEval(json)
+      ClientEvent(serverSignal.changes) hold currentState
+    }
+
   }
 
   class ClientSignal[T: Manifest] private (
@@ -27,6 +36,6 @@ trait ClientSignalLib extends JS with BaconLib with ClientEventLib {
       copy(rep = rep map fun(modifier))
 
     def sampledBy(event: ClientEvent[_]): ClientEvent[T] =
-      ClientEvent(route, rep.sampledBy(event.rep))
+      ClientEvent(route, rep.sampledBy(event.rep), observing)
   }
 }

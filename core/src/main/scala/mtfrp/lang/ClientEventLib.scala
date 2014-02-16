@@ -27,15 +27,18 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
   private def initRoute[T: JsonWriter](url: String, stream: EventStream[T])(implicit observing: Observing): Route =
     path(url) {
       get {
-        respondWithMediaType(MediaType.custom("text/event-stream")) {
-          (ctx: RequestContext) =>
-            ctx.responder ! ChunkedResponseStart(HttpResponse(
-              headers = HttpHeaders.`Cache-Control`(CacheDirectives.`no-cache`) :: Nil,
-              entity = ":" + (" " * 2049) + "\n" // 2k padding for IE polyfill (yaffle)
-            ))
-            stream foreach { data =>
-              ctx.responder ! MessageChunk(s"data:${data.toJson.compactPrint}\n\n")
-            }
+        cookie("frpID") { idCookie =>
+          respondWithMediaType(MediaType.custom("text/event-stream")) {
+            (ctx: RequestContext) =>
+              ctx.responder ! ChunkedResponseStart(HttpResponse(
+                headers = HttpHeaders.`Cache-Control`(CacheDirectives.`no-cache`) :: Nil,
+                entity = ":" + (" " * 2049) + "\n" // 2k padding for IE polyfill (yaffle)
+              ))
+              stream foreach { data =>
+                // if data.fst == idCookie
+                ctx.responder ! MessageChunk(s"data:${data.toJson.compactPrint}\n\n")
+              }
+          }
         }
       }
     }
@@ -46,8 +49,11 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
     def apply[T: Manifest](stream: Rep[BaconStream[T]]): ClientEvent[T] =
       new ClientEvent(None, stream, None)
 
-    def apply[T: Manifest](route: Option[Route], stream: Rep[BaconStream[T]]): ClientEvent[T] =
-      new ClientEvent(route, stream, None)
+    def apply[T: Manifest](
+      route: Option[Route],
+      stream: Rep[BaconStream[T]],
+      observing: Option[Observing]): ClientEvent[T] =
+      new ClientEvent(route, stream, observing)
 
     def apply[T: JsonWriter: JSJsonReader: Manifest](serverStream: ServerEvent[T]) = {
       val genUrl = URLEncoder encode (UUID.randomUUID.toString, "UTF-8")
@@ -60,6 +66,7 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
 
       new ClientEvent(Some(route), bus, Some(observing))
     }
+
   }
 
   implicit class ReactiveToServer[T: JsonReader: JSJsonWriter: Manifest](evt: ClientEvent[T]) {

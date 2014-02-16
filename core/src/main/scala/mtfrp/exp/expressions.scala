@@ -45,7 +45,8 @@ trait ClientEventLibExp
 trait ClientSignalLibExp
     extends ClientSignalLib
     with BaconLibExp
-    with JSExp {
+    with JSExp
+    with DelayedEvalExp {
   self: ServerSignalLibExp =>
 }
 

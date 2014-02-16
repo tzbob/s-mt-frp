@@ -18,4 +18,15 @@ trait MtFrpProg
     with Adts
     with DocumentOpsExtended {
   def main: ClientSignal[Element]
+
+  private[mtfrp] def mainGen: ClientSignal[Element] = {
+    val signal = main
+    signal.rep onValue fun { (str: Rep[Element]) =>
+      // clean body
+      document.body.setInnerHTML("")
+      // fill body
+      document.body.appendChild(str)
+    }
+    signal
+  }
 }

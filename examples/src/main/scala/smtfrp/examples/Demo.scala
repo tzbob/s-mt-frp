@@ -6,10 +6,16 @@ import mtfrp.gen.PageCompiler
 import spray.routing.SimpleRoutingApp
 
 object Demo extends App with SimpleRoutingApp {
-  implicit val system = ActorSystem("simple-apps")
-
   val echoProg = new EchoProg with MtFrpProgExp
   val echoRoute = PageCompiler.makeRoute(echoProg)("echo")
 
-  startServer("localhost", port = 8080)(echoRoute ~ getFromResourceDirectory(""))
+  val guestProg = new GuestbookProg with MtFrpProgExp
+  val guestRoute = PageCompiler.makeRoute(guestProg)("guest")
+
+  implicit val system = ActorSystem("simple-apps")
+  startServer("localhost", port = 8080)(
+    getFromResourceDirectory("")
+      ~ echoRoute
+      ~ guestRoute
+  )
 }

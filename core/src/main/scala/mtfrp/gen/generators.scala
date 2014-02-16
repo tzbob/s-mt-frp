@@ -31,7 +31,8 @@ trait GenClientEventLib
 
 trait GenClientSignalLib
     extends GenBaconLib
-    with GenJS {
+    with GenJS
+    with GenDelayedEval {
   self: GenClientEventLib =>
   val IR: ClientSignalLibExp
 }
