@@ -3,6 +3,8 @@ package smtfrp.examples
 import mtfrp.lang.MtFrpProg
 import spray.json.DefaultJsonProtocol
 import scala.util.Random
+import mtfrp.lang.Client
+import mtfrp.lang.ClientQuery
 
 trait EchoProg extends MtFrpProg {
   import DefaultJsonProtocol._
@@ -13,7 +15,7 @@ trait EchoProg extends MtFrpProg {
   implicit val echoFormat = jsonFormat2(EchoData)
 
   def main: ClientSignal[Element] =
-    inputOnServer.toClient.hold(ClientEchoData("<>", "<>")) map template
+    broadcastInput.toClient.hold(ClientEchoData("<>", "<>")) map template
 
   def template(data: Rep[EchoData]): Rep[Element] = el('div)(
     el('h1)("Echo prog"),
@@ -21,7 +23,7 @@ trait EchoProg extends MtFrpProg {
     el('div)(name, text, send)
   )
 
-  lazy val inputOnServer: ServerEvent[EchoData] = input.toServer
+  lazy val broadcastInput = input.toServer.map { tup => (ClientQuery.any, tup._2) }
   lazy val input: ClientEvent[EchoData] = {
     val combined = name.values.combine(text.values)(ClientEchoData(_, _))
     val signal = combined hold ClientEchoData("", "")

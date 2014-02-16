@@ -28,8 +28,8 @@ trait GuestbookProg extends MtFrpProg {
   }
 
   lazy val book: ServerSignal[List[Entry]] =
-    input.toServer.fhold(immutable.List.empty[Entry]) { (acc, evt) =>
-      evt :: acc
+    input.toServer.fhold(immutable.List.empty[Entry]) { (acc, tup) =>
+      tup._2 :: acc
     }
 
   lazy val input: ClientEvent[Entry] = {

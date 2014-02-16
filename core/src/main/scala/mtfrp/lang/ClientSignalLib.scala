@@ -16,7 +16,9 @@ trait ClientSignalLib extends JS with BaconLib with ClientEventLib with DelayedE
     def apply[T: JsonWriter: JSJsonReader: Manifest](serverSignal: ServerSignal[T]) = {
       def json() = unit(serverSignal.signal.now.toJson.compactPrint)
       val currentState = implicitly[JSJsonReader[T]] read delayEval(json)
-      ClientEvent(serverSignal.changes) hold currentState
+      val any: Client => Boolean = _ => true
+      val targetedChanges = serverSignal.changes.map { (any, _) }
+      ClientEvent(targetedChanges) hold currentState
     }
 
   }

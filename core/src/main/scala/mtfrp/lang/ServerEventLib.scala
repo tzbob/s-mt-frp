@@ -22,17 +22,16 @@ trait ServerEventLib extends JSJsonWriterLib
       observing: Option[Observing]): ServerEvent[T] =
       new ServerEvent(route, stream, observing)
 
-    def apply[T: JsonReader: JSJsonWriter: Manifest](stream: ClientEvent[T]): ServerEvent[T] = {
+    def apply[T: JsonReader: JSJsonWriter: Manifest](stream: ClientEvent[T]): ServerEvent[(Client, T)] = {
       val genUrl = URLEncoder encode (UUID.randomUUID.toString, "UTF-8")
-      val source = new reactive.EventSource[T]
+      val source = new reactive.EventSource[(Client, T)]
 
       val initRoute = path(genUrl) {
         post {
           cookie("frpID") { idCookie =>
             entity(as[String]) { data =>
               complete {
-                // source fire (idCookie, data.asJson.convertTo[T])
-                source fire data.asJson.convertTo[T]
+                source fire (Client(idCookie.content), data.asJson.convertTo[T])
                 "OK"
               }
             }
@@ -59,7 +58,7 @@ trait ServerEventLib extends JSJsonWriterLib
       req.send(value.toJSONString)
     }
 
-  implicit class ReactiveToClient[T: JsonWriter: JSJsonReader: Manifest](evt: ServerEvent[T]) {
+  implicit class ReactiveToClient[T: JsonWriter: JSJsonReader: Manifest](evt: ServerEvent[(Client => Boolean, T)]) {
     def toClient: ClientEvent[T] = ClientEvent(evt)
   }
 

@@ -24,19 +24,20 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
     source
   }
 
-  private def initRoute[T: JsonWriter](url: String, stream: EventStream[T])(implicit observing: Observing): Route =
+  private def initRoute[T: JsonWriter](url: String, stream: EventStream[(Client => Boolean, T)])(implicit observing: Observing): Route =
     path(url) {
       get {
         cookie("frpID") { idCookie =>
           respondWithMediaType(MediaType.custom("text/event-stream")) {
-            (ctx: RequestContext) =>
+            ctx: RequestContext =>
               ctx.responder ! ChunkedResponseStart(HttpResponse(
                 headers = HttpHeaders.`Cache-Control`(CacheDirectives.`no-cache`) :: Nil,
                 entity = ":" + (" " * 2049) + "\n" // 2k padding for IE polyfill (yaffle)
               ))
-              stream foreach { data =>
-                // if data.fst == idCookie
-                ctx.responder ! MessageChunk(s"data:${data.toJson.compactPrint}\n\n")
+              stream foreach { tup =>
+                val (pred, data) = tup
+                if (pred(Client(idCookie.content)))
+                  ctx.responder ! MessageChunk(s"data:${data.toJson.compactPrint}\n\n")
               }
           }
         }
@@ -55,7 +56,7 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
       observing: Option[Observing]): ClientEvent[T] =
       new ClientEvent(route, stream, observing)
 
-    def apply[T: JsonWriter: JSJsonReader: Manifest](serverStream: ServerEvent[T]) = {
+    def apply[T: JsonWriter: JSJsonReader: Manifest](serverStream: ServerEvent[(Client => Boolean, T)]) = {
       val genUrl = URLEncoder encode (UUID.randomUUID.toString, "UTF-8")
       val bus = Bus[T]()
       initEventSource(bus, genUrl)
@@ -70,7 +71,7 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
   }
 
   implicit class ReactiveToServer[T: JsonReader: JSJsonWriter: Manifest](evt: ClientEvent[T]) {
-    def toServer: ServerEvent[T] = ServerEvent(evt)
+    def toServer: ServerEvent[(Client, T)] = ServerEvent(evt)
   }
 
   class ClientEvent[T: Manifest] private (
