@@ -18,22 +18,25 @@ trait GuestbookProg extends MtFrpProg {
   def template(data: Rep[List[Entry]]): Rep[Element] = {
     val entryEls =
       for (entry <- data)
-        yield el('div)(entry.name, " says ", entry.text)
+        yield el('li)(entry.name, " says ", entry.text)
 
     el('div)(
-      el('h1)("Echo prog"),
-      entryEls,
+      el('h1)("Guestbook Prog"),
+      el('ol)(entryEls),
       el('div)(name, text, send)
     )
   }
 
   lazy val book: ServerSignal[List[Entry]] =
-    input.toServer.fhold(immutable.List.empty[Entry]) { (acc, tup) =>
-      tup._2 :: acc
+    input.toServer.fhold(immutable.List.empty[Entry]) {
+      case (acc, (_, entry)) => entry :: acc
     }
+  //    input.toServer.fhold(imm.Map.empty[Client, imm.List[Entry]] withDefaultValue imm.List.empty[Entry]) {
+  //      case (acc, (client, entry)) => acc + (client -> (entry :: acc(client)))
+  //    }
 
   lazy val input: ClientEvent[Entry] = {
-    val combined = name.values.combine(text.values)(ClientEntry(_, _))
+    val combined = name.values.combine(text.values) { ClientEntry(_, _) }
     val signal = combined hold ClientEntry("", "")
     signal sampledBy send.toStream(Click)
   }

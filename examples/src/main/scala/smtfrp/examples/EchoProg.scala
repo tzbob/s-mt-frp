@@ -23,7 +23,9 @@ trait EchoProg extends MtFrpProg {
     el('div)(name, text, send)
   )
 
-  lazy val broadcastInput = input.toServer.map { tup => (ClientQuery.any, tup._2) }
+  lazy val broadcastInput = input.toServer.map {
+    case (_, input) => (ClientQuery.any, input)
+  }
   lazy val input: ClientEvent[EchoData] = {
     val combined = name.values.combine(text.values)(ClientEchoData(_, _))
     val signal = combined hold ClientEchoData("", "")

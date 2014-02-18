@@ -28,16 +28,17 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
     path(url) {
       get {
         cookie("frpID") { idCookie =>
+          val client = Client(idCookie.content)
           respondWithMediaType(MediaType.custom("text/event-stream")) {
             ctx: RequestContext =>
               ctx.responder ! ChunkedResponseStart(HttpResponse(
                 headers = HttpHeaders.`Cache-Control`(CacheDirectives.`no-cache`) :: Nil,
                 entity = ":" + (" " * 2049) + "\n" // 2k padding for IE polyfill (yaffle)
               ))
-              stream foreach { tup =>
-                val (pred, data) = tup
-                if (pred(Client(idCookie.content)))
-                  ctx.responder ! MessageChunk(s"data:${data.toJson.compactPrint}\n\n")
+              stream foreach {
+                case (pred, data) =>
+                  if (pred(client))
+                    ctx.responder ! MessageChunk(s"data:${data.toJson.compactPrint}\n\n")
               }
           }
         }

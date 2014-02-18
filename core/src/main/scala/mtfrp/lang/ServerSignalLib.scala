@@ -4,6 +4,7 @@ import scala.js.language.JS
 import reactive.{ Observing, Signal }
 import spray.routing.Route
 import spray.json.JsonWriter
+import spray.json.JsonReader
 
 trait ServerSignalLib extends JS with ServerEventLib {
   self: ClientSignalLib =>

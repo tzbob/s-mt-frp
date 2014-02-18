@@ -20,11 +20,6 @@ object PageCompiler {
     val gen = new GenMtFrp { val IR: prog.type = prog }
     val block = gen.reifyBlock(signal.rep)
 
-    /*
-     * TODO
-     *  generate frpID for setCookie
-     */
-
     def html = {
       val sw = new StringWriter
       val out = new PrintWriter(sw)
