@@ -13,7 +13,7 @@ object Demo extends App with SimpleRoutingApp {
   val guestRoute = PageCompiler.makeRoute(guestProg)("guest")
 
   implicit val system = ActorSystem("simple-apps")
-  startServer("localhost", port = 8080)(
+  startServer("::1", port = 8080)(
     getFromResourceDirectory("")
       ~ echoRoute
       ~ guestRoute

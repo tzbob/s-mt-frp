@@ -4,6 +4,6 @@ import scala.virtualization.lms.common.Base
 
 trait DelayedEval extends Base {
 
-  def delayEval[T: Manifest](thunk: () => Rep[T]): Rep[T]
+  def delayForClient[T: Manifest](thunk: Client => Rep[T]): Rep[T]
 
 }

@@ -14,11 +14,11 @@ trait ServerSignalLib extends JS with ServerEventLib {
       new ServerSignal(stepper.route, stepper.stream hold init, stepper.observing)
   }
 
-  implicit class ReactiveToClient[T: JsonWriter: JSJsonReader: Manifest](evt: ServerSignal[T]) {
+  implicit class ReactiveToClient[T: JsonWriter: JSJsonReader: Manifest](evt: ServerSignal[Client => T]) {
     def toClient: ClientSignal[T] = ClientSignal(evt)
   }
 
-  class ServerSignal[T] private (
+  class ServerSignal[+T] private (
       val route: Option[Route],
       val signal: Signal[T],
       val observing: Option[Observing]) {

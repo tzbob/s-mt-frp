@@ -28,7 +28,7 @@ trait ServerEventLib extends JSJsonWriterLib
 
       val initRoute = path(genUrl) {
         post {
-          cookie("frpID") { idCookie =>
+          cookie("clientID") { idCookie =>
             entity(as[String]) { data =>
               complete {
                 source fire (Client(idCookie.content), data.asJson.convertTo[T])
@@ -58,11 +58,11 @@ trait ServerEventLib extends JSJsonWriterLib
       req.send(value.toJSONString)
     }
 
-  implicit class ReactiveToClient[T: JsonWriter: JSJsonReader: Manifest](evt: ServerEvent[(Client => Boolean, T)]) {
+  implicit class ReactiveToClient[T: JsonWriter: JSJsonReader: Manifest](evt: ServerEvent[Client => Option[T]]) {
     def toClient: ClientEvent[T] = ClientEvent(evt)
   }
 
-  class ServerEvent[T] private (
+  class ServerEvent[+T] private (
       val route: Option[Route],
       val stream: EventStream[T],
       val observing: Option[Observing]) {
@@ -82,7 +82,7 @@ trait ServerEventLib extends JSJsonWriterLib
     def filter(pred: T => Boolean): ServerEvent[T] =
       this.copy(stream = this.stream filter pred)
 
-    def hold(initial: T): ServerSignal[T] = ServerSignal(initial, this)
+    def hold[U >: T](initial: U): ServerSignal[U] = ServerSignal(initial, this)
 
     def fhold[A](start: A)(stepper: (A, T) => A): ServerSignal[A] =
       fold(start)(stepper) hold start

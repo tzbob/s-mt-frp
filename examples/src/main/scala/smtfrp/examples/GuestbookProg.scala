@@ -2,8 +2,8 @@ package smtfrp.examples
 
 import mtfrp.lang.MtFrpProg
 import spray.json.DefaultJsonProtocol
-
-import collection._
+import collection.{ immutable => i }
+import mtfrp.lang.Client
 
 trait GuestbookProg extends MtFrpProg {
   import DefaultJsonProtocol._
@@ -13,7 +13,12 @@ trait GuestbookProg extends MtFrpProg {
   implicit def entryOps(p: Rep[Entry]) = adtOps(p)
   implicit val entryFormat = jsonFormat2(Entry)
 
-  def main: ClientSignal[Element] = book.toClient map template
+  def main: ClientSignal[Element] = {
+    val serverState = book.map { book =>
+      client: Client => book
+    }
+    serverState.toClient map template
+  }
 
   def template(data: Rep[List[Entry]]): Rep[Element] = {
     val entryEls =
@@ -27,13 +32,10 @@ trait GuestbookProg extends MtFrpProg {
     )
   }
 
-  lazy val book: ServerSignal[List[Entry]] =
-    input.toServer.fhold(immutable.List.empty[Entry]) {
-      case (acc, (_, entry)) => entry :: acc
+  lazy val book: ServerSignal[i.List[Entry]] =
+    input.toServer.fhold(i.List.empty[Entry]) {
+      case (acc, (client, entry)) => entry :: acc
     }
-  //    input.toServer.fhold(imm.Map.empty[Client, imm.List[Entry]] withDefaultValue imm.List.empty[Entry]) {
-  //      case (acc, (client, entry)) => acc + (client -> (entry :: acc(client)))
-  //    }
 
   lazy val input: ClientEvent[Entry] = {
     val combined = name.values.combine(text.values) { ClientEntry(_, _) }
