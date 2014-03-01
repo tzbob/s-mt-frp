@@ -6,17 +6,17 @@ import spray.routing.Route
 import reactive.Observing
 import spray.json.JsonWriter
 
-trait ClientSignalLib extends JS with BaconLib with ClientEventLib with DelayedEval {
-  self: ServerSignalLib =>
+trait ClientBehaviorLib extends JS with BaconLib with ClientEventLib with DelayedEval {
+  self: ServerBehaviorLib =>
 
-  object ClientSignal {
+  object ClientBehavior {
     def apply[T: Manifest](init: Rep[T], stepper: ClientEvent[T]) =
-      new ClientSignal(stepper.route, stepper.rep toProperty init, stepper.observing)
+      new ClientBehavior(stepper.route, stepper.rep toProperty init, stepper.observing)
 
-    def apply[T: JsonWriter: JSJsonReader: Manifest](serverSignal: ServerSignal[Client => T]) = {
-      def json(client: Client) = unit(serverSignal.signal.now(client).toJson.compactPrint)
+    def apply[T: JsonWriter: JSJsonReader: Manifest](serverBehavior: ServerBehavior[Client => T]) = {
+      def json(client: Client) = unit(serverBehavior.signal.now(client).toJson.compactPrint)
       val currentState = implicitly[JSJsonReader[T]] read delayForClient(json)
-      val targetedChanges = serverSignal.changes.map { fun =>
+      val targetedChanges = serverBehavior.changes.map { fun =>
         client: Client => Some(fun(client))
       }
       ClientEvent(targetedChanges) hold currentState
@@ -24,7 +24,7 @@ trait ClientSignalLib extends JS with BaconLib with ClientEventLib with DelayedE
 
   }
 
-  class ClientSignal[+T: Manifest] private (
+  class ClientBehavior[+T: Manifest] private (
       val route: Option[Route],
       val rep: Rep[Property[T]],
       val observing: Option[Observing]) {
@@ -32,10 +32,10 @@ trait ClientSignalLib extends JS with BaconLib with ClientEventLib with DelayedE
     def copy[A: Manifest](
       route: Option[Route] = this.route,
       rep: Rep[Property[A]] = this.rep,
-      observing: Option[Observing] = this.observing): ClientSignal[A] =
-      new ClientSignal(route, rep, observing)
+      observing: Option[Observing] = this.observing): ClientBehavior[A] =
+      new ClientBehavior(route, rep, observing)
 
-    def map[A: Manifest](modifier: Rep[T] => Rep[A]): ClientSignal[A] =
+    def map[A: Manifest](modifier: Rep[T] => Rep[A]): ClientBehavior[A] =
       copy(rep = rep map fun(modifier))
 
     def sampledBy(event: ClientEvent[_]): ClientEvent[T] =

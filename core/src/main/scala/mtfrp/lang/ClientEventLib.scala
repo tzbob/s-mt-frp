@@ -14,7 +14,7 @@ import scala.js.language.dom.EventOps
 
 trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
     with JS with JSLiteral with EventOps {
-  self: ServerEventLib with ClientSignalLib =>
+  self: ServerEventLib with ClientBehaviorLib =>
 
   private def initEventSource[T: JSJsonReader: Manifest](bus: Rep[Bus[T]], url: String): Rep[EventSource] = {
     val source = EventSource(url)
@@ -108,7 +108,7 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
       this.copy(route = route, rep = rep)
     }
 
-    def hold[U >: T: Manifest](initial: Rep[U]): ClientSignal[U] = ClientSignal(initial, this)
+    def hold[U >: T: Manifest](initial: Rep[U]): ClientBehavior[U] = ClientBehavior(initial, this)
 
   }
 }

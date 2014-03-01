@@ -7,8 +7,8 @@ import forest.Forest
 trait FrpLib
   extends ClientEventLib
   with ServerEventLib
-  with ClientSignalLib
-  with ServerSignalLib
+  with ClientBehaviorLib
+  with ServerBehaviorLib
 
 trait MtFrpProg
     extends FrpExtensions
@@ -17,9 +17,9 @@ trait MtFrpProg
     with Browser
     with Adts
     with DocumentOpsExtended {
-  def main: ClientSignal[Element]
+  def main: ClientBehavior[Element]
 
-  private[mtfrp] def mainGen: ClientSignal[Element] = {
+  private[mtfrp] def mainGen: ClientBehavior[Element] = {
     val signal = main
     signal.rep onValue fun { (str: Rep[Element]) =>
       // clean body

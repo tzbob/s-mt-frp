@@ -4,8 +4,8 @@ import scala.js.exp.{ AdtsExp, FFIExp, JSExp, JSLibExp, JSLiteralExp }
 import scala.js.exp.dom.{ BrowserExp, ElementOpsExp, EventOpsExp }
 import forest.ForestExp
 import mtfrp.gen.GenMtFrp
-import mtfrp.lang.{ ClientEventLib, ClientSignalLib, DocumentOpsExtended, FrpLib, JSJsonFormatLib, JSJsonReaderLib, JSJsonWriterLib, MtFrpProg, ServerEventLib }
-import mtfrp.lang.ServerSignalLib
+import mtfrp.lang.{ ClientEventLib, ClientBehaviorLib, DocumentOpsExtended, FrpLib, JSJsonFormatLib, JSJsonReaderLib, JSJsonWriterLib, MtFrpProg, ServerEventLib }
+import mtfrp.lang.ServerBehaviorLib
 
 trait JSJsonReaderLibExp extends JSJsonReaderLib with JSExp with FFIExp with AdtsExp {
   def parse[T: Manifest](raw: Exp[String]): Exp[T] =
@@ -39,15 +39,15 @@ trait ClientEventLibExp
     with JSExp
     with JSLiteralExp
     with EventOpsExp {
-  self: ServerEventLibExp with ClientSignalLibExp =>
+  self: ServerEventLibExp with ClientBehaviorLibExp =>
 }
 
-trait ClientSignalLibExp
-    extends ClientSignalLib
+trait ClientBehaviorLibExp
+    extends ClientBehaviorLib
     with BaconLibExp
     with JSExp
     with DelayedEvalExp {
-  self: ServerSignalLibExp =>
+  self: ServerBehaviorLibExp =>
 }
 
 trait ServerEventLibExp
@@ -55,21 +55,21 @@ trait ServerEventLibExp
     with JSJsonWriterLibExp
     with JSExp
     with XMLHttpRequestsExp {
-  self: ClientEventLibExp with ServerSignalLibExp =>
+  self: ClientEventLibExp with ServerBehaviorLibExp =>
 }
 
-trait ServerSignalLibExp
-    extends ServerSignalLib
+trait ServerBehaviorLibExp
+    extends ServerBehaviorLib
     with JSExp {
-  self: ClientSignalLibExp =>
+  self: ClientBehaviorLibExp =>
 }
 
 trait FrpLibExp
   extends FrpLib
   with ClientEventLibExp
   with ServerEventLibExp
-  with ClientSignalLibExp
-  with ServerSignalLibExp
+  with ClientBehaviorLibExp
+  with ServerBehaviorLibExp
 
 trait FrpExtensionsExp
   extends FrpLibExp

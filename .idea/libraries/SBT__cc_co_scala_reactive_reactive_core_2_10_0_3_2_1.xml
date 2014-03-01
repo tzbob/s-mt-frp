@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="SBT: cc.co.scala-reactive:reactive-core_2.10:0.3.2.1">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/cc.co.scala-reactive/reactive-core_2.10/jars/reactive-core_2.10-0.3.2.1.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/.ivy2/cache/cc.co.scala-reactive/reactive-core_2.10/docs/reactive-core_2.10-0.3.2.1-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/cc.co.scala-reactive/reactive-core_2.10/srcs/reactive-core_2.10-0.3.2.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

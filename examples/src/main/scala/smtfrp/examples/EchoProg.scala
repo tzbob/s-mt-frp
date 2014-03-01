@@ -14,7 +14,7 @@ trait EchoProg extends MtFrpProg {
   implicit def echoDataOps(p: Rep[EchoData]) = adtOps(p)
   implicit val echoFormat = jsonFormat2(EchoData)
 
-  def main: ClientSignal[Element] =
+  def main: ClientBehavior[Element] =
     broadcastInput.toClient.hold(ClientEchoData("<>", "<>")) map template
 
   def template(data: Rep[EchoData]): Rep[Element] = el('div)(

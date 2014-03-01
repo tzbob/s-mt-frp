@@ -9,7 +9,7 @@ import spray.routing.{ Directives, Route }
 
 trait ServerEventLib extends JSJsonWriterLib
     with JSExp with XMLHttpRequests {
-  self: ClientEventLib with ServerSignalLib =>
+  self: ClientEventLib with ServerBehaviorLib =>
 
   private[mtfrp] object ServerEvent extends Directives {
 
@@ -82,9 +82,9 @@ trait ServerEventLib extends JSJsonWriterLib
     def filter(pred: T => Boolean): ServerEvent[T] =
       this.copy(stream = this.stream filter pred)
 
-    def hold[U >: T](initial: U): ServerSignal[U] = ServerSignal(initial, this)
+    def hold[U >: T](initial: U): ServerBehavior[U] = ServerBehavior(initial, this)
 
-    def fhold[A](start: A)(stepper: (A, T) => A): ServerSignal[A] =
+    def fhold[A](start: A)(stepper: (A, T) => A): ServerBehavior[A] =
       fold(start)(stepper) hold start
   }
 }

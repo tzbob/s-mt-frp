@@ -13,7 +13,7 @@ trait GuestbookProg extends MtFrpProg {
   implicit def entryOps(p: Rep[Entry]) = adtOps(p)
   implicit val entryFormat = jsonFormat2(Entry)
 
-  def main: ClientSignal[Element] = {
+  def main: ClientBehavior[Element] = {
     val serverState = book.map { book =>
       client: Client => book
     }
@@ -32,7 +32,7 @@ trait GuestbookProg extends MtFrpProg {
     )
   }
 
-  lazy val book: ServerSignal[i.List[Entry]] =
+  lazy val book: ServerBehavior[i.List[Entry]] =
     input.toServer.fhold(i.List.empty[Entry]) {
       case (acc, (client, entry)) => entry :: acc
     }

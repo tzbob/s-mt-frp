@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="SBT: js-scala:forest_2.10:0.5-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/local/js-scala/forest_2.10/0.5-SNAPSHOT/jars/forest_2.10.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/.ivy2/local/js-scala/forest_2.10/0.5-SNAPSHOT/docs/forest_2.10-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/local/js-scala/forest_2.10/0.5-SNAPSHOT/srcs/forest_2.10-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

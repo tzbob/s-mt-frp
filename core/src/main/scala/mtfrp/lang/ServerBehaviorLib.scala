@@ -6,19 +6,19 @@ import spray.routing.Route
 import spray.json.JsonWriter
 import spray.json.JsonReader
 
-trait ServerSignalLib extends JS with ServerEventLib {
-  self: ClientSignalLib =>
+trait ServerBehaviorLib extends JS with ServerEventLib {
+  self: ClientBehaviorLib =>
 
-  object ServerSignal {
+  object ServerBehavior {
     def apply[T](init: T, stepper: ServerEvent[T]) =
-      new ServerSignal(stepper.route, stepper.stream hold init, stepper.observing)
+      new ServerBehavior(stepper.route, stepper.stream hold init, stepper.observing)
   }
 
-  implicit class ReactiveToClient[T: JsonWriter: JSJsonReader: Manifest](evt: ServerSignal[Client => T]) {
-    def toClient: ClientSignal[T] = ClientSignal(evt)
+  implicit class ReactiveToClient[T: JsonWriter: JSJsonReader: Manifest](evt: ServerBehavior[Client => T]) {
+    def toClient: ClientBehavior[T] = ClientBehavior(evt)
   }
 
-  class ServerSignal[+T] private (
+  class ServerBehavior[+T] private (
       val route: Option[Route],
       val signal: Signal[T],
       val observing: Option[Observing]) {
@@ -26,16 +26,16 @@ trait ServerSignalLib extends JS with ServerEventLib {
     def copy[A](
       route: Option[Route] = this.route,
       signal: Signal[A] = this.signal,
-      observing: Option[Observing] = this.observing): ServerSignal[A] =
-      new ServerSignal(route, signal, observing)
+      observing: Option[Observing] = this.observing): ServerBehavior[A] =
+      new ServerBehavior(route, signal, observing)
 
-    def map[A](modifier: T => A): ServerSignal[A] =
+    def map[A](modifier: T => A): ServerBehavior[A] =
       this.copy(signal = this.signal map modifier)
 
     private[mtfrp] def changes: ServerEvent[T] =
       ServerEvent(route, signal.change, observing)
 
-    def fold[A](start: A)(stepper: (A, T) => A): ServerSignal[A] =
+    def fold[A](start: A)(stepper: (A, T) => A): ServerBehavior[A] =
       this.copy(signal = this.signal.foldLeft(start)(stepper))
   }
 }
