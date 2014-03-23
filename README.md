@@ -7,6 +7,10 @@ We propose Multi-tier FRP for the Web, a novel way of writing web applications w
 
 ## Try it out!
 
+### Install [SBT](http://www.scala-sbt.org/)
+
+Please follow the install guide on the official [scala-sbt.org](http://www.scala-sbt.org/release/docs/Getting-Started/Setup.html#installing-sbt) website.
+
 ### Install [LMS](https://github.com/TiarkRompf/virtualization-lms-core)
 
     git clone git@github.com:TiarkRompf/virtualization-lms-core.git
