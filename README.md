@@ -16,31 +16,31 @@ Please follow the install guide on the official [scala-sbt.org](http://www.scala
     git clone git@github.com:TiarkRompf/virtualization-lms-core.git
     cd virtualization-lms-core
     sbt publish-local
+    cd ..
 
 ### Install [JS-Scala](https://github.com/js-scala/js-scala)
 
-    cd ..
     git clone git@github.com:js-scala/js-scala.git
     cd js-scala
     sbt publish-local
+    cd ..
 
 ### Install [Forest](https://github.com/js-scala/forest)
-    cd ..
     git clone git@github.com:js-scala/forest.git
     cd forest/forest
     sbt publish-local
+    cd ../..
 
 ### Install [Reactive](https://github.com/nafg/reactive/)
 
-    cd ..
     git clone git@github.com:nafg/reactive.git
     cd reactive
     git checkout v0.4.0
     sbt publish-local
+    cd ..
 
 ### Run the examples
 
-    cd ..
     git clone git@github.com:Tzbob/s-mt-frp.git
     cd s-mt-frp
     sbt "project examples" run

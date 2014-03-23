@@ -19,7 +19,7 @@ object Demo extends App with SimpleRoutingApp {
   val chatRoute = PageCompiler.makeRoute(chatProg)("chat")
 
   implicit val system = ActorSystem("simple-apps")
-  startServer("::1", port = 8080)(
+  startServer("localhost", port = 8080)(
     getFromResourceDirectory("")
       ~ echoRoute
       ~ guestRoute
