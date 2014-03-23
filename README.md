@@ -52,14 +52,14 @@ startServer("::1", port = 8080)...
 ```
 Which indicates that;
 
-- the Echo program is available at http://localhost:8080/echo,
-- the GuestBook program is available at http://localhost:8080/guest,
-- the BasicChat program is available at http://localhost:8080/basicchat,
-- the Chat program is available at http://localhost:8080/chat.
+- the Echo program is available at [http://localhost:8080/echo](http://localhost:8080/echo),
+- the GuestBook program is available at [http://localhost:8080/guest](http://localhost:8080/guest),
+- the BasicChat program is available at [http://localhost:8080/basicchat](http://localhost:8080/basicchat),
+- the Chat program is available at [http://localhost:8080/chat](http://localhost:8080/chat).
 
 ## Layout
 
-The repository is split into **examples** and **core** containing framework and demo code.
+The repository is split into **examples** and **core** containing demo and framework code.
 
 ### Examples
 
@@ -78,5 +78,3 @@ You should look at "core/src/main/scala/mtfrp" when navigating through **core**,
 - **lang**: the DSL definitions for our multi-tier FRP language are located here e.g. ```MtFrpProg```
 - **exp**: contains the implementations of our DSL definition in the LMS way e.g. ```MtFrpProgExp```
 - **gen**: contains the JavaScript generators for all our implementatinons e.g. ```GenMtFrpProg```
-
-
