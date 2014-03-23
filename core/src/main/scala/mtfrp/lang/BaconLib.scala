@@ -7,16 +7,18 @@ trait BaconLib extends Proxy {
 
   trait Bacon {
     def fromCallback[T](handler: Rep[(T => Unit) => Unit]): Rep[BaconStream[T]]
+    def combineWith[A, B, T](f: Rep[((A, B)) => T])(a: Rep[Property[A]], b: Rep[Property[B]]): Rep[Property[T]]
+    def combineWith[A, B, C, T](f: Rep[((A, B, C)) => T])(a: Rep[Property[A]], b: Rep[Property[B]], c: Rep[Property[C]]): Rep[Property[T]]
   }
   implicit def repToBacon(x: Rep[Bacon]): Bacon = repProxy[Bacon](x)
 
   trait BaconStream[+T] {
     def onValue(handler: Rep[T => Unit]): Rep[Unit]
     def map[A](modifier: Rep[T => A]): Rep[BaconStream[A]]
-    def fold[A](start: A)(stepper: Rep[((A, T)) => A]): Rep[BaconStream[A]]
+    def fold[A](start: Rep[A])(stepper: Rep[((A, T)) => A]): Rep[BaconStream[A]]
     def merge[A >: T](stream: Rep[BaconStream[A]]): Rep[BaconStream[A]]
     def filter(pred: Rep[T => Boolean]): Rep[BaconStream[T]]
-    def combine[A >: T, B](stream: Rep[BaconStream[A]])(f: Rep[((T, A)) => B]): Rep[Property[B]]
+    def combine[A, B](stream: Rep[BaconStream[A]])(f: Rep[((T, A)) => B]): Rep[Property[B]]
     def skipUntil(stream: Rep[BaconStream[_]]): Rep[BaconStream[T]]
     def toProperty[U >: T](initial: Rep[U]): Rep[Property[U]]
   }
@@ -38,6 +40,8 @@ trait BaconLib extends Proxy {
     def onValue(handler: Rep[T => Unit]): Rep[Unit]
     def sampledBy(stream: Rep[BaconStream[_]]): Rep[BaconStream[T]]
     def changes(): Rep[BaconStream[T]]
+    def combine[A, B](stream: Rep[Property[A]])(f: Rep[((T, A)) => B]): Rep[Property[B]]
+    def scan[A](start: Rep[A])(stepper: Rep[((A, T)) => A]): Rep[Property[A]]
   }
   implicit def repToProperty[T: Manifest](x: Rep[Property[T]]): Property[T] =
     repProxy[Property[T]](x)

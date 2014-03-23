@@ -24,7 +24,8 @@ trait GenClientEventLib
     with GenEventSources
     with GenJS
     with GenJSLiteral
-    with GenEventOps {
+    with GenEventOps
+    with GenDelayedEval {
   self: GenServerEventLib =>
   val IR: ClientEventLibExp
 }
@@ -40,7 +41,8 @@ trait GenClientBehaviorLib
 trait GenServerEventLib
     extends GenJSJsonWriterContext
     with GenJS
-    with GenXMLHttpRequests {
+    with GenXMLHttpRequests
+    with GenDelayedEval {
   self: GenClientEventLib =>
   val IR: ServerEventLibExp
 }

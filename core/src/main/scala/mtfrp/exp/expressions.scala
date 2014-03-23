@@ -9,12 +9,12 @@ import mtfrp.lang.ServerBehaviorLib
 
 trait JSJsonReaderLibExp extends JSJsonReaderLib with JSExp with FFIExp with AdtsExp {
   def parse[T: Manifest](raw: Exp[String]): Exp[T] =
-    foreign"JSON.parse($raw)".withEffect[T]()
+    foreign"JSON.parse($raw)"[T].withEffect()
 }
 
 trait JSJsonWriterLibExp extends JSJsonWriterLib with JSExp with FFIExp with AdtsExp {
   def stringify[T](raw: Exp[T]): Exp[String] =
-    foreign"JSON.stringify($raw)".withEffect[String]()
+    foreign"JSON.stringify($raw)"[String].withEffect()
 }
 
 trait JSJsonFormatLibExp
@@ -24,11 +24,11 @@ trait JSJsonFormatLibExp
 
 trait DocumentOpsExtendedExp extends DocumentOpsExtended with BrowserExp with FFIExp {
   protected[mtfrp] def documentCreateElement[A: Manifest](d: Exp[Document], e: ElementTagName[A]): Exp[e.Type] =
-    foreign"$d.createElement(${unit(e.name)})".withEffect[e.Type]()
+    foreign"$d.createElement(${unit(e.name)})"[e.Type].withEffect()
   protected[mtfrp] def elementSetInnerHTML(e: Exp[Element], s: Exp[String]): Exp[Unit] =
-    foreign"$e.innerHTML = $s".withEffect()
+    foreign"$e.innerHTML = $s"[Unit].withEffect()
   protected[mtfrp] def elementInnerHTML(e: Exp[Element]): Exp[String] =
-    foreign"$e.innerHTML".withEffect()
+    foreign"$e.innerHTML"[String].withEffect()
 }
 
 trait ClientEventLibExp
@@ -38,7 +38,8 @@ trait ClientEventLibExp
     with EventSourcesExp
     with JSExp
     with JSLiteralExp
-    with EventOpsExp {
+    with EventOpsExp
+    with DelayedEvalExp {
   self: ServerEventLibExp with ClientBehaviorLibExp =>
 }
 
@@ -54,7 +55,8 @@ trait ServerEventLibExp
     extends ServerEventLib
     with JSJsonWriterLibExp
     with JSExp
-    with XMLHttpRequestsExp {
+    with XMLHttpRequestsExp
+    with DelayedEvalExp {
   self: ClientEventLibExp with ServerBehaviorLibExp =>
 }
 

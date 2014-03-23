@@ -35,21 +35,21 @@ object PageCompiler {
           <link href="css/flat-ui.css" rel="stylesheet"/>
           <link rel="shortcut icon" href="images/favicon.ico"/>
         </head>
-        <body data-id={ client.id }>
+        <body>
           <script src="//cdnjs.cloudflare.com/ajax/libs/bacon.js/0.7.2/bacon.min.js"></script>
           <script type="text/javascript">({ Unparsed(js) })()</script>
         </body>
       </html>
     }
 
+    var simpleID = 0
+
     val pageRoute = path(url) {
       get {
         dynamic {
           val id = URLEncoder encode (UUID.randomUUID.toString, "UTF-8")
-          setCookie(HttpCookie("clientID", content = id)) {
-            respondWithMediaType(MediaTypes.`text/html`) {
-              complete(html(Client(id)))
-            }
+          respondWithMediaType(MediaTypes.`text/html`) {
+            complete(html(Client(id)))
           }
         }
       }

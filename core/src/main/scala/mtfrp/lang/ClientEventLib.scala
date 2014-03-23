@@ -13,11 +13,11 @@ import spray.routing.Directives._
 import scala.js.language.dom.EventOps
 
 trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
-    with JS with JSLiteral with EventOps {
+    with JS with JSLiteral with EventOps with DelayedEval {
   self: ServerEventLib with ClientBehaviorLib =>
 
   private def initEventSource[T: JSJsonReader: Manifest](bus: Rep[Bus[T]], url: String): Rep[EventSource] = {
-    val source = EventSource(url)
+    val source = EventSource(includeClientIdParam(url))
     source.onmessage = fun { ev: Rep[Dataliteral] =>
       bus.push(implicitly[JSJsonReader[T]] read ev.data)
     }
@@ -27,8 +27,8 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
   private def initRoute[T: JsonWriter](url: String, stream: EventStream[Client => Option[T]])(implicit observing: Observing): Route =
     path(url) {
       get {
-        cookie("clientID") { idCookie =>
-          val client = Client(idCookie.content)
+        parameter('id) { id =>
+          val client = Client(id)
           respondWithMediaType(MediaType.custom("text/event-stream")) {
             ctx: RequestContext =>
               ctx.responder ! ChunkedResponseStart(HttpResponse(
@@ -36,8 +36,9 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
                 entity = ":" + (" " * 2049) + "\n" // 2k padding for IE polyfill (yaffle)
               ))
               stream foreach { fun =>
-                for (data <- fun(client))
+                for (data <- fun(client)) {
                   ctx.responder ! MessageChunk(s"data:${data.toJson.compactPrint}\n\n")
+                }
               }
           }
         }
@@ -71,6 +72,7 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
   }
 
   implicit class ReactiveToServer[T: JsonReader: JSJsonWriter: Manifest](evt: ClientEvent[T]) {
+    def toServerAnon: ServerEvent[T] = ServerEvent(evt).map { tuple => tuple._2 }
     def toServer: ServerEvent[(Client, T)] = ServerEvent(evt)
   }
 
@@ -79,7 +81,7 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
       val rep: Rep[BaconStream[T]],
       val observing: Option[Observing]) {
 
-    def copy[A: Manifest](
+    private[this] def copy[A: Manifest](
       route: Option[Route] = this.route,
       rep: Rep[BaconStream[A]] = this.rep,
       observing: Option[Observing] = this.observing): ClientEvent[A] =
@@ -90,25 +92,19 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
       this.copy(rep = rep)
     }
 
-    def fold[A: Manifest](start: A)(stepper: (Rep[A], Rep[T]) => Rep[A]): ClientEvent[A] =
-      this.copy(rep = rep.fold(start)(fun(stepper)))
-
     def merge[A >: T: Manifest](stream: ClientEvent[A]): ClientEvent[A] =
       this.copy(rep = rep.merge(stream.rep))
 
     def filter(pred: Rep[T] => Rep[Boolean]): ClientEvent[T] =
       this.copy(rep = rep.filter(fun(pred)))
 
-    def combine[A >: T: Manifest, B: Manifest](stream: ClientEvent[A])(f: (Rep[T], Rep[A]) => Rep[B]): ClientEvent[B] = {
-      val rep = this.rep.combine(stream.rep)(fun(f)).changes
-      val route = this.route match {
-        case None    => stream.route
-        case Some(r) => stream.route.map(_ ~ r)
-      }
-      this.copy(route = route, rep = rep)
-    }
+    def fold[A: Manifest](start: Rep[A])(stepper: (Rep[A], Rep[T]) => Rep[A]): ClientEvent[A] =
+      this.copy(rep = rep.fold(start)(fun(stepper)))
 
-    def hold[U >: T: Manifest](initial: Rep[U]): ClientBehavior[U] = ClientBehavior(initial, this)
+    def hold[U >: T: Manifest](initial: Rep[U]): ClientBehavior[U] =
+      ClientBehavior(initial, this)
 
+    def fhold[A: Manifest](start: Rep[A])(stepper: (Rep[A], Rep[T]) => Rep[A]): ClientBehavior[A] =
+      this.fold(start)(stepper) hold start
   }
 }

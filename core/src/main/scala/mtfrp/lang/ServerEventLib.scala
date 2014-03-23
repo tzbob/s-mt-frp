@@ -8,7 +8,7 @@ import spray.json.{ JsonReader, JsonWriter, pimpString }
 import spray.routing.{ Directives, Route }
 
 trait ServerEventLib extends JSJsonWriterLib
-    with JSExp with XMLHttpRequests {
+    with JSExp with XMLHttpRequests with DelayedEval {
   self: ClientEventLib with ServerBehaviorLib =>
 
   private[mtfrp] object ServerEvent extends Directives {
@@ -27,11 +27,11 @@ trait ServerEventLib extends JSJsonWriterLib
       val source = new reactive.EventSource[(Client, T)]
 
       val initRoute = path(genUrl) {
-        post {
-          cookie("clientID") { idCookie =>
+        parameter('id) { id =>
+          post {
             entity(as[String]) { data =>
               complete {
-                source fire (Client(idCookie.content), data.asJson.convertTo[T])
+                source fire (Client(id), data.asJson.convertTo[T])
                 "OK"
               }
             }
@@ -41,12 +41,8 @@ trait ServerEventLib extends JSJsonWriterLib
 
       val initExp = makeInitExp(stream, genUrl)
 
-      val newRoute = stream.route match {
-        case Some(route) => initRoute ~ route
-        case None        => initRoute
-      }
-
-      new ServerEvent(Some(newRoute), source, None)
+      val newRoute = combineRouteOpts(stream.route, Some(initRoute))
+      new ServerEvent(newRoute, source, None)
     }
   }
 
@@ -54,12 +50,17 @@ trait ServerEventLib extends JSJsonWriterLib
   private def makeInitExp[T: JSJsonWriter: Manifest](stream: ClientEvent[T], genUrl: String) =
     stream.rep onValue fun { value =>
       val req = XMLHttpRequest()
-      req.open("POST", genUrl)
+      req.open("POST", includeClientIdParam(genUrl))
       req.send(value.toJSONString)
     }
 
   implicit class ReactiveToClient[T: JsonWriter: JSJsonReader: Manifest](evt: ServerEvent[Client => Option[T]]) {
     def toClient: ClientEvent[T] = ClientEvent(evt)
+  }
+  implicit class ReactiveToAllClients[T: JsonWriter: JSJsonReader: Manifest](evt: ServerEvent[T]) {
+    def toAllClients: ClientEvent[T] = ClientEvent(evt.map { t =>
+      c: Client => Some(t)
+    })
   }
 
   class ServerEvent[+T] private (
@@ -67,7 +68,7 @@ trait ServerEventLib extends JSJsonWriterLib
       val stream: EventStream[T],
       val observing: Option[Observing]) {
 
-    def copy[A](
+    private[this] def copy[A](
       route: Option[Route] = this.route,
       stream: EventStream[A] = this.stream,
       observing: Option[Observing] = this.observing): ServerEvent[A] =
@@ -76,15 +77,20 @@ trait ServerEventLib extends JSJsonWriterLib
     def map[A](modifier: T => A): ServerEvent[A] =
       this.copy(stream = this.stream map modifier)
 
-    def fold[A](start: A)(stepper: (A, T) => A): ServerEvent[A] =
-      this.copy(stream = this.stream.foldLeft(start)(stepper))
+    def merge[A >: T](stream: ServerEvent[A]): ServerEvent[A] =
+      this.copy(stream = this.stream | stream.stream)
 
     def filter(pred: T => Boolean): ServerEvent[T] =
       this.copy(stream = this.stream filter pred)
 
-    def hold[U >: T](initial: U): ServerBehavior[U] = ServerBehavior(initial, this)
+    def fold[A](start: A)(stepper: (A, T) => A): ServerEvent[A] =
+      this.copy(stream = this.stream.foldLeft(start)(stepper))
+
+    def hold[U >: T](initial: U): ServerBehavior[U] =
+      ServerBehavior(initial, this)
 
     def fhold[A](start: A)(stepper: (A, T) => A): ServerBehavior[A] =
       fold(start)(stepper) hold start
+
   }
 }

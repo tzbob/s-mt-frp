@@ -1,10 +1,11 @@
 package mtfrp.lang
 
 import scala.js.language.JS
-import spray.json._
-import spray.routing.Route
+
 import reactive.Observing
-import spray.json.JsonWriter
+import spray.json.{ JsonWriter, pimpAny }
+import spray.routing.Directives.pimpRouteWithConcatenation
+import spray.routing.Route
 
 trait ClientBehaviorLib extends JS with BaconLib with ClientEventLib with DelayedEval {
   self: ServerBehaviorLib =>
@@ -29,7 +30,7 @@ trait ClientBehaviorLib extends JS with BaconLib with ClientEventLib with Delaye
       val rep: Rep[Property[T]],
       val observing: Option[Observing]) {
 
-    def copy[A: Manifest](
+    private[this] def copy[A: Manifest](
       route: Option[Route] = this.route,
       rep: Rep[Property[A]] = this.rep,
       observing: Option[Observing] = this.observing): ClientBehavior[A] =
@@ -40,5 +41,21 @@ trait ClientBehaviorLib extends JS with BaconLib with ClientEventLib with Delaye
 
     def sampledBy(event: ClientEvent[_]): ClientEvent[T] =
       ClientEvent(route, rep.sampledBy(event.rep), observing)
+
+    def combine[A: Manifest, B: Manifest](that: ClientBehavior[A])(f: (Rep[T], Rep[A]) => Rep[B]): ClientBehavior[B] = {
+      val rep = bacon.combineWith(fun(f))(this.rep, that.rep)
+      val route = combineRouteOpts(this.route, that.route)
+      this.copy(route = route, rep = rep)
+    }
+
+    def combine[A: Manifest, B: Manifest, C: Manifest](a: ClientBehavior[A], b: ClientBehavior[B])(f: (Rep[T], Rep[A], Rep[B]) => Rep[C]): ClientBehavior[C] = {
+      val rep = bacon.combineWith(fun(f))(this.rep, a.rep, b.rep)
+      val route = combineRouteOpts(combineRouteOpts(this.route, a.route), b.route)
+      this.copy(route = route, rep = rep)
+    }
+
+    def fold[A: Manifest](start: Rep[A])(stepper: (Rep[A], Rep[T]) => Rep[A]): ClientBehavior[A] =
+      this.copy(rep = rep.scan(start)(stepper))
+
   }
 }

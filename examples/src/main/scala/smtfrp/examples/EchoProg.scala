@@ -1,53 +1,36 @@
 package smtfrp.examples
 
-import mtfrp.lang.MtFrpProg
 import spray.json.DefaultJsonProtocol
-import scala.util.Random
-import mtfrp.lang.Client
-import mtfrp.lang.ClientQuery
+import scala.js.language.AdtsImpl.Adt
+import mtfrp.lang.MtFrpProg
 
-trait EchoProg extends MtFrpProg {
+trait EchoProg extends MtFrpProg with EasyHTML {
   import DefaultJsonProtocol._
 
   case class EchoData(name: String, text: String) extends Adt
   val ClientEchoData = adt[EchoData]
-  implicit def echoDataOps(p: Rep[EchoData]) = adtOps(p)
   implicit val echoFormat = jsonFormat2(EchoData)
 
   def main: ClientBehavior[Element] =
-    broadcastInput.toClient.hold(ClientEchoData("<>", "<>")) map template
+    singleClientInput.toAllClients.hold(ClientEchoData("<>", "<>")) map template
 
-  def template(data: Rep[EchoData]): Rep[Element] = el('div)(
-    el('h1)("Echo prog"),
-    el('div)(data.name, " says ", data.text),
-    el('div)(name, text, send)
-  )
+  def template(data: Rep[EchoData]): Rep[Element] = {
+    implicit def echoDataOps(p: Rep[EchoData]) = adtOps(p)
+    el('div)(
+      el('h1)("Echo prog"),
+      el('div)(data.name, " says ", data.text),
+      el('div)(name, text, send)
+    )
+  }
 
-  lazy val broadcastInput: ServerEvent[Client => Option[EchoData]] =
-    input.toServer.map {
-      case (c, data) =>
-        client =>
-          if (c == client) Some(data)
-          else None
-    }
+  lazy val singleClientInput = input.toServerAnon
 
   lazy val input: ClientEvent[EchoData] = {
     val combined = name.values.combine(text.values)(ClientEchoData(_, _))
-    val signal = combined hold ClientEchoData("", "")
-    signal sampledBy send.toStream(Click)
+    combined sampledBy send.toStream(Click)
   }
 
-  lazy val name: Rep[Input] = createInput("text")
-  lazy val text: Rep[Input] = createInput("text")
-  lazy val send: Rep[Button] = {
-    val send = document createElement ButtonTag
-    send.setInnerHTML("Send")
-    send
-  }
-
-  def createInput(tp: Rep[String]): Rep[Input] = {
-    val el = document createElement InputTag
-    el.setAttribute("type", tp)
-    el
-  }
+  lazy val name: Rep[Input] = text("Name")
+  lazy val text: Rep[Input] = text("Text")
+  lazy val send: Rep[Button] = button("Send")
 }

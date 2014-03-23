@@ -22,8 +22,7 @@ object SMTFRPBuild extends Build {
     "io.spray" %% "spray-json" % "1.2.5",
     "com.typesafe.akka" %% "akka-actor" % "2.2.3",
     "js-scala" %% "forest" % "0.5-SNAPSHOT",
-    //"cc.co.scala-reactive" %% "reactive-core" % "0.4.0-SNAPSHOT"
-    "cc.co.scala-reactive" %% "reactive-core" % "0.3.2.1"
+    "cc.co.scala-reactive" %% "reactive-core" % "0.4.0-SNAPSHOT"
   )
 
   lazy val root = Project(

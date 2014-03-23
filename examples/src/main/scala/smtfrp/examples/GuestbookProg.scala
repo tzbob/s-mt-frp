@@ -5,25 +5,19 @@ import spray.json.DefaultJsonProtocol
 import collection.{ immutable => i }
 import mtfrp.lang.Client
 
-trait GuestbookProg extends MtFrpProg {
+trait GuestbookProg extends MtFrpProg with EasyHTML {
   import DefaultJsonProtocol._
 
   case class Entry(name: String, text: String) extends Adt
   val ClientEntry = adt[Entry]
-  implicit def entryOps(p: Rep[Entry]) = adtOps(p)
   implicit val entryFormat = jsonFormat2(Entry)
 
-  def main: ClientBehavior[Element] = {
-    val serverState = book.map { book =>
-      client: Client => book
-    }
-    serverState.toClient map template
-  }
+  def main: ClientBehavior[Element] = book.toAllClients map template
 
   def template(data: Rep[List[Entry]]): Rep[Element] = {
-    val entryEls =
-      for (entry <- data)
-        yield el('li)(entry.name, " says ", entry.text)
+    implicit def entryOps(p: Rep[Entry]) = adtOps(p)
+    val entryEls = for (entry <- data)
+      yield el('li)(entry.name, " says ", entry.text)
 
     el('div)(
       el('h1)("Guestbook Prog"),
@@ -33,27 +27,16 @@ trait GuestbookProg extends MtFrpProg {
   }
 
   lazy val book: ServerBehavior[i.List[Entry]] =
-    input.toServer.fhold(i.List.empty[Entry]) {
-      case (acc, (client, entry)) => entry :: acc
+    input.toServerAnon.fhold(i.List.empty[Entry]) {
+      case (acc, entry) => entry :: acc
     }
 
   lazy val input: ClientEvent[Entry] = {
     val combined = name.values.combine(text.values) { ClientEntry(_, _) }
-    val signal = combined hold ClientEntry("", "")
-    signal sampledBy send.toStream(Click)
+    combined sampledBy send.toStream(Click)
   }
 
-  lazy val name: Rep[Input] = createInput("text")
-  lazy val text: Rep[Input] = createInput("text")
-  lazy val send: Rep[Button] = {
-    val send = document createElement ButtonTag
-    send.setInnerHTML("Send")
-    send
-  }
-
-  def createInput(tp: Rep[String]): Rep[Input] = {
-    val el = document createElement InputTag
-    el.setAttribute("type", tp)
-    el
-  }
+  lazy val name: Rep[Input] = text("Name")
+  lazy val text: Rep[Input] = text("Text")
+  lazy val send: Rep[Button] = button("Send")
 }

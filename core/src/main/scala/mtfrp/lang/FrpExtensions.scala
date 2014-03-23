@@ -17,11 +17,11 @@ trait FrpExtensions extends FrpLib with ElementOps with EventOps {
   case object KeyPress extends EventName[Event]("keypress")
   case object KeyUp extends EventName[Event]("keyup")
   implicit class ReactiveInputOps(e: Rep[Input]) extends Serializable {
-    def values: ClientEvent[String] = {
+    def values: ClientBehavior[String] = {
       val evt = e.toStream(KeyUp).map(_ => ())
         .merge(e.toStream(Click).map(_ => ()))
         .merge(e.toStream(Change).map(_ => ()))
-      evt.map(_ => e.value)
+      evt.map(_ => e.value).hold("")
     }
   }
 
