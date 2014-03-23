@@ -63,13 +63,14 @@ The repository is split into **examples** and **core** containing demo and frame
 
 ### Examples
 
-"smtfrp/examples" contains some small demo applications:
+"smtfrp/examples" contains some small demo applications;
 
-- ```EasyHTML``` demonstrates how additional JavaScript modules can be defined.
-- ```EchoProg``` is the simplest example, a message is taken to the server anonymously and broadcasted to all connections.
-- ```GuestbookProg``` introduces an example to keep state on the server.
-- ```BasicChatProg``` is a simple implementation of a chat application.
-- ```ChatProg``` extends on the simple chat implementation and adds private messaging, this example displays the expressive power of our approach when dealing with connection identification.
+- ```EasyHTML``` demonstrates how additional JavaScript modules can be defined,
+- ```EchoProg``` is the simplest example, a message is taken to the server anonymously and broadcasted to all connections,
+- ```GuestbookProg``` introduces an example to keep state on the server,
+- ```BasicChatProg``` is a simple implementation of a chat application,
+- ```ChatProg``` extends on the simple chat implementation and adds private messaging, this example displays the expressive power of our approach when dealing with connection identification,
+- ```Demo``` demonstrates how a program written using our DSL is made available.
 
 ### Core
 
