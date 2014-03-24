@@ -29,7 +29,7 @@ trait BasicChatProg extends MtFrpProg with EasyHTML {
   lazy val serverSubmit: ServerEvent[Entry] = submit.toServerAnon
 
   lazy val chat: ServerBehavior[List[Entry]] =
-    serverSubmit.fhold(i.List.empty[Entry]) { (acc, entry) =>
+    serverSubmit.fold(i.List.empty[Entry]) { (acc, entry) =>
       entry :: acc
     }
   def template(view: Rep[List[Entry]]): Rep[Element] = {

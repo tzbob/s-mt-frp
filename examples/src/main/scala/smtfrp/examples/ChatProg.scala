@@ -53,7 +53,7 @@ trait ChatProg extends MtFrpProg with EasyHTML {
   lazy val serverSubmit: ServerEvent[(Client, Entry)] = submit.toServer
 
   lazy val chat: ServerBehavior[Chat] =
-    serverSubmit.fhold((Map[String, Client](), Chat())) {
+    serverSubmit.fold((Map[String, Client](), Chat())) {
       case ((ppl, c @ Chat(pub, priv)), (sender, entry)) =>
         val newPpl = ppl + (entry.name -> sender)
         val newChat = entry.target match {

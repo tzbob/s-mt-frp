@@ -27,7 +27,7 @@ trait GuestbookProg extends MtFrpProg with EasyHTML {
   }
 
   lazy val book: ServerBehavior[i.List[Entry]] =
-    input.toServerAnon.fhold(i.List.empty[Entry]) {
+    input.toServerAnon.fold(i.List.empty[Entry]) {
       case (acc, entry) => entry :: acc
     }
 

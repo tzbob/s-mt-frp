@@ -98,13 +98,10 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
     def filter(pred: Rep[T] => Rep[Boolean]): ClientEvent[T] =
       this.copy(rep = rep.filter(fun(pred)))
 
-    def fold[A: Manifest](start: Rep[A])(stepper: (Rep[A], Rep[T]) => Rep[A]): ClientEvent[A] =
-      this.copy(rep = rep.fold(start)(fun(stepper)))
-
     def hold[U >: T: Manifest](initial: Rep[U]): ClientBehavior[U] =
       ClientBehavior(initial, this)
 
-    def fhold[A: Manifest](start: Rep[A])(stepper: (Rep[A], Rep[T]) => Rep[A]): ClientBehavior[A] =
-      this.fold(start)(stepper) hold start
+    def fold[A: Manifest](start: Rep[A])(stepper: (Rep[A], Rep[T]) => Rep[A]): ClientBehavior[A] =
+      this.copy(rep = rep.fold(start)(fun(stepper))).hold(start)
   }
 }

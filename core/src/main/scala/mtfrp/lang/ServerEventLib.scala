@@ -83,14 +83,10 @@ trait ServerEventLib extends JSJsonWriterLib
     def filter(pred: T => Boolean): ServerEvent[T] =
       this.copy(stream = this.stream filter pred)
 
-    def fold[A](start: A)(stepper: (A, T) => A): ServerEvent[A] =
-      this.copy(stream = this.stream.foldLeft(start)(stepper))
-
     def hold[U >: T](initial: U): ServerBehavior[U] =
       ServerBehavior(initial, this)
 
-    def fhold[A](start: A)(stepper: (A, T) => A): ServerBehavior[A] =
-      fold(start)(stepper) hold start
-
+    def fold[A](start: A)(stepper: (A, T) => A): ServerBehavior[A] =
+      this.copy(stream = this.stream.foldLeft(start)(stepper)).hold(start)
   }
 }
