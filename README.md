@@ -26,7 +26,8 @@ Please follow the install guide on the official [scala-sbt.org](http://www.scala
     cd ..
 
 ### Install [Forest](https://github.com/js-scala/forest)
-    git clone git@github.com:js-scala/forest.git
+
+    git clone git@github.com:Tzbob/forest.git
     cd forest/forest
     sbt publish-local
     cd ../..
