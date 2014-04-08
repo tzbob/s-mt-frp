@@ -14,19 +14,18 @@ trait ServerEventLib extends JSJsonWriterLib
   private[mtfrp] object ServerEvent extends Directives {
 
     def apply[T](stream: reactive.EventStream[T]): ServerEvent[T] =
-      new ServerEvent(None, stream, None)
+      new ServerEvent(stream, ServerCore())
 
     def apply[T](
-      route: Option[Route],
       stream: reactive.EventStream[T],
-      observing: Option[Observing]): ServerEvent[T] =
-      new ServerEvent(route, stream, observing)
+      core: ServerCore): ServerEvent[T] =
+      new ServerEvent(stream, core)
 
-    def apply[T: JsonReader: JSJsonWriter: Manifest](stream: ClientEvent[T]): ServerEvent[(Client, T)] = {
+    def apply[T: JsonReader: JSJsonWriter: Manifest](event: ClientEvent[T]): ServerEvent[(Client, T)] = {
       val genUrl = URLEncoder encode (UUID.randomUUID.toString, "UTF-8")
       val source = new reactive.EventSource[(Client, T)]
 
-      val initRoute = path(genUrl) {
+      val route = path(genUrl) {
         parameter('id) { id =>
           post {
             entity(as[String]) { data =>
@@ -38,15 +37,12 @@ trait ServerEventLib extends JSJsonWriterLib
           }
         }
       }
-
-      val initExp = makeInitExp(stream, genUrl)
-
-      val newRoute = combineRouteOpts(stream.route, Some(initRoute))
-      new ServerEvent(newRoute, source, None)
+      makeInitExp(event, genUrl)
+      ServerEvent(source, event.core.combine(ServerCore(routes = Set(route))))
     }
   }
 
-  // fix for serialization --- needed for recursion check??
+  // separate function to bypass serialization --- needed for recursion check??
   private def makeInitExp[T: JSJsonWriter: Manifest](stream: ClientEvent[T], genUrl: String) =
     stream.rep onValue fun { value =>
       val req = XMLHttpRequest()
@@ -64,21 +60,19 @@ trait ServerEventLib extends JSJsonWriterLib
   }
 
   class ServerEvent[+T] private (
-      val route: Option[Route],
       val stream: EventStream[T],
-      val observing: Option[Observing]) {
+      val core: ServerCore) {
 
     private[this] def copy[A](
-      route: Option[Route] = this.route,
       stream: EventStream[A] = this.stream,
-      observing: Option[Observing] = this.observing): ServerEvent[A] =
-      new ServerEvent(route, stream, observing)
+      core: ServerCore = this.core): ServerEvent[A] =
+      new ServerEvent(stream, core)
 
     def map[A](modifier: T => A): ServerEvent[A] =
       this.copy(stream = this.stream map modifier)
 
-    def merge[A >: T](stream: ServerEvent[A]): ServerEvent[A] =
-      this.copy(stream = this.stream | stream.stream)
+    def merge[A >: T](that: ServerEvent[A]): ServerEvent[A] =
+      this.copy(core = core.combine(that.core), stream = stream | that.stream)
 
     def filter(pred: T => Boolean): ServerEvent[T] =
       this.copy(stream = this.stream filter pred)

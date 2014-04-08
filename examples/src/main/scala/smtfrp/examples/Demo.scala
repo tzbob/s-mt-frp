@@ -18,12 +18,16 @@ object Demo extends App with SimpleRoutingApp {
   val chatProg = new ChatProg with MtFrpProgExp
   val chatRoute = PageCompiler.makeRoute(chatProg)("chat")
 
+  val multiDepsProg = new MultipleDeps with MtFrpProgExp
+  val multiDepsRoute = PageCompiler.makeRoute(multiDepsProg)("deps")
+
   implicit val system = ActorSystem("simple-apps")
-  startServer("localhost", port = 8080)(
+  startServer("::1", port = 8080)(
     getFromResourceDirectory("")
-      ~ echoRoute
-      ~ guestRoute
-      ~ basicChatRoute
-      ~ chatRoute
+      //      ~ echoRoute
+      //      ~ guestRoute
+      //      ~ basicChatRoute
+      //      ~ chatRoute
+      ~ multiDepsRoute
   )
 }

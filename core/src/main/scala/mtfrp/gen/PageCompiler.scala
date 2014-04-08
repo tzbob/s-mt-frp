@@ -42,8 +42,6 @@ object PageCompiler {
       </html>
     }
 
-    var simpleID = 0
-
     val pageRoute = path(url) {
       get {
         dynamic {
@@ -55,7 +53,7 @@ object PageCompiler {
       }
     }
 
-    signal.route match {
+    signal.core.route match {
       case Some(route) => pageRoute ~ route
       case None        => pageRoute
     }

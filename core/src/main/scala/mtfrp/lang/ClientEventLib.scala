@@ -3,7 +3,6 @@ package mtfrp.lang
 import java.net.URLEncoder
 import java.util.UUID
 import scala.js.language.{ JS, JSLiteral }
-import akka.actor.actorRef2Scala
 import reactive.{ EventStream, Observing }
 import spray.http.{ CacheDirectives, ChunkedResponseStart, HttpHeaders, HttpResponse, MediaType, MessageChunk }
 import spray.http.HttpEntity.apply
@@ -49,51 +48,50 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
     import Directives._
 
     def apply[T: Manifest](stream: Rep[BaconStream[T]]): ClientEvent[T] =
-      new ClientEvent(None, stream, None)
+      new ClientEvent(stream, ServerCore())
 
     def apply[T: Manifest](
-      route: Option[Route],
-      stream: Rep[BaconStream[T]],
-      observing: Option[Observing]): ClientEvent[T] =
-      new ClientEvent(route, stream, observing)
+      rep: Rep[BaconStream[T]],
+      core: ServerCore): ClientEvent[T] =
+      new ClientEvent(rep, core)
 
-    def apply[T: JsonWriter: JSJsonReader: Manifest](serverStream: ServerEvent[Client => Option[T]]) = {
+    def apply[T: JsonWriter: JSJsonReader: Manifest](event: ServerEvent[Client => Option[T]]) = {
       val genUrl = URLEncoder encode (UUID.randomUUID.toString, "UTF-8")
       val bus = Bus[T]()
       initEventSource(bus, genUrl)
 
-      implicit val observing = serverStream.observing getOrElse new Observing {}
-      val currentRoute = initRoute(genUrl, serverStream.stream)
-      val route = serverStream.route.map(_ ~ currentRoute) getOrElse currentRoute
+      implicit val observing = new Observing {}
+      val route = initRoute(genUrl, event.stream)
 
-      new ClientEvent(Some(route), bus, Some(observing))
+      new ClientEvent(bus, event.core.combine(ServerCore(Set(route), Set(observing))))
     }
 
   }
 
   implicit class ReactiveToServer[T: JsonReader: JSJsonWriter: Manifest](evt: ClientEvent[T]) {
-    def toServerAnon: ServerEvent[T] = ServerEvent(evt).map { tuple => tuple._2 }
+    def toServerAnon: ServerEvent[T] = ServerEvent(evt).map { tuple =>
+      System.out.println(tuple)
+      tuple._2
+    }
     def toServer: ServerEvent[(Client, T)] = ServerEvent(evt)
   }
 
   class ClientEvent[+T: Manifest] private (
-      val route: Option[Route],
       val rep: Rep[BaconStream[T]],
-      val observing: Option[Observing]) {
+      val core: ServerCore) {
 
     private[this] def copy[A: Manifest](
-      route: Option[Route] = this.route,
       rep: Rep[BaconStream[A]] = this.rep,
-      observing: Option[Observing] = this.observing): ClientEvent[A] =
-      new ClientEvent(route, rep, observing)
+      core: ServerCore = this.core): ClientEvent[A] =
+      new ClientEvent(rep, core)
 
     def map[A: Manifest](modifier: Rep[T] => Rep[A]): ClientEvent[A] = {
       val rep = this.rep.map(fun(modifier))
       this.copy(rep = rep)
     }
 
-    def merge[A >: T: Manifest](stream: ClientEvent[A]): ClientEvent[A] =
-      this.copy(rep = rep.merge(stream.rep))
+    def merge[A >: T: Manifest](that: ClientEvent[A]): ClientEvent[A] =
+      this.copy(core = core.combine(that.core), rep = rep.merge(that.rep))
 
     def filter(pred: Rep[T] => Rep[Boolean]): ClientEvent[T] =
       this.copy(rep = rep.filter(fun(pred)))

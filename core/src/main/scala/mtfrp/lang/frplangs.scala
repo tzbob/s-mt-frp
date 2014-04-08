@@ -3,6 +3,7 @@ package mtfrp.lang
 import scala.js.language.Adts
 import scala.js.language.dom.Browser
 import forest.Forest
+import spray.json.DefaultJsonProtocol
 
 trait FrpLib
   extends ClientEventLib
@@ -17,6 +18,7 @@ trait MtFrpProg
     with Browser
     with Adts
     with DocumentOpsExtended {
+
   def main: ClientBehavior[Element]
 
   private[mtfrp] def mainGen: ClientBehavior[Element] = {

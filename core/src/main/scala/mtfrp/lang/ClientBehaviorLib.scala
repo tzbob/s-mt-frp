@@ -12,7 +12,7 @@ trait ClientBehaviorLib extends JS with BaconLib with ClientEventLib with Delaye
 
   object ClientBehavior {
     def apply[T: Manifest](init: Rep[T], stepper: ClientEvent[T]) =
-      new ClientBehavior(stepper.route, stepper.rep toProperty init, stepper.observing)
+      new ClientBehavior(stepper.rep toProperty init, stepper.core)
 
     def apply[T: JsonWriter: JSJsonReader: Manifest](serverBehavior: ServerBehavior[Client => T]) = {
       def json(client: Client) = unit(serverBehavior.signal.now(client).toJson.compactPrint)
@@ -26,32 +26,28 @@ trait ClientBehaviorLib extends JS with BaconLib with ClientEventLib with Delaye
   }
 
   class ClientBehavior[+T: Manifest] private (
-      val route: Option[Route],
       val rep: Rep[Property[T]],
-      val observing: Option[Observing]) {
+      val core: ServerCore) {
 
     private[this] def copy[A: Manifest](
-      route: Option[Route] = this.route,
       rep: Rep[Property[A]] = this.rep,
-      observing: Option[Observing] = this.observing): ClientBehavior[A] =
-      new ClientBehavior(route, rep, observing)
+      core: ServerCore = this.core): ClientBehavior[A] =
+      new ClientBehavior(rep, core)
 
     def map[A: Manifest](modifier: Rep[T] => Rep[A]): ClientBehavior[A] =
       copy(rep = rep map fun(modifier))
 
     def sampledBy(event: ClientEvent[_]): ClientEvent[T] =
-      ClientEvent(route, rep.sampledBy(event.rep), observing)
+      ClientEvent(rep.sampledBy(event.rep), core.combine(event.core))
 
     def combine[A: Manifest, B: Manifest](that: ClientBehavior[A])(f: (Rep[T], Rep[A]) => Rep[B]): ClientBehavior[B] = {
       val rep = bacon.combineWith(fun(f))(this.rep, that.rep)
-      val route = combineRouteOpts(this.route, that.route)
-      this.copy(route = route, rep = rep)
+      this.copy(rep, core.combine(that.core))
     }
 
     def combine[A: Manifest, B: Manifest, C: Manifest](a: ClientBehavior[A], b: ClientBehavior[B])(f: (Rep[T], Rep[A], Rep[B]) => Rep[C]): ClientBehavior[C] = {
       val rep = bacon.combineWith(fun(f))(this.rep, a.rep, b.rep)
-      val route = combineRouteOpts(combineRouteOpts(this.route, a.route), b.route)
-      this.copy(route = route, rep = rep)
+      this.copy(rep, core.combine(a.core).combine(b.core))
     }
 
     def fold[A: Manifest](start: Rep[A])(stepper: (Rep[A], Rep[T]) => Rep[A]): ClientBehavior[A] =
