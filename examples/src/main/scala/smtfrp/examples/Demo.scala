@@ -22,12 +22,12 @@ object Demo extends App with SimpleRoutingApp {
   val multiDepsRoute = PageCompiler.makeRoute(multiDepsProg)("deps")
 
   implicit val system = ActorSystem("simple-apps")
-  startServer("::1", port = 8080)(
+  startServer("localhost", port = 8080)(
     getFromResourceDirectory("")
-      //      ~ echoRoute
-      //      ~ guestRoute
-      //      ~ basicChatRoute
-      //      ~ chatRoute
+      ~ echoRoute
+      ~ guestRoute
+      ~ basicChatRoute
+      ~ chatRoute
       ~ multiDepsRoute
   )
 }
