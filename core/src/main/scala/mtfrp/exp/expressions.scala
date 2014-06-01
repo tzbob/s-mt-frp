@@ -23,6 +23,8 @@ trait JSJsonFormatLibExp
   with JSJsonWriterLibExp
 
 trait DocumentOpsExtendedExp extends DocumentOpsExtended with BrowserExp with FFIExp {
+  case class CreateElement[A](d: Exp[Document], name: String) extends Def[A]
+
   protected[mtfrp] def documentCreateElement[A: Manifest](d: Exp[Document], e: ElementTagName[A]): Exp[e.Type] =
     foreign"$d.createElement(${unit(e.name)})"[e.Type].withEffect()
   protected[mtfrp] def elementSetInnerHTML(e: Exp[Element], s: Exp[String]): Exp[Unit] =

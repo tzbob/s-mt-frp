@@ -20,7 +20,7 @@ trait ClientBehaviorLib extends JS with BaconLib with ClientEventLib with Delaye
       val targetedChanges = serverBehavior.changes.map { fun =>
         client: Client => Some(fun(client))
       }
-      ClientEvent(targetedChanges) hold currentState
+      targetedChanges.toClient hold currentState
     }
 
   }

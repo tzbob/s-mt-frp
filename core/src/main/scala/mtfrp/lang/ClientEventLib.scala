@@ -69,10 +69,7 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
   }
 
   implicit class ReactiveToServer[T: JsonReader: JSJsonWriter: Manifest](evt: ClientEvent[T]) {
-    def toServerAnon: ServerEvent[T] = ServerEvent(evt).map { tuple =>
-      System.out.println(tuple)
-      tuple._2
-    }
+    def toServerAnon: ServerEvent[T] = ServerEvent(evt).map { _._2 }
     def toServer: ServerEvent[(Client, T)] = ServerEvent(evt)
   }
 

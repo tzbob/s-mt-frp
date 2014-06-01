@@ -1,9 +1,10 @@
 package mtfrp.gen
 
-import scala.js.gen.js.{GenJSLiteral, GenProxy}
+import scala.js.gen.js.GenJS
+
 import mtfrp.exp.XMLHttpRequestsExp
 
-trait GenXMLHttpRequests extends GenJSLiteral with GenProxy {
+trait GenXMLHttpRequests extends GenJS {
   val IR: XMLHttpRequestsExp
   import IR._
 
