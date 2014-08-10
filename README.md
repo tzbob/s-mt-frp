@@ -39,10 +39,12 @@ Please follow the install guide on the official [scala-sbt.org](http://www.scala
     cd ../..
 
 ### Install [Reactive](https://github.com/nafg/reactive/)
+(double publish is not a typo but an unidentified bug)
 
     git clone https://github.com/nafg/reactive.git
     cd reactive
     git checkout a477dd8aceee8a92ade8bcdc79d6bedf2cac210f  
+    sbt publish-local
     sbt publish-local
     cd ..
 
