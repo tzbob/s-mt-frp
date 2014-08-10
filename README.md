@@ -31,7 +31,7 @@ Please follow the install guide on the official [scala-sbt.org](http://www.scala
 
 ### Install [Forest](https://github.com/js-scala/forest)
 
-    git clone https://github.com:Tzbob/forest.git
+    git clone https://github.com/Tzbob/forest.git
     cd forest
     git checkout 8f46c61e72891a9ded5b8898e0b8b56feea32c18
     cd forest
@@ -42,7 +42,7 @@ Please follow the install guide on the official [scala-sbt.org](http://www.scala
 
     git clone https://github.com/nafg/reactive.git
     cd reactive
-    git checkout b15fc6ba4d74b327d8ab43431f90f7f9a32af56d
+    git checkout a477dd8aceee8a92ade8bcdc79d6bedf2cac210f  
     sbt publish-local
     cd ..
 
