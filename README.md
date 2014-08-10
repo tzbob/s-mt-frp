@@ -13,37 +13,42 @@ Please follow the install guide on the official [scala-sbt.org](http://www.scala
 
 ### Install [LMS](https://github.com/TiarkRompf/virtualization-lms-core)
 
-    git clone git@github.com:TiarkRompf/virtualization-lms-core.git
+    git clone https://github.com/TiarkRompf/virtualization-lms-core.git
     cd virtualization-lms-core
+    git checkout fabff2a64983cfb7a787db186d51c249228b9ffc
     sbt publish-local
     cd ..
 
 ### Install [JS-Scala](https://github.com/js-scala/js-scala)
 
-    git clone git@github.com:js-scala/js-scala.git
+    git clone https://github.com/js-scala/js-scala.git
     cd js-scala
+    git checkout febdc39e3e1da7803ec51268781bc883da2dcda6
     sbt publish-local
     cd ..
 
 ### Install [Forest](https://github.com/js-scala/forest)
 
-    git clone git@github.com:Tzbob/forest.git
-    cd forest/forest
+    git clone https://github.com:Tzbob/forest.git
+    cd forest
+    git checkout 8f46c61e72891a9ded5b8898e0b8b56feea32c18
+    cd forest
     sbt publish-local
     cd ../..
 
 ### Install [Reactive](https://github.com/nafg/reactive/)
 
-    git clone git@github.com:nafg/reactive.git
+    git clone https://github.com/nafg/reactive.git
     cd reactive
-    git checkout v0.4.0
+    git checkout b15fc6ba4d74b327d8ab43431f90f7f9a32af56d
     sbt publish-local
     cd ..
 
 ### Run the examples
 
-    git clone git@github.com:Tzbob/s-mt-frp.git
+    git clone https://github.com/Tzbob/s-mt-frp.git
     cd s-mt-frp
+    git checkout 1645671d1f3fd6097e139db1be9d0cc0a626aed4
     sbt "project examples" run
 
 The 'Demo' object contains the following code:
