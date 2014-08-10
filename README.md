@@ -5,7 +5,7 @@ We focus, firstly, on Functional Reactive Programming (FRP), which allows us to 
 Current web frameworks exploit the benefits of both approaches separately, but important additional benefits can be obtained from a deep integration of both ideas.
 We propose Multi-tier FRP for the Web, a novel way of writing web applications where the FRP network spans client and server.
 
-For more details please prefer to this paper: ['Multi-tier Functional Reactive Programming for the Web'](https://lirias.kuleuven.be/bitstream/123456789/458251/1/sigplanconf-template.pdf) 
+For more details please refer to this paper: ['Multi-tier Functional Reactive Programming for the Web'](https://lirias.kuleuven.be/bitstream/123456789/458251/1/sigplanconf-template.pdf) 
 
 ## Try it out!
 
