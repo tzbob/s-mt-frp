@@ -9,6 +9,16 @@ For more details please refer to this paper: ['Multi-tier Functional Reactive Pr
 
 ## Try it out!
 
+Please note that this README describes a way to get our proof-of-concept
+implementation running for experimentation.  Because it uses unstable
+versions of some libraries and the libraries have changed since the
+implementation, this README describes downloading old versions from
+github for those libraries.  We have verified that this procedure
+works for a user with a fresh scala install on our system, but this is
+hard to guarantee.  We hope to develop our implementation further in
+the future, particularly make it depend on more stable (versions of)
+libraries.
+
 ### Install [SBT](http://www.scala-sbt.org/)
 
 Please follow the install guide on the official [scala-sbt.org](http://www.scala-sbt.org/release/docs/Getting-Started/Setup.html#installing-sbt) website.
@@ -39,13 +49,13 @@ Please follow the install guide on the official [scala-sbt.org](http://www.scala
     cd ../..
 
 ### Install [Reactive](https://github.com/nafg/reactive/)
-(double publish is not a typo but an unidentified bug)
+(the removal of the ivy cached directory is due to an unidentified bug and is a step that should not be skipped)
 
     git clone https://github.com/nafg/reactive.git
     cd reactive
     git checkout a477dd8aceee8a92ade8bcdc79d6bedf2cac210f  
     sbt publish-local
-    sbt publish-local
+    rm -rf ~/.ivy2/cache/cc.co.scala-reactive/reactive-core_2.10/
     cd ..
 
 ### Run the examples
