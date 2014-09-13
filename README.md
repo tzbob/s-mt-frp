@@ -9,6 +9,16 @@ For more details please refer to this paper: ['Multi-tier Functional Reactive Pr
 
 ## Try it out!
 
+Please note that this README describes a way to get our proof-of-concept
+implementation running for experimentation.  Because it uses unstable
+versions of some libraries and the libraries have changed since the
+implementation, this README describes downloading old versions from
+github for those libraries.  We have verified that this procedure
+works for a user with a fresh scala install on our system, but this is
+hard to guarantee.  We hope to develop our implementation further in
+the future, particularly make it depend on more stable (versions of)
+libraries.
+
 ### Install [SBT](http://www.scala-sbt.org/)
 
 Please follow the install guide on the official [scala-sbt.org](http://www.scala-sbt.org/release/docs/Getting-Started/Setup.html#installing-sbt) website.
