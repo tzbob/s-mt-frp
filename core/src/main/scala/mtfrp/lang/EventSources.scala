@@ -1,5 +1,8 @@
 package mtfrp.lang
-import scala.js.language.{JSLiteral, Proxy}
+
+import scala.language.implicitConversions
+
+import scala.js.language.{ JSLiteral, Proxy }
 import scala.js.language.dom.EventOps
 
 trait EventSources extends EventOps with JSLiteral with Proxy {

@@ -3,7 +3,6 @@ package mtfrp.lang
 import java.net.URLEncoder
 import java.util.UUID
 import scala.js.language.{ JS, JSLiteral }
-import reactive.{ EventStream, Observing }
 import spray.http.{ CacheDirectives, ChunkedResponseStart, HttpHeaders, HttpResponse, MediaType, MessageChunk }
 import spray.http.HttpEntity.apply
 import spray.json._
@@ -12,7 +11,7 @@ import spray.routing.Directives._
 import scala.js.language.dom.EventOps
 
 trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
-    with JS with JSLiteral with EventOps with DelayedEval {
+  with JS with JSLiteral with EventOps with DelayedEval {
   self: ServerEventLib with ClientBehaviorLib =>
 
   private def initEventSource[T: JSJsonReader: Manifest](bus: Rep[Bus[T]], url: String): Rep[EventSource] = {
@@ -23,7 +22,7 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
     source
   }
 
-  private def initRoute[T: JsonWriter](url: String, stream: EventStream[Client => Option[T]])(implicit observing: Observing): Route =
+  private def initRoute[T: JsonWriter](url: String, stream: frp.core.Event[Client => Option[T]]): Route =
     path(url) {
       get {
         parameter('id) { id =>
@@ -33,7 +32,7 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
               ctx.responder ! ChunkedResponseStart(HttpResponse(
                 headers = HttpHeaders.`Cache-Control`(CacheDirectives.`no-cache`) :: Nil,
                 entity = ":" + (" " * 2049) + "\n" // 2k padding for IE polyfill (yaffle)
-              ))
+                ))
               stream foreach { fun =>
                 for (data <- fun(client)) {
                   ctx.responder ! MessageChunk(s"data:${data.toJson.compactPrint}\n\n")
@@ -56,14 +55,13 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
       new ClientEvent(rep, core)
 
     def apply[T: JsonWriter: JSJsonReader: Manifest](event: ServerEvent[Client => Option[T]]) = {
-      val genUrl = URLEncoder encode (UUID.randomUUID.toString, "UTF-8")
+      val genUrl = URLEncoder.encode(UUID.randomUUID.toString, "UTF-8")
       val bus = Bus[T]()
       initEventSource(bus, genUrl)
 
-      implicit val observing = new Observing {}
       val route = initRoute(genUrl, event.stream)
 
-      new ClientEvent(bus, event.core.combine(ServerCore(Set(route), Set(observing))))
+      new ClientEvent(bus, event.core.combine(ServerCore(Set(route))))
     }
 
   }
@@ -74,8 +72,8 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
   }
 
   class ClientEvent[+T: Manifest] private (
-      val rep: Rep[BaconStream[T]],
-      val core: ServerCore) {
+    val rep: Rep[BaconStream[T]],
+    val core: ServerCore) {
 
     private[this] def copy[A: Manifest](
       rep: Rep[BaconStream[A]] = this.rep,

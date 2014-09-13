@@ -6,10 +6,11 @@ import com.sun.org.apache.xml.internal.serializer.ToStream
 
 trait FrpExtensions extends FrpLib with ElementOps with EventOps {
 
-  implicit class ReactiveTargetOps(e: Rep[EventTarget]) {
+  implicit class ReactiveTargetOps(et: Rep[EventTarget]) {
     def toStream(ev: EventDef)(implicit m: Manifest[ev.Type]): ClientEvent[ev.Type] = {
       val bus = Bus[ev.Type]()
-      e.on(ev) { bus push _ }
+      def pusher(event: Rep[ev.Type]) = bus.push(event)
+      eventtarget_on(et, new EventName[ev.Type](ev.name), unit(false), pusher)
       ClientEvent(bus)
     }
   }

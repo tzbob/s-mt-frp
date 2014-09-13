@@ -1,17 +1,17 @@
 package mtfrp.lang
 
 import scala.js.language.JS
-import reactive.{ Observing, Signal }
 import spray.routing.Route
 import spray.json.JsonWriter
 import spray.json.JsonReader
+import frp.core.Behavior
 
 trait ServerBehaviorLib extends JS with ServerEventLib {
   self: ClientBehaviorLib =>
 
   object ServerBehavior {
-    def apply[T](init: T, stepper: ServerEvent[T]) =
-      new ServerBehavior(stepper.stream hold init, stepper.core)
+    def apply[T](beh: Behavior[T], core: ServerCore) =
+      new ServerBehavior(beh, core)
   }
 
   implicit class ReactiveToAllClients[T: JsonWriter: JSJsonReader: Manifest](evt: ServerBehavior[T]) {
@@ -25,33 +25,32 @@ trait ServerBehaviorLib extends JS with ServerEventLib {
   }
 
   class ServerBehavior[+T] private (
-      val signal: Signal[T],
-      val core: ServerCore) {
+    val behavior: Behavior[T],
+    val core: ServerCore) {
 
     private[this] def copy[A](
-      signal: Signal[A] = this.signal,
+      behavior: Behavior[A] = this.behavior,
       core: ServerCore = this.core): ServerBehavior[A] =
-      new ServerBehavior(signal, core)
+      new ServerBehavior(behavior, core)
 
     private[mtfrp] def changes: ServerEvent[T] =
-      ServerEvent(signal.change, core)
+      ServerEvent(behavior.changes, core)
 
     def map[A](modifier: T => A): ServerBehavior[A] =
-      this.copy(signal = this.signal map modifier)
+      this.copy(behavior = this.behavior map modifier)
 
     def sampledBy(event: ServerEvent[_]): ServerEvent[T] = {
       val core = this.core.combine(event.core)
-      ServerEvent(event.stream.map { _ => signal.now }, core)
+      val ticket = behavior.markExit
+      ServerEvent(event.stream.map { _ => ticket.now }, core)
     }
 
-    def fold[A](start: A)(stepper: (A, T) => A): ServerBehavior[A] =
-      this.copy(signal = this.signal.foldLeft(start)(stepper))
+    //    def fold[A](start: A)(stepper: (A, T) => A): ServerBehavior[A] =
+    //      this.copy(behavior = this.behavior.foldLeft(start)(stepper))
 
     def combine[A, B](that: ServerBehavior[A])(f: (T, A) => B): ServerBehavior[B] = {
-      val signal = this.signal.flatMap { ts =>
-        that.signal.map { as => f(ts, as) }
-      }
-      this.copy(signal = signal, core = core.combine(that.core))
+      val behavior = this.behavior.combine(that.behavior, f)
+      this.copy(behavior = behavior, core = core.combine(that.core))
     }
   }
 }

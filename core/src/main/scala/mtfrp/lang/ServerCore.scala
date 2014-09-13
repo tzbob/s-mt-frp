@@ -1,25 +1,15 @@
 package mtfrp.lang
 
 import spray.routing.Route
-import reactive.Observing
-import reactive.ObservingGroup
-import spray.routing.Directives.pimpRouteWithConcatenation
+import spray.routing.Directives._
 
 object ServerCore {
-  def apply(routes: Set[Route] = Set.empty, obs: Set[Observing] = Set.empty) =
-    new ServerCore(routes, obs)
+  def apply(routes: Set[Route] = Set.empty) =
+    new ServerCore(routes)
 }
 
-class ServerCore(val routes: Set[Route], val obs: Set[Observing]) {
+class ServerCore(val routes: Set[Route]) {
   def combine(that: ServerCore): ServerCore =
-    ServerCore(routes ++ that.routes, obs ++ that.obs)
-
+    ServerCore(routes ++ that.routes)
   def route: Option[Route] = routes.reduceOption { _ ~ _ }
-
-  def observing: Option[Observing] = obs.toList match {
-    case Nil => None
-    case list => Some(new ObservingGroup {
-      def observings: List[Observing] = list
-    })
-  }
 }

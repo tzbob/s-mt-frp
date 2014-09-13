@@ -1,5 +1,6 @@
 package mtfrp.lang
 
+import scala.language.implicitConversions
 import scala.js.language.Proxy
 
 trait BaconLib extends Proxy {

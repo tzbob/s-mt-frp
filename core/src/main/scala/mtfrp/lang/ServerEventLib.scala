@@ -3,34 +3,36 @@ package mtfrp.lang
 import java.net.URLEncoder
 import java.util.UUID
 import scala.js.exp.JSExp
-import reactive.{ EventStream, Observing }
 import spray.json.{ JsonReader, JsonWriter, pimpString }
 import spray.routing.{ Directives, Route }
+import frp.core.Event
+import frp.core.EventSource
+import frp.core.TickContext.global
 
 trait ServerEventLib extends JSJsonWriterLib
-    with JSExp with XMLHttpRequests with DelayedEval {
+  with JSExp with XMLHttpRequests with DelayedEval {
   self: ClientEventLib with ServerBehaviorLib =>
 
   private[mtfrp] object ServerEvent extends Directives {
 
-    def apply[T](stream: reactive.EventStream[T]): ServerEvent[T] =
+    def apply[T](stream: frp.core.Event[T]): ServerEvent[T] =
       new ServerEvent(stream, ServerCore())
 
     def apply[T](
-      stream: reactive.EventStream[T],
+      stream: frp.core.Event[T],
       core: ServerCore): ServerEvent[T] =
       new ServerEvent(stream, core)
 
     def apply[T: JsonReader: JSJsonWriter: Manifest](event: ClientEvent[T]): ServerEvent[(Client, T)] = {
       val genUrl = URLEncoder encode (UUID.randomUUID.toString, "UTF-8")
-      val source = new reactive.EventSource[(Client, T)]
+      val source = frp.core.EventSource.concerning[(Client, T)]
 
       val route = path(genUrl) {
         parameter('id) { id =>
           post {
             entity(as[String]) { data =>
               complete {
-                source fire (Client(id), data.asJson.convertTo[T])
+                source.fire((Client(id), data.parseJson.convertTo[T]))
                 "OK"
               }
             }
@@ -60,11 +62,11 @@ trait ServerEventLib extends JSJsonWriterLib
   }
 
   class ServerEvent[+T] private (
-      val stream: EventStream[T],
-      val core: ServerCore) {
+    val stream: frp.core.Event[T],
+    val core: ServerCore) {
 
     private[this] def copy[A](
-      stream: EventStream[A] = this.stream,
+      stream: frp.core.Event[A] = this.stream,
       core: ServerCore = this.core): ServerEvent[A] =
       new ServerEvent(stream, core)
 
@@ -72,15 +74,17 @@ trait ServerEventLib extends JSJsonWriterLib
       this.copy(stream = this.stream map modifier)
 
     def merge[A >: T](that: ServerEvent[A]): ServerEvent[A] =
-      this.copy(core = core.combine(that.core), stream = stream | that.stream)
+      this.copy(core = core.combine(that.core), stream = stream or that.stream)
 
     def filter(pred: T => Boolean): ServerEvent[T] =
       this.copy(stream = this.stream filter pred)
 
     def hold[U >: T](initial: U): ServerBehavior[U] =
-      ServerBehavior(initial, this)
+      ServerBehavior(stream.hold(initial), core)
 
-    def fold[A](start: A)(stepper: (A, T) => A): ServerBehavior[A] =
-      this.copy(stream = this.stream.foldLeft(start)(stepper)).hold(start)
+    def fold[A](start: A)(stepper: (A, T) => A): ServerBehavior[A] = {
+      val beh = this.stream.foldPast(start)(stepper)
+      ServerBehavior(stream.foldPast(start)(stepper), core)
+    }
   }
 }

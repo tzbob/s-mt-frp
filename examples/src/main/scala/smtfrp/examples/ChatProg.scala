@@ -38,8 +38,7 @@ trait ChatProg extends MtFrpProg with EasyHTML {
       el('h1)("Multi-tier Chat"), el('hr)(),
       el('div)(name, message, target, send),
       el('h3)("Public"), el('ol)(contents), el('hr)(),
-      el('h3)("Private"), el('ol)(privs), el('hr)()
-    )
+      el('h3)("Private"), el('ol)(privs), el('hr)())
   }
 
   lazy val submit: ClientEvent[Entry] = {
@@ -58,7 +57,7 @@ trait ChatProg extends MtFrpProg with EasyHTML {
         val newPpl = ppl + (entry.name -> sender)
         val newChat = entry.target match {
           case Some(t) =>
-            def cons(c: Client) = c -> (entry :: priv(c))
+            def cons(c: Client): (Client, List[Entry]) = c -> (entry :: priv(c))
             c.copy(priv = priv + cons(ppl(t)) + cons(sender))
           case None => c.copy(pub = entry :: pub)
         }

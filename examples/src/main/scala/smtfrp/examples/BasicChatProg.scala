@@ -39,8 +39,7 @@ trait BasicChatProg extends MtFrpProg with EasyHTML {
     el('div)(
       el('h1)("Multi-tier Chat"), el('hr)(),
       el('div)(name, msg, send),
-      el('h3)("Public"), el('ol)(contents), el('hr)()
-    )
+      el('h3)("Public"), el('ol)(contents), el('hr)())
   }
 
   lazy val main: ClientBehavior[Element] =

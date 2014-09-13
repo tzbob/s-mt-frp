@@ -2,7 +2,6 @@ package mtfrp.lang
 
 import scala.js.language.JS
 
-import reactive.Observing
 import spray.json.{ JsonWriter, pimpAny }
 import spray.routing.Directives.pimpRouteWithConcatenation
 import spray.routing.Route
@@ -12,10 +11,13 @@ trait ClientBehaviorLib extends JS with BaconLib with ClientEventLib with Delaye
 
   object ClientBehavior {
     def apply[T: Manifest](init: Rep[T], stepper: ClientEvent[T]) =
-      new ClientBehavior(stepper.rep toProperty init, stepper.core)
+      new ClientBehavior(stepper.rep.toProperty(init), stepper.core)
 
     def apply[T: JsonWriter: JSJsonReader: Manifest](serverBehavior: ServerBehavior[Client => T]) = {
-      def json(client: Client) = unit(serverBehavior.signal.now(client).toJson.compactPrint)
+      def json(client: Client) = {
+        val ticket = serverBehavior.behavior.markExit
+        unit(ticket.now()(client).toJson.compactPrint)
+      }
       val currentState = implicitly[JSJsonReader[T]] read delayForClient(json)
       val targetedChanges = serverBehavior.changes.map { fun =>
         client: Client => Some(fun(client))
@@ -26,8 +28,8 @@ trait ClientBehaviorLib extends JS with BaconLib with ClientEventLib with Delaye
   }
 
   class ClientBehavior[+T: Manifest] private (
-      val rep: Rep[Property[T]],
-      val core: ServerCore) {
+    val rep: Rep[Property[T]],
+    val core: ServerCore) {
 
     private[this] def copy[A: Manifest](
       rep: Rep[Property[A]] = this.rep,
