@@ -38,11 +38,10 @@ Please follow the install guide on the official [scala-sbt.org](http://www.scala
     sbt publish-local
     cd ../..
 
-### Install [Reactive](https://github.com/nafg/reactive/)
+### Install [S-FRP](https://github.com/Tzbob/s-frp)
 
-    git clone https://github.com/nafg/reactive.git
-    cd reactive
-    git checkout a477dd8aceee8a92ade8bcdc79d6bedf2cac210f  
+    git clone https://github.com/Tzbob/s-frp.git
+    cd s-frp
     sbt publish-local
     cd ..
 
@@ -50,7 +49,6 @@ Please follow the install guide on the official [scala-sbt.org](http://www.scala
 
     git clone https://github.com/Tzbob/s-mt-frp.git
     cd s-mt-frp
-    git checkout 1645671d1f3fd6097e139db1be9d0cc0a626aed4
     sbt "project examples" run
 
 The 'Demo' object contains the following code:
