@@ -19,45 +19,45 @@ trait GenJSJsonFormat extends GenJSJsonReaderContext with GenJSJsonWriterContext
 }
 
 trait GenClientEventLib
-    extends GenJSJsonReaderContext
-    with GenBaconLib
-    with GenEventSources
-    with GenJS
-    with GenJSLiteral
-    with GenEventOps
-    with GenDelayedEval {
+  extends GenJSJsonReaderContext
+  with GenSFRPClientLib
+  with GenEventSources
+  with GenJS
+  with GenJSLiteral
+  with GenEventOps
+  with GenDelayedEval {
   self: GenServerEventLib =>
   val IR: ClientEventLibExp
 }
 
 trait GenClientBehaviorLib
-    extends GenBaconLib
-    with GenJS
-    with GenDelayedEval {
+  extends GenSFRPClientLib
+  with GenJS
+  with GenDelayedEval {
   self: GenClientEventLib =>
   val IR: ClientBehaviorLibExp
 }
 
 trait GenServerEventLib
-    extends GenJSJsonWriterContext
-    with GenJS
-    with GenXMLHttpRequests
-    with GenDelayedEval {
+  extends GenJSJsonWriterContext
+  with GenJS
+  with GenXMLHttpRequests
+  with GenDelayedEval {
   self: GenClientEventLib =>
   val IR: ServerEventLibExp
 }
 
 trait GenFrpLib
-    extends GenClientEventLib
-    with GenServerEventLib
-    with GenClientBehaviorLib {
+  extends GenClientEventLib
+  with GenServerEventLib
+  with GenClientBehaviorLib {
   val IR: FrpLibExp
 }
 
 trait GenMtFrp
-    extends GenBrowser
-    with JSGenForest
-    with GenFrpLib
-    with GenAdts {
+  extends GenBrowser
+  with JSGenForest
+  with GenFrpLib
+  with GenAdts {
   val IR: MtFrpProgExp
 }

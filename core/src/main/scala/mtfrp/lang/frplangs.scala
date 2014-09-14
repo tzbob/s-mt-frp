@@ -12,23 +12,23 @@ trait FrpLib
   with ServerBehaviorLib
 
 trait MtFrpProg
-    extends FrpExtensions
-    with JSJsonFormatLib
-    with Forest
-    with Browser
-    with Adts
-    with DocumentOpsExtended {
+  extends FrpExtensions
+  with JSJsonFormatLib
+  with Forest
+  with Browser
+  with Adts
+  with DocumentOpsExtended {
 
   def main: ClientBehavior[Element]
 
   private[mtfrp] def mainGen: ClientBehavior[Element] = {
     val signal = main
-    signal.rep onValue fun { (str: Rep[Element]) =>
+    signal.rep.changes.foreach(fun { (str: Rep[Element]) =>
       // clean body
       document.body.setInnerHTML("")
       // fill body
       document.body.appendChild(str)
-    }
+    }, globalContext)
     signal
   }
 }

@@ -8,8 +8,8 @@ trait FrpExtensions extends FrpLib with ElementOps with EventOps {
 
   implicit class ReactiveTargetOps(et: Rep[EventTarget]) {
     def toStream(ev: EventDef)(implicit m: Manifest[ev.Type]): ClientEvent[ev.Type] = {
-      val bus = Bus[ev.Type]()
-      def pusher(event: Rep[ev.Type]) = bus.push(event)
+      val bus = FRP.stream[ev.Type](globalContext)
+      def pusher(event: Rep[ev.Type]) = bus.fire(event)
       eventtarget_on(et, new EventName[ev.Type](ev.name), unit(false), pusher)
       ClientEvent(bus)
     }
@@ -20,8 +20,8 @@ trait FrpExtensions extends FrpLib with ElementOps with EventOps {
   implicit class ReactiveInputOps(e: Rep[Input]) extends Serializable {
     def values: ClientBehavior[String] = {
       val evt = e.toStream(KeyUp).map(_ => ())
-        .merge(e.toStream(Click).map(_ => ()))
-        .merge(e.toStream(Change).map(_ => ()))
+        .or(e.toStream(Click).map(_ => ()))
+        .or(e.toStream(Change).map(_ => ()))
       evt.map(_ => e.value).hold("")
     }
   }

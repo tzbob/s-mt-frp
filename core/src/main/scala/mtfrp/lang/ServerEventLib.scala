@@ -46,11 +46,11 @@ trait ServerEventLib extends JSJsonWriterLib
 
   // separate function to bypass serialization --- needed for recursion check??
   private def makeInitExp[T: JSJsonWriter: Manifest](stream: ClientEvent[T], genUrl: String) =
-    stream.rep onValue fun { value =>
+    stream.rep.foreach(fun { value =>
       val req = XMLHttpRequest()
       req.open("POST", includeClientIdParam(genUrl))
       req.send(value.toJSONString)
-    }
+    }, globalContext)
 
   implicit class ReactiveToClient[T: JsonWriter: JSJsonReader: Manifest](evt: ServerEvent[Client => Option[T]]) {
     def toClient: ClientEvent[T] = ClientEvent(evt)

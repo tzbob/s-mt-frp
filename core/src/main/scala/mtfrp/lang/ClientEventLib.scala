@@ -10,14 +10,14 @@ import spray.routing.{ Directives, RequestContext, Route }
 import spray.routing.Directives._
 import scala.js.language.dom.EventOps
 
-trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
+trait ClientEventLib extends JSJsonReaderLib with SFRPClientLib with EventSources
   with JS with JSLiteral with EventOps with DelayedEval {
   self: ServerEventLib with ClientBehaviorLib =>
 
-  private def initEventSource[T: JSJsonReader: Manifest](bus: Rep[Bus[T]], url: String): Rep[EventSource] = {
+  private def initEventSource[T: JSJsonReader: Manifest](src: Rep[JSEventSource[T]], url: String): Rep[EventSource] = {
     val source = EventSource(includeClientIdParam(url))
     source.onmessage = fun { ev: Rep[Dataliteral] =>
-      bus.push(implicitly[JSJsonReader[T]] read ev.data)
+      src.fire(implicitly[JSJsonReader[T]] read ev.data)
     }
     source
   }
@@ -46,22 +46,22 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
   private[mtfrp] object ClientEvent {
     import Directives._
 
-    def apply[T: Manifest](stream: Rep[BaconStream[T]]): ClientEvent[T] =
+    def apply[T: Manifest](stream: Rep[JSEvent[T]]): ClientEvent[T] =
       new ClientEvent(stream, ServerCore())
 
     def apply[T: Manifest](
-      rep: Rep[BaconStream[T]],
+      rep: Rep[JSEvent[T]],
       core: ServerCore): ClientEvent[T] =
       new ClientEvent(rep, core)
 
     def apply[T: JsonWriter: JSJsonReader: Manifest](event: ServerEvent[Client => Option[T]]) = {
       val genUrl = URLEncoder.encode(UUID.randomUUID.toString, "UTF-8")
-      val bus = Bus[T]()
-      initEventSource(bus, genUrl)
+      val src = FRP.stream[T](globalContext)
+      initEventSource(src, genUrl)
 
       val route = initRoute(genUrl, event.stream)
 
-      new ClientEvent(bus, event.core.combine(ServerCore(Set(route))))
+      new ClientEvent(src, event.core.combine(ServerCore(Set(route))))
     }
 
   }
@@ -72,11 +72,11 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
   }
 
   class ClientEvent[+T: Manifest] private (
-    val rep: Rep[BaconStream[T]],
+    val rep: Rep[JSEvent[T]],
     val core: ServerCore) {
 
     private[this] def copy[A: Manifest](
-      rep: Rep[BaconStream[A]] = this.rep,
+      rep: Rep[JSEvent[A]] = this.rep,
       core: ServerCore = this.core): ClientEvent[A] =
       new ClientEvent(rep, core)
 
@@ -85,8 +85,8 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
       this.copy(rep = rep)
     }
 
-    def merge[A >: T: Manifest](that: ClientEvent[A]): ClientEvent[A] =
-      this.copy(core = core.combine(that.core), rep = rep.merge(that.rep))
+    def or[A >: T: Manifest](that: ClientEvent[A]): ClientEvent[A] =
+      this.copy(core = core.combine(that.core), rep = rep.or(that.rep))
 
     def filter(pred: Rep[T] => Rep[Boolean]): ClientEvent[T] =
       this.copy(rep = rep.filter(fun(pred)))
@@ -94,7 +94,7 @@ trait ClientEventLib extends JSJsonReaderLib with BaconLib with EventSources
     def hold[U >: T: Manifest](initial: Rep[U]): ClientBehavior[U] =
       ClientBehavior(initial, this)
 
-    def fold[A: Manifest](start: Rep[A])(stepper: (Rep[A], Rep[T]) => Rep[A]): ClientBehavior[A] =
-      this.copy(rep = rep.fold(start)(fun(stepper))).hold(start)
+    //    def fold[A: Manifest](start: Rep[A])(stepper: (Rep[A], Rep[T]) => Rep[A]): ClientBehavior[A] =
+    //      this.copy(rep = rep.fold(start, fun(stepper))).hold(start)
   }
 }

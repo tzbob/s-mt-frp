@@ -4,12 +4,12 @@ import scala.language.implicitConversions
 import scala.js.language.Proxy
 
 trait SFRPClientLib extends Proxy {
-  val frp: Rep[FRP]
-  val global: Rep[TickContext]
+  val FRP: Rep[FRP]
+  val globalContext: Rep[TickContext]
 
   trait FRP {
     def constant[A](value: Rep[A]): Rep[JSBehavior[A]]
-    def stream[A](context: Rep[TickContext])
+    def stream[A](context: Rep[TickContext]): Rep[JSEventSource[A]]
     def global: Rep[TickContext]
   }
   implicit def repToFRP(x: Rep[FRP]): FRP = repProxy[FRP](x)
