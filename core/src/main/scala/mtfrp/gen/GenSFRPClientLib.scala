@@ -1,7 +1,6 @@
 package mtfrp.gen
 
 import scala.js.gen.js.{ GenFFI, GenProxy }
-import mtfrp.exp.BaconLibExp
 import mtfrp.exp.SFRPCientLibExp
 
 trait GenSFRPClientLib extends GenProxy with GenFFI {

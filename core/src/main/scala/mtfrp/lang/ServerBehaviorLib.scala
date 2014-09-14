@@ -41,12 +41,8 @@ trait ServerBehaviorLib extends JS with ServerEventLib {
 
     def sampledBy(event: ServerEvent[_]): ServerEvent[T] = {
       val core = this.core.combine(event.core)
-      val ticket = behavior.markExit
-      ServerEvent(event.stream.map { _ => ticket.now }, core)
+      ServerEvent(behavior.sampledBy(event.stream), core)
     }
-
-    //    def fold[A](start: A)(stepper: (A, T) => A): ServerBehavior[A] =
-    //      this.copy(behavior = this.behavior.foldLeft(start)(stepper))
 
     def combine[A, B](that: ServerBehavior[A])(f: (T, A) => B): ServerBehavior[B] = {
       val behavior = this.behavior.combine(that.behavior, f)

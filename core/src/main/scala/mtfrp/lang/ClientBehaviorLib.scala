@@ -37,10 +37,10 @@ trait ClientBehaviorLib extends JS with SFRPClientLib with ClientEventLib with D
       new ClientBehavior(rep, core)
 
     def map[A: Manifest](modifier: Rep[T] => Rep[A]): ClientBehavior[A] =
-      copy(rep = rep map fun(modifier))
+      copy(rep = rep.map(fun(modifier)))
 
-    //    def sampledBy(event: ClientEvent[_]): ClientEvent[T] =
-    //      ClientEvent(rep.sampledBy(event.rep), core.combine(event.core))
+    def sampledBy(event: ClientEvent[_]): ClientEvent[T] =
+      ClientEvent(rep.sampledBy(event.rep), core.combine(event.core))
 
     def combine[A: Manifest, B: Manifest](that: ClientBehavior[A])(f: (Rep[T], Rep[A]) => Rep[B]): ClientBehavior[B] = {
       val rep = this.rep.combine(that.rep, fun(f))

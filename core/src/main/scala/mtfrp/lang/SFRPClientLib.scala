@@ -37,6 +37,7 @@ trait SFRPClientLib extends Proxy {
     def map[A](modifier: Rep[T => A]): Rep[JSBehavior[A]]
     def changes: Rep[JSEvent[T]]
     def combine[A, B](other: Rep[JSBehavior[A]], f: Rep[((T, A)) => B]): Rep[JSBehavior[B]]
+    def sampledBy(event: Rep[JSEvent[_]]): Rep[JSEvent[T]]
     def markExit(context: Rep[TickContext]): Rep[Ticket[T]]
   }
   implicit def repToJSBehavior[T: Manifest](x: Rep[JSBehavior[T]]): JSBehavior[T] =

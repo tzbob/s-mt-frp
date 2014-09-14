@@ -11,14 +11,13 @@ trait MultipleDeps extends MtFrpProg with EasyHTML {
   lazy val b: ClientEvent[String] = a.toAllClients
   lazy val c: ClientEvent[String] = b.map(_ => "c's")
   lazy val d: ClientEvent[String] = b.map(_ => "d's")
-  lazy val e: ClientEvent[String] = c.merge(d)
+  lazy val e: ClientEvent[String] = c.or(d)
 
   def main: ClientBehavior[Element] = e.hold("start").map { evt =>
     el('div)(
       el('h1)("Deps prog"),
       el('div)(evt),
-      el('div)(btn)
-    )
+      el('div)(btn))
   }
 
 }

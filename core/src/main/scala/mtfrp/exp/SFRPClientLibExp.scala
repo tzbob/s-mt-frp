@@ -1,7 +1,6 @@
 package mtfrp.exp
 
 import scala.js.exp.{ FFIExp, ProxyExp }
-import mtfrp.lang.BaconLib
 import mtfrp.lang.SFRPClientLib
 
 trait SFRPCientLibExp extends SFRPClientLib with ProxyExp with FFIExp {
