@@ -10,8 +10,8 @@ trait ClientBehaviorLib extends JS with SFRPClientLib with ClientEventLib with D
   self: ServerBehaviorLib =>
 
   object ClientBehavior {
-    def apply[T: Manifest](init: Rep[T], stepper: ClientEvent[T]) =
-      new ClientBehavior(stepper.rep.hold(init), stepper.core)
+    def apply[T: Manifest](rep: Rep[JSBehavior[T]], core: ServerCore) =
+      new ClientBehavior(rep, core)
 
     def apply[T: JsonWriter: JSJsonReader: Manifest](serverBehavior: ServerBehavior[Client => T]) = {
       def json(client: Client) = {
@@ -25,6 +25,8 @@ trait ClientBehaviorLib extends JS with SFRPClientLib with ClientEventLib with D
       targetedChanges.toClient hold currentState
     }
 
+    def constant[T: Manifest](init: Rep[T]): ClientBehavior[T] =
+      new ClientBehavior(FRP.constant(init), ServerCore())
   }
 
   class ClientBehavior[+T: Manifest] private (
@@ -35,6 +37,9 @@ trait ClientBehaviorLib extends JS with SFRPClientLib with ClientEventLib with D
       rep: Rep[JSBehavior[A]] = this.rep,
       core: ServerCore = this.core): ClientBehavior[A] =
       new ClientBehavior(rep, core)
+
+    def changes: ClientEvent[T] =
+      ClientEvent(rep.changes, core)
 
     def map[A: Manifest](modifier: Rep[T] => Rep[A]): ClientBehavior[A] =
       copy(rep = rep.map(fun(modifier)))

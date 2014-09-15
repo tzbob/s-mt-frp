@@ -72,7 +72,7 @@ trait ServerEventLib extends JSJsonWriterLib
     def map[A](modifier: T => A): ServerEvent[A] =
       this.copy(stream = this.stream map modifier)
 
-    def merge[A >: T](that: ServerEvent[A]): ServerEvent[A] =
+    def or[A >: T](that: ServerEvent[A]): ServerEvent[A] =
       this.copy(core = core.combine(that.core), stream = stream or that.stream)
 
     def filter(pred: T => Boolean): ServerEvent[T] =

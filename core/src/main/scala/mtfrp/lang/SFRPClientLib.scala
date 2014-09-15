@@ -22,7 +22,7 @@ trait SFRPClientLib extends Proxy {
     def or[B >: A](other: Rep[JSEvent[B]]): Rep[JSEvent[B]]
     def foreach(observer: Rep[A => Unit], c: Rep[TickContext]): Rep[Unit]
     def hold[B >: A](init: Rep[B]): Rep[JSBehavior[B]]
-    def foldPast[B](init: B, op: Rep[((B, A)) => B]): Rep[JSBehavior[B]]
+    def foldPast[B](init: Rep[B], op: Rep[((B, A)) => B]): Rep[JSBehavior[B]]
   }
   implicit def repToJSEvent[T: Manifest](x: Rep[JSEvent[T]]): JSEvent[T] =
     repProxy[JSEvent[T]](x)

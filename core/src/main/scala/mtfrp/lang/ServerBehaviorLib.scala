@@ -33,7 +33,7 @@ trait ServerBehaviorLib extends JS with ServerEventLib {
       core: ServerCore = this.core): ServerBehavior[A] =
       new ServerBehavior(behavior, core)
 
-    private[mtfrp] def changes: ServerEvent[T] =
+    def changes: ServerEvent[T] =
       ServerEvent(behavior.changes, core)
 
     def map[A](modifier: T => A): ServerBehavior[A] =

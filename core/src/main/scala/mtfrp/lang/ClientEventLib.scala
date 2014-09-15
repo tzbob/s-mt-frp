@@ -92,9 +92,12 @@ trait ClientEventLib extends JSJsonReaderLib with SFRPClientLib with EventSource
       this.copy(rep = rep.filter(fun(pred)))
 
     def hold[U >: T: Manifest](initial: Rep[U]): ClientBehavior[U] =
-      ClientBehavior(initial, this)
+      ClientBehavior(rep.hold(initial), core)
 
-    //    def fold[A: Manifest](start: Rep[A])(stepper: (Rep[A], Rep[T]) => Rep[A]): ClientBehavior[A] =
-    //      this.copy(rep = rep.fold(start, fun(stepper))).hold(start)
+    def fold[A: Manifest](start: Rep[A])(stepper: (Rep[A], Rep[T]) => Rep[A]): ClientBehavior[A] = {
+      val f = fun(stepper)
+      val folded = rep.foldPast(start, f)
+      ClientBehavior(folded, core)
+    }
   }
 }

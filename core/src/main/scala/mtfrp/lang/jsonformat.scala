@@ -19,7 +19,7 @@ trait JSJsonReaderLib extends JS with Adts {
     def read(raw: Rep[String]) = parse(raw)
   }
 
-  implicit object ListJSJsonReader extends JSJsonReader[List[String]] {
+  implicit object BooleanJSJsonReader extends JSJsonReader[Boolean] {
     def read(raw: Rep[String]) = parse(raw)
   }
 
@@ -50,6 +50,10 @@ trait JSJsonWriterLib extends JS with Adts {
 
   implicit object IntJSJsonWriter extends JSJsonWriter[Int] {
     def write(raw: Rep[Int]): Rep[String] = stringify(raw)
+  }
+
+  implicit object BooleanJSJsonWriter extends JSJsonWriter[Boolean] {
+    def write(raw: Rep[Boolean]): Rep[String] = stringify(raw)
   }
 
   implicit def adtJSJsonWriter[A <: Adt] = new JSJsonWriter[A] {
