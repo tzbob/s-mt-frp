@@ -24,6 +24,9 @@ object Demo extends App with SimpleRoutingApp {
   val multiDepsProg = new MultipleDeps with MtFrpProgExp
   val multiDepsRoute = routeMaker(multiDepsProg)("deps")
 
+  val glitchesProg = new TestGlitches with MtFrpProgExp
+  val glitchesRoute = routeMaker(glitchesProg)("glitches")
+
   implicit val system = ActorSystem("simple-apps")
   startServer("localhost", port = 8080)(
     getFromResourceDirectory("")
@@ -31,5 +34,6 @@ object Demo extends App with SimpleRoutingApp {
       ~ guestRoute
       ~ basicChatRoute
       ~ chatRoute
-      ~ multiDepsRoute)
+      ~ multiDepsRoute
+      ~ glitchesRoute)
 }
