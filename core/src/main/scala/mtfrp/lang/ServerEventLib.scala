@@ -26,7 +26,6 @@ trait ServerEventLib extends JSJsonWriterLib
     def apply[T: JsonReader: JSJsonWriter: Manifest](event: ClientEvent[T]): ServerEvent[(Client, T)] = {
       val genUrl = URLEncoder encode (UUID.randomUUID.toString, "UTF-8")
       val source = frp.core.EventSource.concerning[(Client, T)]
-
       val route = path(genUrl) {
         parameter('id) { id =>
           post {
