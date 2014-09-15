@@ -14,12 +14,14 @@ import mtfrp.lang.Client
 object PageCompiler {
   import Directives._
 
-  def makeRoute(prog: MtFrpProgExp)(url: String): Route = {
+  def makeRoute(csses: Seq[String] = Seq.empty, scripts: Seq[String] = Seq.empty)(prog: MtFrpProgExp)(url: String): Route = {
     lazy val signal = prog.mainGen
     val gen = new GenMtFrp { val IR: prog.type = prog }
     val block = gen.reifyBlock(signal.rep)
 
-    def html(client: Client) = {
+    val scriptsD = "s-frp-js-opt.js" +: scripts
+
+    def html(client: Client, csses: Seq[String], scripts: Seq[String]) = {
       val sw = new StringWriter
       val out = new PrintWriter(sw)
       gen.emitSourceForClient(client, Nil, block, "", out)
@@ -29,14 +31,11 @@ object PageCompiler {
         <head>
           <title>Chat</title>
           <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-          <!-- Loading Bootstrap -->
-          <link href="bootstrap/css/bootstrap.css" rel="stylesheet"/>
-          <!-- Loading Flat UI -->
-          <link href="css/flat-ui.css" rel="stylesheet"/>
+          { csses.map { css => <link href={ css } rel="stylesheet"/> } }
           <link rel="shortcut icon" href="images/favicon.ico"/>
         </head>
         <body>
-          <script src="//cdnjs.cloudflare.com/ajax/libs/bacon.js/0.7.2/bacon.min.js"></script>
+          { scripts.map { script => <script src={ script }></script> } }
           <script type="text/javascript">({ Unparsed(js) })()</script>
         </body>
       </html>
@@ -47,7 +46,7 @@ object PageCompiler {
         dynamic {
           val id = URLEncoder encode (UUID.randomUUID.toString, "UTF-8")
           respondWithMediaType(MediaTypes.`text/html`) {
-            complete(html(Client(id)))
+            complete(html(Client(id), csses, scriptsD))
           }
         }
       }

@@ -5,7 +5,7 @@ import scala.js.language.Proxy
 
 trait SFRPClientLib extends Proxy {
   val FRP: Rep[FRP]
-  val globalContext: Rep[TickContext]
+  lazy val globalContext: Rep[TickContext] = FRP.global
 
   trait FRP {
     def constant[A](value: Rep[A]): Rep[JSBehavior[A]]
@@ -37,6 +37,7 @@ trait SFRPClientLib extends Proxy {
     def map[A](modifier: Rep[T => A]): Rep[JSBehavior[A]]
     def changes: Rep[JSEvent[T]]
     def combine[A, B](other: Rep[JSBehavior[A]], f: Rep[((T, A)) => B]): Rep[JSBehavior[B]]
+    def combine2[A, B, C](one: Rep[JSBehavior[A]], two: Rep[JSBehavior[B]], f: Rep[((T, A, B)) => C]): Rep[JSBehavior[C]]
     def sampledBy(event: Rep[JSEvent[_]]): Rep[JSEvent[T]]
     def markExit(context: Rep[TickContext]): Rep[Ticket[T]]
   }

@@ -22,13 +22,16 @@ trait MtFrpProg
   def main: ClientBehavior[Element]
 
   private[mtfrp] def mainGen: ClientBehavior[Element] = {
-    val signal = main
-    signal.rep.changes.foreach(fun { (str: Rep[Element]) =>
+    val resetBody: Rep[Element => Unit] = fun { el =>
       // clean body
       document.body.setInnerHTML("")
       // fill body
-      document.body.appendChild(str)
-    }, globalContext)
+      document.body.appendChild(el)
+    }
+
+    val signal = main
+    resetBody(signal.rep.markExit(globalContext).now())
+    signal.rep.changes.foreach(fun { resetBody(_) }, globalContext)
     signal
   }
 }

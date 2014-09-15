@@ -1,10 +1,10 @@
 package mtfrp.gen
 
 import scala.js.gen.js.{ GenFFI, GenProxy }
-import mtfrp.exp.SFRPCientLibExp
+import mtfrp.exp.SFRPClientLibExp
 
 trait GenSFRPClientLib extends GenProxy with GenFFI {
-  val IR: SFRPCientLibExp
+  val IR: SFRPClientLibExp
   import IR._
 
   override def quote(x: Exp[Any]): String = x match {

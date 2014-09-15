@@ -36,7 +36,7 @@ trait DocumentOpsExtendedExp extends DocumentOpsExtended with BrowserExp with FF
 trait ClientEventLibExp
   extends ClientEventLib
   with JSJsonReaderLibExp
-  with SFRPCientLibExp
+  with SFRPClientLibExp
   with EventSourcesExp
   with JSExp
   with JSLiteralExp
@@ -47,7 +47,7 @@ trait ClientEventLibExp
 
 trait ClientBehaviorLibExp
   extends ClientBehaviorLib
-  with SFRPCientLibExp
+  with SFRPClientLibExp
   with JSExp
   with DelayedEvalExp {
   self: ServerBehaviorLibExp =>

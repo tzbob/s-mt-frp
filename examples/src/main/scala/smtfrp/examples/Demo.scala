@@ -6,20 +6,23 @@ import mtfrp.gen.PageCompiler
 import spray.routing.SimpleRoutingApp
 
 object Demo extends App with SimpleRoutingApp {
+  val bootstrap = Seq("bootstrap/css/bootstrap.css", "css/flat-ui.css")
+
+  val routeMaker = PageCompiler.makeRoute(csses = bootstrap)_
   val echoProg = new EchoProg with MtFrpProgExp
-  val echoRoute = PageCompiler.makeRoute(echoProg)("echo")
+  val echoRoute = routeMaker(echoProg)("echo")
 
   val guestProg = new GuestbookProg with MtFrpProgExp
-  val guestRoute = PageCompiler.makeRoute(guestProg)("guest")
+  val guestRoute = routeMaker(guestProg)("guest")
 
   val basicChatProg = new BasicChatProg with MtFrpProgExp
-  val basicChatRoute = PageCompiler.makeRoute(basicChatProg)("basicchat")
+  val basicChatRoute = routeMaker(basicChatProg)("basicchat")
 
   val chatProg = new ChatProg with MtFrpProgExp
-  val chatRoute = PageCompiler.makeRoute(chatProg)("chat")
+  val chatRoute = routeMaker(chatProg)("chat")
 
   val multiDepsProg = new MultipleDeps with MtFrpProgExp
-  val multiDepsRoute = PageCompiler.makeRoute(multiDepsProg)("deps")
+  val multiDepsRoute = routeMaker(multiDepsProg)("deps")
 
   implicit val system = ActorSystem("simple-apps")
   startServer("localhost", port = 8080)(
@@ -28,6 +31,5 @@ object Demo extends App with SimpleRoutingApp {
       ~ guestRoute
       ~ basicChatRoute
       ~ chatRoute
-      ~ multiDepsRoute
-  )
+      ~ multiDepsRoute)
 }

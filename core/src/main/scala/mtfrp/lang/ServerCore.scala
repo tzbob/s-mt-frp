@@ -9,7 +9,9 @@ object ServerCore {
 }
 
 class ServerCore(val routes: Set[Route]) {
-  def combine(that: ServerCore): ServerCore =
-    ServerCore(routes ++ that.routes)
+  def combine(others: ServerCore*): ServerCore = {
+    val routes = others.foldLeft(Set.empty[Route])(_ ++ _.routes)
+    ServerCore(routes)
+  }
   def route: Option[Route] = routes.reduceOption { _ ~ _ }
 }

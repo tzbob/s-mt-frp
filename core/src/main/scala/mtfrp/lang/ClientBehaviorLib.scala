@@ -47,10 +47,10 @@ trait ClientBehaviorLib extends JS with SFRPClientLib with ClientEventLib with D
       this.copy(rep, core.combine(that.core))
     }
 
-    //    def combine[A: Manifest, B: Manifest, C: Manifest](a: ClientBehavior[A], b: ClientBehavior[B])(f: (Rep[T], Rep[A], Rep[B]) => Rep[C]): ClientBehavior[C] = {
-    //      val rep = bacon.combineWith(fun(f))(this.rep, a.rep, b.rep)
-    //      this.copy(rep, core.combine(a.core).combine(b.core))
-    //    }
+    def combine2[A: Manifest, B: Manifest, C: Manifest](a: ClientBehavior[A], b: ClientBehavior[B])(f: (Rep[T], Rep[A], Rep[B]) => Rep[C]): ClientBehavior[C] = {
+      val rep = this.rep.combine2(a.rep, b.rep, fun(f))
+      this.copy(rep, core.combine(a.core, b.core))
+    }
 
     //    def fold[A: Manifest](start: Rep[A])(stepper: (Rep[A], Rep[T]) => Rep[A]): ClientBehavior[A] =
     //      this.copy(rep = rep.foldPast(start, stepper))

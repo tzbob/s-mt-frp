@@ -43,7 +43,7 @@ trait ChatProg extends MtFrpProg with EasyHTML {
 
   lazy val submit: ClientEvent[Entry] = {
     val combined: ClientBehavior[Entry] =
-      name.values.combine(target.values, message.values) { (n, t, m) =>
+      name.values.combine2(target.values, message.values) { (n, t, m) =>
         EntryRep(n, if (t == "") none else some(t), m)
       }
     combined.sampledBy(send.toStream(Click))

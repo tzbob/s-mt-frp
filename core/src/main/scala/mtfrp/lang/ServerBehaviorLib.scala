@@ -45,8 +45,13 @@ trait ServerBehaviorLib extends JS with ServerEventLib {
     }
 
     def combine[A, B](that: ServerBehavior[A])(f: (T, A) => B): ServerBehavior[B] = {
-      val behavior = this.behavior.combine(that.behavior, f)
+      val behavior = this.behavior.combine(that.behavior)(f)
       this.copy(behavior = behavior, core = core.combine(that.core))
+    }
+
+    def combine2[A, B, C](one: ServerBehavior[A], two: ServerBehavior[B])(f: (T, A, B) => C): ServerBehavior[C] = {
+      val behavior = this.behavior.combine2(one.behavior, two.behavior)(f)
+      this.copy(behavior = behavior, core = core.combine(one.core, two.core))
     }
   }
 }
