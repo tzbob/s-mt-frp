@@ -10,7 +10,7 @@ trait ServerBehaviorLib extends JS with ServerEventLib {
   self: ClientBehaviorLib =>
 
   object ServerBehavior {
-    def apply[T](beh: Behavior[T], core: ServerCore) =
+    def apply[T](beh: Behavior[T], core: ReplicationCore) =
       new ServerBehavior(beh, core)
   }
 
@@ -25,12 +25,12 @@ trait ServerBehaviorLib extends JS with ServerEventLib {
   }
 
   class ServerBehavior[+T] private (
-    val behavior: Behavior[T],
-    val core: ServerCore) {
+      val behavior: Behavior[T],
+      val core: ReplicationCore) {
 
     private[this] def copy[A](
       behavior: Behavior[A] = this.behavior,
-      core: ServerCore = this.core): ServerBehavior[A] =
+      core: ReplicationCore = this.core): ServerBehavior[A] =
       new ServerBehavior(behavior, core)
 
     def changes: ServerEvent[T] =

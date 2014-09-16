@@ -11,7 +11,7 @@ import spray.routing.Directives._
 import scala.js.language.dom.EventOps
 
 trait ClientEventLib extends JSJsonReaderLib with SFRPClientLib with EventSources
-  with JS with JSLiteral with EventOps with DelayedEval {
+    with ReplicationCoreLib with JS with JSLiteral with EventOps with DelayedEval {
   self: ServerEventLib with ClientBehaviorLib =>
 
   private def initEventSource[T: JSJsonReader: Manifest](src: Rep[JSEventSource[T]], url: String): Rep[EventSource] = {
@@ -47,37 +47,37 @@ trait ClientEventLib extends JSJsonReaderLib with SFRPClientLib with EventSource
     import Directives._
 
     def apply[T: Manifest](stream: Rep[JSEvent[T]]): ClientEvent[T] =
-      new ClientEvent(stream, ServerCore())
+      new ClientEvent(stream, ReplicationCore())
 
     def apply[T: Manifest](
       rep: Rep[JSEvent[T]],
-      core: ServerCore): ClientEvent[T] =
+      core: ReplicationCore): ClientEvent[T] =
       new ClientEvent(rep, core)
 
     def apply[T: JsonWriter: JSJsonReader: Manifest](event: ServerEvent[Client => Option[T]]) = {
       val genUrl = URLEncoder.encode(UUID.randomUUID.toString, "UTF-8")
-      val src = FRP.stream[T](globalContext)
+      val src = FRP.eventSource[T](globalContext)
       initEventSource(src, genUrl)
 
       val route = initRoute(genUrl, event.stream)
 
-      new ClientEvent(src, event.core.combine(ServerCore(Set(route))))
+      new ClientEvent(src, event.core.addRoutes(route))
     }
 
   }
 
   implicit class ReactiveToServer[T: JsonReader: JSJsonWriter: Manifest](evt: ClientEvent[T]) {
-    def toServerAnon: ServerEvent[T] = ServerEvent(evt).map { _._2 }
     def toServer: ServerEvent[(Client, T)] = ServerEvent(evt)
+    def toServerAnon: ServerEvent[T] = ServerEvent(evt).map { _._2 }
   }
 
   class ClientEvent[+T: Manifest] private (
-    val rep: Rep[JSEvent[T]],
-    val core: ServerCore) {
+      val rep: Rep[JSEvent[T]],
+      val core: ReplicationCore) {
 
     private[this] def copy[A: Manifest](
       rep: Rep[JSEvent[A]] = this.rep,
-      core: ServerCore = this.core): ClientEvent[A] =
+      core: ReplicationCore = this.core): ClientEvent[A] =
       new ClientEvent(rep, core)
 
     def map[A: Manifest](modifier: Rep[T] => Rep[A]): ClientEvent[A] = {

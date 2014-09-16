@@ -8,7 +8,7 @@ trait FrpExtensions extends FrpLib with ElementOps with EventOps {
 
   implicit class ReactiveTargetOps(et: Rep[EventTarget]) {
     def toStream(ev: EventDef)(implicit m: Manifest[ev.Type]): ClientEvent[ev.Type] = {
-      val bus = FRP.stream[ev.Type](globalContext)
+      val bus = FRP.eventSource[ev.Type](globalContext)
       def pusher(event: Rep[ev.Type]) = bus.fire(event)
       eventtarget_on(et, new EventName[ev.Type](ev.name), unit(false), pusher)
       ClientEvent(bus)

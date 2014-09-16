@@ -9,17 +9,21 @@ trait SFRPClientLib extends Proxy {
 
   trait FRP {
     def constant[A](value: Rep[A]): Rep[JSBehavior[A]]
-    def stream[A](context: Rep[TickContext]): Rep[JSEventSource[A]]
+    def eventSource[A](context: Rep[TickContext]): Rep[JSEventSource[A]]
     def global: Rep[TickContext]
+    def withBatch(context: Rep[TickContext], f: Rep[Batch => Unit]): Rep[Unit]
+    def merge[A](evts: Rep[Seq[JSEvent[A]]]): Rep[JSEvent[Seq[A]]]
   }
   implicit def repToFRP(x: Rep[FRP]): FRP = repProxy[FRP](x)
 
+  trait Batch
   trait TickContext
 
   trait JSEvent[+A] {
     def map[B](mapping: Rep[A => B]): Rep[JSEvent[B]]
     def filter(predicate: Rep[A => Boolean]): Rep[JSEvent[A]]
     def or[B >: A](other: Rep[JSEvent[B]]): Rep[JSEvent[B]]
+    def mergeInto[B >: A](other: Rep[JSEvent[Seq[B]]]): Rep[JSEvent[Seq[B]]]
     def foreach(observer: Rep[A => Unit], c: Rep[TickContext]): Rep[Unit]
     def hold[B >: A](init: Rep[B]): Rep[JSBehavior[B]]
     def foldPast[B](init: Rep[B], op: Rep[((B, A)) => B]): Rep[JSBehavior[B]]
@@ -29,6 +33,7 @@ trait SFRPClientLib extends Proxy {
 
   trait JSEventSource[A] extends JSEvent[A] {
     def fire(value: Rep[A]): Rep[Unit]
+    def batchFire(value: Rep[A], batch: Rep[Batch])
   }
   implicit def r2Src[A: Manifest](x: Rep[JSEventSource[A]]): JSEventSource[A] =
     repProxy[JSEventSource[A]](x)

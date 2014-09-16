@@ -1,16 +1,15 @@
 package mtfrp.lang
 
 import scala.js.language.JS
-
 import spray.json.{ JsonWriter, pimpAny }
 import spray.routing.Directives.pimpRouteWithConcatenation
 import spray.routing.Route
 
-trait ClientBehaviorLib extends JS with SFRPClientLib with ClientEventLib with DelayedEval {
+trait ClientBehaviorLib extends JS with SFRPClientLib with ClientEventLib {
   self: ServerBehaviorLib =>
 
   object ClientBehavior {
-    def apply[T: Manifest](rep: Rep[JSBehavior[T]], core: ServerCore) =
+    def apply[T: Manifest](rep: Rep[JSBehavior[T]], core: ReplicationCore) =
       new ClientBehavior(rep, core)
 
     def apply[T: JsonWriter: JSJsonReader: Manifest](serverBehavior: ServerBehavior[Client => T]) = {
@@ -26,16 +25,16 @@ trait ClientBehaviorLib extends JS with SFRPClientLib with ClientEventLib with D
     }
 
     def constant[T: Manifest](init: Rep[T]): ClientBehavior[T] =
-      new ClientBehavior(FRP.constant(init), ServerCore())
+      new ClientBehavior(FRP.constant(init), ReplicationCore())
   }
 
   class ClientBehavior[+T: Manifest] private (
-    val rep: Rep[JSBehavior[T]],
-    val core: ServerCore) {
+      val rep: Rep[JSBehavior[T]],
+      val core: ReplicationCore) {
 
     private[this] def copy[A: Manifest](
       rep: Rep[JSBehavior[A]] = this.rep,
-      core: ServerCore = this.core): ClientBehavior[A] =
+      core: ReplicationCore = this.core): ClientBehavior[A] =
       new ClientBehavior(rep, core)
 
     def changes: ClientEvent[T] =
