@@ -19,7 +19,7 @@ object PageCompiler {
     val gen = new GenMtFrp { val IR: prog.type = prog }
     val block = gen.reifyBlock(rep)
 
-    val scriptsD = "s-frp-js-fastopt.js" +: scripts
+    val scriptsD = "s-frp-js-opt.js" +: scripts
 
     def html(client: Client, csses: Seq[String], scripts: Seq[String]) = {
       val sw = new StringWriter

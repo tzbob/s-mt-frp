@@ -7,6 +7,10 @@ trait JSJsonReaderLib extends JS with Adts {
 
   def parse[T: Manifest](raw: Rep[String]): Rep[T]
 
+  implicit class ConvertRepString(x: Rep[String]) {
+    def convertToRep[T: JSJsonReader] = implicitly[JSJsonReader[T]].read(x)
+  }
+
   trait JSJsonReader[T] extends Serializable {
     def read(raw: Rep[String]): Rep[T]
   }
@@ -32,6 +36,10 @@ trait JSJsonReaderLib extends JS with Adts {
   }
 
   implicit def seqJSJsonReader[T: JSJsonReader] = new JSJsonReader[Seq[T]] {
+    def read(raw: Rep[String]) = parse(raw)
+  }
+
+  implicit def arrayJSJsonReader[T: JSJsonReader] = new JSJsonReader[Array[T]] {
     def read(raw: Rep[String]) = parse(raw)
   }
 }
@@ -70,6 +78,10 @@ trait JSJsonWriterLib extends JS with Adts {
 
   implicit def seqJSJsonWriter[T: JSJsonWriter] = new JSJsonWriter[Seq[T]] {
     def write(raw: Rep[Seq[T]]): Rep[String] = stringify(raw)
+  }
+
+  implicit def arrayJSJsonWriter[T: JSJsonWriter] = new JSJsonWriter[Array[T]] {
+    def write(raw: Rep[Array[T]]): Rep[String] = stringify(raw)
   }
 }
 

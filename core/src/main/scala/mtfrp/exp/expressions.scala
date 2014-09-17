@@ -6,6 +6,7 @@ import forest.ForestExp
 import mtfrp.gen.GenMtFrp
 import mtfrp.lang.{ ClientEventLib, ClientBehaviorLib, DocumentOpsExtended, FrpLib, JSJsonFormatLib, JSJsonReaderLib, JSJsonWriterLib, MtFrpProg, ServerEventLib }
 import mtfrp.lang.ServerBehaviorLib
+import scala.js.exp.JSMapsExp
 
 trait JSJsonReaderLibExp extends JSJsonReaderLib with JSExp with FFIExp with AdtsExp {
   def parse[T: Manifest](raw: Exp[String]): Exp[T] =
@@ -33,38 +34,42 @@ trait DocumentOpsExtendedExp extends DocumentOpsExtended with BrowserExp with FF
     foreign"$e.innerHTML"[String].withEffect()
 }
 
-trait ClientEventLibExp
-  extends ClientEventLib
-  with JSJsonReaderLibExp
-  with SFRPClientLibExp
+trait ReplicationCoreLibExp
+  extends JSJsonFormatLibExp
   with EventSourcesExp
-  with JSExp
-  with JSLiteralExp
-  with EventOpsExp
-  with DelayedEvalExp {
+  with SFRPClientLibExp
+  with XMLHttpRequestsExp
+  with DelayedEvalExp
+  with JSMapsExp
+
+trait ClientEventLibExp
+    extends ClientEventLib
+    with JSJsonReaderLibExp
+    with SFRPClientLibExp
+    with JSExp
+    with ReplicationCoreLibExp {
   self: ServerEventLibExp with ClientBehaviorLibExp =>
 }
 
 trait ClientBehaviorLibExp
-  extends ClientBehaviorLib
-  with SFRPClientLibExp
-  with JSExp
-  with DelayedEvalExp {
+    extends ClientBehaviorLib
+    with SFRPClientLibExp
+    with JSExp
+    with DelayedEvalExp {
   self: ServerBehaviorLibExp =>
 }
 
 trait ServerEventLibExp
-  extends ServerEventLib
-  with JSJsonWriterLibExp
-  with JSExp
-  with XMLHttpRequestsExp
-  with DelayedEvalExp {
+    extends ServerEventLib
+    with JSJsonWriterLibExp
+    with JSExp
+    with ReplicationCoreLibExp {
   self: ClientEventLibExp with ServerBehaviorLibExp =>
 }
 
 trait ServerBehaviorLibExp
-  extends ServerBehaviorLib
-  with JSExp {
+    extends ServerBehaviorLib
+    with JSExp {
   self: ClientBehaviorLibExp =>
 }
 

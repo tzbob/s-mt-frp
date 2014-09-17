@@ -11,7 +11,7 @@ import frp.core.TickContext.globalTickContext
 import frp.core.EventSource
 
 trait ServerEventLib extends JSJsonWriterLib
-    with ReplicationCoreLib with JSExp with XMLHttpRequests with DelayedEval {
+    with ReplicationCoreLib with JSExp {
   self: ClientEventLib with ServerBehaviorLib =>
 
   private[mtfrp] object ServerEvent extends Directives {
