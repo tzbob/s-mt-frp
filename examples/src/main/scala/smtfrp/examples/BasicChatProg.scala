@@ -29,11 +29,11 @@ trait BasicChatProg extends MtFrpProg with EasyHTML {
   }
   lazy val serverSubmit: ServerEvent[Entry] = submit.toServerAnon
 
-  implicit def serverListPrepender[A] = new ServerDeltaApplicator[List[A], A] {
+  def serverListPrepender[A] = new ServerDeltaApplicator[List[A], A] {
     def apply(acc: List[A], delta: A): List[A] = delta :: acc
   }
 
-  implicit def clientListPrepender[A: Manifest] = new ClientDeltaApplicator[List[A], A] {
+  def clientListPrepender[A: Manifest] = new ClientDeltaApplicator[List[A], A] {
     def apply(acc: Rep[List[A]], delta: Rep[A]): Rep[List[A]] = delta :: acc
   }
 
