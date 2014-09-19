@@ -6,15 +6,14 @@ import forest.Forest
 import spray.json.DefaultJsonProtocol
 import spray.routing.Route
 
-trait FrpLib
-  extends ClientEventLib
-  with ServerEventLib
-  with ClientBehaviorLib
-  with ServerBehaviorLib
+trait MtFrpLib
+  extends ClientFRPLib
+  with ServerFRPLib
+  with ReplicationFRPLib
 
 trait MtFrpProg
-    extends FrpExtensions
-    with JSJsonFormatLib
+    extends MtFrpLib
+    with FrpExtensions
     with Forest
     with Browser
     with Adts

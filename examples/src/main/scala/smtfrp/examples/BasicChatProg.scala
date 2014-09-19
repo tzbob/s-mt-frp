@@ -4,6 +4,7 @@ import spray.json.DefaultJsonProtocol
 import mtfrp.lang.MtFrpProg
 import mtfrp.lang.Client
 import collection.{ immutable => i }
+import frp.core.DeltaApplicator
 
 trait BasicChatProg extends MtFrpProg with EasyHTML {
   import DefaultJsonProtocol._
@@ -28,10 +29,17 @@ trait BasicChatProg extends MtFrpProg with EasyHTML {
   }
   lazy val serverSubmit: ServerEvent[Entry] = submit.toServerAnon
 
-  lazy val chat: ServerBehavior[List[Entry]] =
-    serverSubmit.fold(i.List.empty[Entry]) { (acc, entry) =>
-      entry :: acc
-    }
+  implicit def serverListPrepender[A] = new ServerDeltaApplicator[List[A], A] {
+    def apply(acc: List[A], delta: A): List[A] = delta :: acc
+  }
+
+  implicit def clientListPrepender[A: Manifest] = new ClientDeltaApplicator[List[A], A] {
+    def apply(acc: Rep[List[A]], delta: Rep[A]): Rep[List[A]] = delta :: acc
+  }
+
+  lazy val chat: ServerIncBehavior[Entry, List[Entry]] =
+    serverSubmit.incFold(i.List.empty[Entry])(serverListPrepender)
+
   def template(view: Rep[List[Entry]]): Rep[Element] = {
     implicit def itemOps(p: Rep[Entry]) = adtOps(p)
     def template(post: Rep[Entry]) = el('li)(post.name, " says ", post.msg)
@@ -43,6 +51,6 @@ trait BasicChatProg extends MtFrpProg with EasyHTML {
   }
 
   lazy val main: ClientBehavior[Element] =
-    chat.toAllClients.map(template)
+    chat.toAllClients(clientListPrepender).map(template)
 
 }

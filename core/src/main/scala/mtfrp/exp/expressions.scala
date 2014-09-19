@@ -1,12 +1,13 @@
 package mtfrp.exp
 
-import scala.js.exp.{ AdtsExp, FFIExp, JSExp, JSLibExp, JSLiteralExp }
+import scala.js.exp.{ AdtsExp, FFIExp, JSExp, JSMapsExp }
 import scala.js.exp.dom.{ BrowserExp, ElementOpsExp, EventOpsExp }
 import forest.ForestExp
-import mtfrp.gen.GenMtFrp
-import mtfrp.lang.{ ClientEventLib, ClientBehaviorLib, DocumentOpsExtended, FrpLib, JSJsonFormatLib, JSJsonReaderLib, JSJsonWriterLib, MtFrpProg, ServerEventLib }
-import mtfrp.lang.ServerBehaviorLib
-import scala.js.exp.JSMapsExp
+import mtfrp.lang.{ DocumentOpsExtended, JSJsonFormatLib, JSJsonReaderLib, JSJsonWriterLib, MtFrpLib, MtFrpProg }
+import mtfrp.lang.ClientFRPLib
+import mtfrp.lang.ServerFRPLib
+import mtfrp.lang.ReplicationFRPLib
+import mtfrp.lang.FrpExtensions
 
 trait JSJsonReaderLibExp extends JSJsonReaderLib with JSExp with FFIExp with AdtsExp {
   def parse[T: Manifest](raw: Exp[String]): Exp[T] =
@@ -42,51 +43,36 @@ trait ReplicationCoreLibExp
   with DelayedEvalExp
   with JSMapsExp
 
-trait ClientEventLibExp
-    extends ClientEventLib
-    with JSJsonReaderLibExp
-    with SFRPClientLibExp
-    with JSExp
-    with ReplicationCoreLibExp {
-  self: ServerEventLibExp with ClientBehaviorLibExp =>
-}
+trait ClientFRPLibExp
+  extends ClientFRPLib
+  with SFRPClientLibExp
+  with ReplicationCoreLibExp
+  with JSExp
 
-trait ClientBehaviorLibExp
-    extends ClientBehaviorLib
-    with SFRPClientLibExp
-    with JSExp
-    with DelayedEvalExp {
-  self: ServerBehaviorLibExp =>
-}
+trait ServerFRPLibExp extends ServerFRPLib with ReplicationCoreLibExp
 
-trait ServerEventLibExp
-    extends ServerEventLib
-    with JSJsonWriterLibExp
-    with JSExp
-    with ReplicationCoreLibExp {
-  self: ClientEventLibExp with ServerBehaviorLibExp =>
-}
+trait ReplicationFRPLibExp
+  extends ReplicationFRPLib
+  with ClientFRPLibExp
+  with ServerFRPLibExp
+  with JSJsonFormatLibExp
+  with EventSourcesExp
 
-trait ServerBehaviorLibExp
-    extends ServerBehaviorLib
-    with JSExp {
-  self: ClientBehaviorLibExp =>
-}
-
-trait FrpLibExp
-  extends FrpLib
-  with ClientEventLibExp
-  with ServerEventLibExp
-  with ClientBehaviorLibExp
-  with ServerBehaviorLibExp
+trait MtFrpLibExp
+  extends MtFrpLib
+  with ClientFRPLibExp
+  with ServerFRPLibExp
+  with ReplicationFRPLibExp
 
 trait FrpExtensionsExp
-  extends FrpLibExp
+  extends FrpExtensions
+  with ClientFRPLibExp
   with ElementOpsExp
   with EventOpsExp
 
 trait MtFrpProgExp
   extends MtFrpProg
+  with MtFrpLibExp
   with JSJsonFormatLibExp
   with FrpExtensionsExp
   with ForestExp

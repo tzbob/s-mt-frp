@@ -9,7 +9,7 @@ lazy val sharedSettings = Defaults.defaultSettings ++ Seq(
       "-deprecation",
       "-encoding", "UTF-8",
       "-unchecked",
-      "-feature",
+      //"-feature",
       "-Xlint")
 )
 

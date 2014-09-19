@@ -27,6 +27,7 @@ trait SFRPClientLib extends Proxy {
     def foreach(observer: Rep[A => Unit], c: Rep[TickContext]): Rep[Unit]
     def hold[B >: A](init: Rep[B]): Rep[JSBehavior[B]]
     def foldPast[B](init: Rep[B], op: Rep[((B, A)) => B]): Rep[JSBehavior[B]]
+    def incFoldPast[B, D >: A](initial: Rep[B], app: Rep[((B, D)) => B]): Rep[JSIncBehavior[D, B]]
   }
   implicit def repToJSEvent[T: Manifest](x: Rep[JSEvent[T]]): JSEvent[T] =
     repProxy[JSEvent[T]](x)
@@ -48,6 +49,12 @@ trait SFRPClientLib extends Proxy {
   }
   implicit def repToJSBehavior[T: Manifest](x: Rep[JSBehavior[T]]): JSBehavior[T] =
     repProxy[JSBehavior[T]](x)
+
+  trait JSIncBehavior[+D, A] extends JSBehavior[A] {
+    def increments: Rep[JSEvent[D]]
+  }
+  implicit def repToJSIncBehavior[D: Manifest, T: Manifest](x: Rep[JSIncBehavior[D, T]]): JSIncBehavior[D, T] =
+    repProxy[JSIncBehavior[D, T]](x)
 
   trait Ticket[+A] {
     def now(): Rep[A]

@@ -1,11 +1,10 @@
 package mtfrp.gen
 
-import scala.js.gen.js.{ GenAdts, GenFFI, GenJS, GenJSLiteral }
-import scala.js.gen.js.dom.{ GenBrowser, GenEventOps }
+import scala.js.gen.js.{GenAdts, GenFFI, GenJS, GenJSMaps}
+import scala.js.gen.js.dom.GenBrowser
+
 import forest.JSGenForest
-import mtfrp.exp.{ ClientEventLibExp, ClientBehaviorLibExp, FrpLibExp, JSJsonFormatLibExp, JSJsonReaderLibExp, JSJsonWriterLibExp, MtFrpProgExp, ServerEventLibExp }
-import scala.js.gen.js.GenJSMaps
-import mtfrp.exp.ReplicationCoreLibExp
+import mtfrp.exp.{ClientFRPLibExp, JSJsonFormatLibExp, JSJsonReaderLibExp, JSJsonWriterLibExp, MtFrpLibExp, MtFrpProgExp, ReplicationCoreLibExp, ReplicationFRPLibExp, ServerFRPLibExp}
 
 trait GenJSJsonReaderContext extends GenJS with GenFFI with GenAdts {
   val IR: JSJsonReaderLibExp
@@ -29,46 +28,35 @@ trait GenReplicationCoreLib
   val IR: ReplicationCoreLibExp
 }
 
-trait GenClientEventLib
-    extends GenJSJsonReaderContext
-    with GenSFRPClientLib
-    with GenJS
-    with GenJSLiteral
-    with GenDelayedEval
-    with GenReplicationCoreLib {
-  self: GenServerEventLib =>
-  val IR: ClientEventLibExp
-}
-
-trait GenClientBehaviorLib
+trait GenClientFRPLib
     extends GenSFRPClientLib
-    with GenJS
-    with GenDelayedEval {
-  self: GenClientEventLib =>
-  val IR: ClientBehaviorLibExp
+    with GenReplicationCoreLib
+    with GenJS {
+  val IR: ClientFRPLibExp
 }
 
-trait GenServerEventLib
-    extends GenJSJsonWriterContext
-    with GenJS
-    with GenXMLHttpRequests
-    with GenDelayedEval
-    with GenReplicationCoreLib {
-  self: GenClientEventLib =>
-  val IR: ServerEventLibExp
+trait GenServerFRPLib extends GenReplicationCoreLib {
+  val IR: ServerFRPLibExp
 }
 
-trait GenFrpLib
-    extends GenClientEventLib
-    with GenServerEventLib
-    with GenClientBehaviorLib {
-  val IR: FrpLibExp
+trait GenReplicationFRPLib
+    extends GenServerFRPLib
+    with GenJSJsonFormat
+    with GenEventSources {
+  val IR: ReplicationFRPLibExp
+}
+
+trait GenMtFrpLib
+    extends GenClientFRPLib
+    with GenServerFRPLib
+    with GenReplicationFRPLib {
+  val IR: MtFrpLibExp
 }
 
 trait GenMtFrp
     extends GenBrowser
     with JSGenForest
-    with GenFrpLib
+    with GenMtFrpLib
     with GenAdts {
   val IR: MtFrpProgExp
 }
