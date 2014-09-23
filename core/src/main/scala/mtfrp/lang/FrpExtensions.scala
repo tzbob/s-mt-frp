@@ -2,7 +2,6 @@ package mtfrp.lang
 
 import scala.js.language.dom.ElementOps
 import scala.js.language.dom.EventOps
-import com.sun.org.apache.xml.internal.serializer.ToStream
 
 trait FrpExtensions extends ClientFRPLib with ElementOps with EventOps {
 
@@ -15,8 +14,18 @@ trait FrpExtensions extends ClientFRPLib with ElementOps with EventOps {
     }
   }
 
-  case object KeyPress extends EventName[Event]("keypress")
-  case object KeyUp extends EventName[Event]("keyup")
+  trait KeyboardEvent extends Event {
+    def keyCode: Rep[Int]
+  }
+  implicit class KbdEvt(rep: Rep[KeyboardEvent]) {
+    def keyCode: Rep[Int] = keyCodeImpl(rep)
+  }
+
+  def keyCodeImpl(r: Rep[KeyboardEvent]): Rep[Int]
+
+  case object KeyPress extends EventName[KeyboardEvent]("keypress")
+  case object KeyUp extends EventName[KeyboardEvent]("keyup")
+
   implicit class ReactiveInputOps(e: Rep[Input]) extends Serializable {
     def values: ClientBehavior[String] = {
       val evt = e.toStream(KeyUp).map(_ => ())

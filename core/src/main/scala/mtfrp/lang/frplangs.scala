@@ -17,7 +17,8 @@ trait MtFrpProg
     with Forest
     with Browser
     with Adts
-    with DocumentOpsExtended {
+    with DocumentOpsExtended
+    with DefaultJsonProtocol {
 
   def main: ClientBehavior[Element]
 

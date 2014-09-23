@@ -8,6 +8,7 @@ import mtfrp.lang.ClientFRPLib
 import mtfrp.lang.ServerFRPLib
 import mtfrp.lang.ReplicationFRPLib
 import mtfrp.lang.FrpExtensions
+import scala.js.exp.ProxyExp
 
 trait JSJsonReaderLibExp extends JSJsonReaderLib with JSExp with FFIExp with AdtsExp {
   def parse[T: Manifest](raw: Exp[String]): Exp[T] =
@@ -65,10 +66,13 @@ trait MtFrpLibExp
   with ReplicationFRPLibExp
 
 trait FrpExtensionsExp
-  extends FrpExtensions
-  with ClientFRPLibExp
-  with ElementOpsExp
-  with EventOpsExp
+    extends FrpExtensions
+    with ClientFRPLibExp
+    with ElementOpsExp
+    with EventOpsExp
+    with FFIExp {
+  def keyCodeImpl(r: Rep[KeyboardEvent]) = foreign"$r.keyCode"[Int].withEffect()
+}
 
 trait MtFrpProgExp
   extends MtFrpProg

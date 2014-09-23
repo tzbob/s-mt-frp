@@ -3,7 +3,7 @@ package mtfrp.gen
 import scala.js.gen.js.{ GenFFI, GenProxy }
 import mtfrp.exp.SFRPClientLibExp
 
-trait GenSFRPClientLib extends GenProxy with GenFFI {
+trait GenSFRPClientLib extends GenProxy {
   val IR: SFRPClientLibExp
   import IR._
 

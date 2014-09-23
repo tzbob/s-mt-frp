@@ -1,10 +1,14 @@
 package mtfrp.gen
 
-import scala.js.gen.js.{GenAdts, GenFFI, GenJS, GenJSMaps}
+import scala.js.gen.js.{ GenAdts, GenFFI, GenJS, GenJSMaps }
 import scala.js.gen.js.dom.GenBrowser
-
 import forest.JSGenForest
-import mtfrp.exp.{ClientFRPLibExp, JSJsonFormatLibExp, JSJsonReaderLibExp, JSJsonWriterLibExp, MtFrpLibExp, MtFrpProgExp, ReplicationCoreLibExp, ReplicationFRPLibExp, ServerFRPLibExp}
+import mtfrp.exp.{ ClientFRPLibExp, JSJsonFormatLibExp, JSJsonReaderLibExp, JSJsonWriterLibExp, MtFrpLibExp, MtFrpProgExp, ReplicationCoreLibExp, ReplicationFRPLibExp, ServerFRPLibExp }
+import scala.js.gen.js.dom.GenElementOps
+import scala.js.gen.js.dom.GenEventOps
+import scala.js.gen.js.GenProxy
+import mtfrp.lang.FrpExtensions
+import mtfrp.exp.FrpExtensionsExp
 
 trait GenJSJsonReaderContext extends GenJS with GenFFI with GenAdts {
   val IR: JSJsonReaderLibExp
@@ -46,6 +50,14 @@ trait GenReplicationFRPLib
   val IR: ReplicationFRPLibExp
 }
 
+trait GenFrpExtensions
+    extends GenClientFRPLib
+    with GenElementOps
+    with GenEventOps
+    with GenProxy {
+  val IR: FrpExtensionsExp
+}
+
 trait GenMtFrpLib
     extends GenClientFRPLib
     with GenServerFRPLib
@@ -57,6 +69,7 @@ trait GenMtFrp
     extends GenBrowser
     with JSGenForest
     with GenMtFrpLib
-    with GenAdts {
+    with GenAdts
+    with GenFrpExtensions {
   val IR: MtFrpProgExp
 }
