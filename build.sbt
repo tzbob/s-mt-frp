@@ -32,10 +32,13 @@ lazy val core = project.in(file("core"))
           "io.spray" % "spray-can" % "1.3.1",
           "io.spray" % "spray-routing" % "1.3.1",
           "io.spray" %% "spray-json" % "1.2.6",
-          "com.typesafe.akka" %% "akka-actor" % "2.3.3"))
+          "com.typesafe.akka" %% "akka-actor" % "2.3.3",
+          "com.typesafe.slick" %% "slick" % "2.1.0"))
             
 lazy val examples = project.in(file("examples"))
      .settings(sharedSettings: _*)
      .settings(
-       name := "smtfrp-examples")
+       name := "smtfrp-examples",
+        libraryDependencies ++= Seq(
+          "com.h2database" % "h2" % "1.3.166"))
      .dependsOn(core)
