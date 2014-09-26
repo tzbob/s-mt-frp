@@ -4,7 +4,6 @@ import scala.js.exp.JSExp
 import frp.core.{ Event => SEvent }
 import frp.core.Behavior
 import frp.core.{ EventSource => SEventSource }
-import frp.core.TickContext.globalTickContext
 import spray.json._
 
 trait ReplicationFRPLib
@@ -39,8 +38,8 @@ trait ReplicationFRPLib
 
   implicit class BehaviorToClient[T: JsonWriter: JSJsonReader: Manifest](beh: ServerBehavior[Client => T]) {
     def toClient: ClientBehavior[T] = {
+      val ticket = beh.rep.markExit
       def insertCurrentState(client: Client) = {
-        val ticket = beh.rep.markExit
         unit(ticket.now()(client).toJson.compactPrint)
       }
       val currentState = delayForClient(insertCurrentState).convertToRep[T]
@@ -58,8 +57,8 @@ trait ReplicationFRPLib
 
   implicit class IncBehaviorToClient[D: JsonWriter: JSJsonReader: Manifest, T: JsonWriter: JSJsonReader: Manifest](beh: ServerIncBehavior[Client => D, Client => T]) {
     def toClient(app: ClientDeltaApplicator[T, D]): ClientIncBehavior[D, T] = {
+      val ticket = beh.rep.markExit
       def insertCurrentState(client: Client) = {
-        val ticket = beh.rep.markExit
         unit(ticket.now()(client).toJson.compactPrint)
       }
       val currentState = delayForClient(insertCurrentState).convertToRep[T]
@@ -73,8 +72,13 @@ trait ReplicationFRPLib
   implicit class IncBehaviorToAllClients[D: JsonWriter: JSJsonReader: Manifest, T: JsonWriter: JSJsonReader: Manifest](beh: ServerIncBehavior[D, T]) {
     // TODO: REWRITE WHEN MAP IS IMPLEMENTED ON INCs
     def toAllClients(app: ClientDeltaApplicator[T, D]): ClientIncBehavior[D, T] = {
-      val currentState = unit(beh.rep.markExit.now().toJson.compactPrint).convertToRep[T]
+      val ticket = beh.rep.markExit
+      def insertCurrentState() = {
+        unit(ticket.now().toJson.compactPrint)
+      }
+      val currentState = delay(insertCurrentState).convertToRep[T]
       val increments = beh.increments
+
       increments.toAllClients.incFold(currentState)(app)
     }
   }

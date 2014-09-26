@@ -4,7 +4,6 @@ import spray.routing.Route
 import spray.routing.Directives._
 import java.net.URLEncoder
 import java.util.UUID
-import frp.core.TickContext.globalTickContext
 import spray.json._
 import scala.js.language.JSMaps
 import spray.http.MediaType
@@ -15,9 +14,14 @@ import spray.http.HttpHeaders
 import spray.http.CacheDirectives
 import spray.routing.RequestContext
 import spray.http.MessageChunk
+import scala.slick.jdbc.JdbcBackend.SessionDef
+import scala.slick.driver.JdbcProfile
+import frp.core.TickContext
 
-trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
+trait ReplicationCoreLib extends JSJsonFormatLib with EventSources with DatabaseFunctionality
     with SFRPClientLib with XMLHttpRequests with DelayedEval with JSMaps {
+
+  implicit val serverContext = new TickContext
 
   object Message extends DefaultJsonProtocol {
     implicit val messageFormat = jsonFormat2(Message.apply)
@@ -25,27 +29,26 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
   case class Message(name: String, json: String) extends Adt
   val MessageRep = adt[Message]
 
-  object ReplicationCore {
-    def apply(clientDeps: Set[ToClientDependency[_]] = Set.empty,
-      serverDeps: Set[ToServerDependency[_]] = Set.empty) =
-      new ReplicationCore(clientDeps, serverDeps)
-  }
-
-  class ReplicationCore(
-      val toClientDeps: Set[ToClientDependency[_]],
-      val toServerDeps: Set[ToServerDependency[_]]) {
+  case class ReplicationCore(
+      toClientDeps: Set[ToClientDependency[_]] = Set.empty,
+      toServerDeps: Set[ToServerDependency[_]] = Set.empty,
+      manipDeps: Set[frp.core.Event[ManipulationDependency]] = Set.empty) {
     def combine(others: ReplicationCore*): ReplicationCore = {
       def fold[T](v: ReplicationCore => Set[T]) = others.foldLeft(v(this))(_ ++ v(_))
       val toClientDeps = fold(_.toClientDeps)
       val toServerDeps = fold(_.toServerDeps)
-      ReplicationCore(toClientDeps, toServerDeps)
+      val manipDeps = fold(_.manipDeps)
+      ReplicationCore(toClientDeps, toServerDeps, manipDeps)
     }
 
     def addToServerDependencies(deps: ToServerDependency[_]*): ReplicationCore =
-      ReplicationCore(toClientDeps, toServerDeps ++ deps)
+      this.copy(toServerDeps = this.toServerDeps ++ deps)
 
     def addToClientDependencies(deps: ToClientDependency[_]*): ReplicationCore =
-      ReplicationCore(toClientDeps ++ deps, toServerDeps)
+      this.copy(toClientDeps = this.toClientDeps ++ deps)
+
+    def addManipulationDependencies(deps: frp.core.Event[ManipulationDependency]*): ReplicationCore =
+      this.copy(manipDeps = this.manipDeps ++ deps)
 
     def route: Option[Route] = {
       val r1 = initializeToClientDependencies()
@@ -55,6 +58,9 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
         else Some(r1.get)
       else None
     }
+
+    def mergedManipulatorDependencies: frp.core.Event[Seq[ManipulationDependency]] =
+      frp.core.Event.merge(manipDeps.toSeq: _*)
 
     /**
      * @return optionally, the Route that encompasses all involved client
@@ -157,7 +163,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
           entity(as[String]) { data =>
             complete {
               val messages = data.parseJson.convertTo[Seq[Message]]
-              globalTickContext.withBatch { batch =>
+              serverContext.withBatch { batch =>
                 messages.foreach { message =>
                   namedToServerDeps(message.name)
                     .fireIntoServerFRP(message.json, id, batch)
@@ -208,4 +214,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
 
   private def makeCarrier[T: JSJsonWriter: Manifest](evt: Rep[JSEvent[T]], name: String) =
     evt.map(fun { t => MessageRep(name, t.toJSONString) })
+
+  import driver.simple._
+  case class ManipulationDependency(trigger: Session => Unit, manipulator: Session => Unit)
 }

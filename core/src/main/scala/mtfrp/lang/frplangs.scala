@@ -5,6 +5,8 @@ import scala.js.language.dom.Browser
 import forest.Forest
 import spray.json.DefaultJsonProtocol
 import spray.routing.Route
+import scala.slick.driver.JdbcProfile
+import scala.slick.driver.JdbcDriver
 
 trait MtFrpLib
   extends ClientFRPLib
@@ -19,7 +21,6 @@ trait MtFrpProg
     with Adts
     with DocumentOpsExtended
     with DefaultJsonProtocol {
-
   def main: ClientBehavior[Element]
 
   private[mtfrp] def mainGen: (Rep[JSBehavior[Element]], Option[Route]) = {
@@ -33,6 +34,12 @@ trait MtFrpProg
     val signal = main
     resetBody(signal.rep.markExit(globalContext).now())
     signal.rep.changes.foreach(fun { resetBody(_) }, globalContext)
+
     (signal.rep, signal.core.route)
   }
+}
+
+trait NoDB {
+  type Profile = JdbcDriver
+  val driver = JdbcDriver
 }

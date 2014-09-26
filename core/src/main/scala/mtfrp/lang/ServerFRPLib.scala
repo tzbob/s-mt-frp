@@ -6,9 +6,9 @@ import frp.core.Behavior
 import frp.core.IncBehavior
 import frp.core.DeltaApplicator
 import scala.annotation.implicitNotFound
+import frp.core.TickContext
 
 trait ServerFRPLib extends ReplicationCoreLib {
-
   object ServerEvent {
     def apply[T](rep: SEvent[T], core: ReplicationCore): ServerEvent[T] =
       new ServerEvent(rep, core)
