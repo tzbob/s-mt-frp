@@ -36,21 +36,6 @@ object Demo extends App with SimpleRoutingApp {
     type Profile = H2Driver
     val driver = H2Driver
     val database = driver.simple.Database.forURL("jdbc:h2:mem:test1;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver")
-
-    override def main: ClientBehavior[Element] = {
-      val oldMain = super.main
-      oldMain.core.mergedManipulatorDependencies.foreach { deps =>
-        val manipulators = deps.map(_.manipulator)
-        val triggers = deps.map(_.trigger)
-        database.withSession { s: driver.simple.Session =>
-          s.withTransaction {
-            manipulators.foreach(_(s))
-          }
-          triggers.foreach(_(s))
-        }
-      }
-      oldMain
-    }
   }
   val todoRoute = routeMaker(todoProg)("todo")
 

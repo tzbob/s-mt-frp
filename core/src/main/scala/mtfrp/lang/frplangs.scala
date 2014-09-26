@@ -23,7 +23,7 @@ trait MtFrpProg
     with DefaultJsonProtocol {
   def main: ClientBehavior[Element]
 
-  private[mtfrp] def mainGen: (Rep[JSBehavior[Element]], Option[Route]) = {
+  private[mtfrp] def addHTMLUpdates: ClientBehavior[Element] = {
     val resetBody: Rep[Element => Unit] = fun { el =>
       // clean body
       document.body.setInnerHTML("")
@@ -31,11 +31,15 @@ trait MtFrpProg
       document.body.appendChild(el)
     }
 
-    val signal = main
-    resetBody(signal.rep.markExit(globalContext).now())
-    signal.rep.changes.foreach(fun { resetBody(_) }, globalContext)
+    val behavior = main
+    resetBody(behavior.rep.markExit(globalContext).now())
+    behavior.rep.changes.foreach(fun { resetBody(_) }, globalContext)
+    behavior
+  }
 
-    (signal.rep, signal.core.route)
+  private[mtfrp] def mainGen: (Rep[JSBehavior[Element]], Option[Route]) = {
+    val behavior = addHTMLUpdates
+    (behavior.rep, behavior.core.route)
   }
 }
 

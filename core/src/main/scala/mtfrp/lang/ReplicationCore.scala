@@ -20,6 +20,7 @@ import frp.core.TickContext
 
 trait ReplicationCoreLib extends JSJsonFormatLib with EventSources with DatabaseFunctionality
     with SFRPClientLib with XMLHttpRequests with DelayedEval with JSMaps {
+  import driver.simple._
 
   implicit val serverContext = new TickContext
 
@@ -59,8 +60,8 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources with Database
       else None
     }
 
-    def mergedManipulatorDependencies: frp.core.Event[Seq[ManipulationDependency]] =
-      frp.core.Event.merge(manipDeps.toSeq: _*)
+    def mergedManipulatorDependencies: frp.core.Event[Map[Session => Unit, Seq[ManipulationDependency]]] =
+      frp.core.Event.merge(manipDeps.toSeq: _*).map(_.groupBy(_.manipulator))
 
     /**
      * @return optionally, the Route that encompasses all involved client
@@ -215,6 +216,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources with Database
   private def makeCarrier[T: JSJsonWriter: Manifest](evt: Rep[JSEvent[T]], name: String) =
     evt.map(fun { t => MessageRep(name, t.toJSONString) })
 
-  import driver.simple._
-  case class ManipulationDependency(trigger: Session => Unit, manipulator: Session => Unit)
+  case class ManipulationDependency(
+    trigger: Session => Unit,
+    manipulator: Session => Unit)
 }
