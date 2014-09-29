@@ -9,18 +9,31 @@ trait DatabaseFRPLib extends MtFrpProg with DatabaseDefinition {
     val behavior = super.addHTMLUpdates
 
     val databaseManipulations = behavior.core.mergedManipulatorDependencies
+
     databaseManipulations.foreach { map =>
       database.withSession { s: Session =>
-        map.keys.foreach(_(s))
+        s.withTransaction {
+          map.keys.foreach(_(s))
+        }
         map.values.foreach(_.foreach(_.trigger(s)))
       }
     }
     behavior
   }
 
-  implicit class DatabaseEvent(evt: ServerEvent[TableManipulation]) {
-    def toTableBehavior[T <: Table[_]](tableQuery: TableQuery[T]): TableBehavior[T] =
-      TableBehavior(tableQuery, evt)
+  trait TableManipulationEvent[T <: Table[_]] {
+    private[mtfrp] def tq: TableQuery[T]
+    private[mtfrp] def evt: ServerEvent[TableManipulation]
+    def toTableBehavior: TableBehavior[T] = TableBehavior(tq, evt)
+  }
+
+  implicit class ToQueryEvent[A](event: ServerEvent[A]) {
+    def toTableManipulation[T <: Table[_]](tableQuery: TableQuery[T])(
+      mapping: (TableQuery[T], A) => TableManipulation): TableManipulationEvent[T] =
+      new TableManipulationEvent[T] {
+        val tq = tableQuery
+        val evt = event.map(mapping(tableQuery, _))
+      }
   }
 
   object TableBehavior {
@@ -62,8 +75,9 @@ trait DatabaseFRPLib extends MtFrpProg with DatabaseDefinition {
         ManipulationDependency(triggerSelect _, executeManipulation(manipulation)_)
       }
 
+      val beh = rawDbInput.hold(start)
       val newCore = core.addManipulationDependencies(manipulator)
-      ServerEvent(rawDbInput, newCore).hold(start)
+      ServerBehavior(beh, newCore)
     }
   }
 }
