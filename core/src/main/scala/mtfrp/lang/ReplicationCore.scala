@@ -102,7 +102,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources with Database
     val sseSource = EventSource(includeClientIdParam(genUrl))
     sseSource.onmessage = fun { ev: Rep[Dataliteral] =>
       val messages = implicitly[JSJsonReader[List[Message]]].read(ev.data)
-      FRP.withBatch(globalContext, fun { (batch: Rep[Batch]) =>
+      FRP.withBatch(FRP.global, fun { (batch: Rep[Batch]) =>
         messages.foreach { (message: Rep[Message]) =>
           namedClientEntryPoints(message.name)((message.json, batch))
         }
@@ -148,7 +148,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources with Database
       val req = XMLHttpRequest()
       req.open("POST", includeClientIdParam(genUrl))
       req.send(value.toJSONString)
-    }, globalContext)
+    }, FRP.global)
   }
 
   private def initServerSideToServer(

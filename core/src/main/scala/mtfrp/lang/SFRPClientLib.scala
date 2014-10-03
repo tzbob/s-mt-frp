@@ -5,7 +5,6 @@ import scala.js.language.Proxy
 
 trait SFRPClientLib extends Proxy {
   val FRP: Rep[FRP]
-  lazy val globalContext: Rep[JSTickContext] = FRP.global
 
   trait FRP {
     def constant[A](value: Rep[A]): Rep[JSBehavior[A]]

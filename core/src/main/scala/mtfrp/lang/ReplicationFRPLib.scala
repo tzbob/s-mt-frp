@@ -24,7 +24,7 @@ trait ReplicationFRPLib
 
   implicit class EventToClient[T: JsonWriter: JSJsonReader: Manifest](evt: ServerEvent[Client => Option[T]]) {
     def toClient: ClientEvent[T] = {
-      val source = FRP.eventSource[T](globalContext)
+      val source = FRP.eventSource[T](FRP.global)
       val toClientDep = new ToClientDependency(evt.rep, source)
       ClientEvent(source, evt.core.addToClientDependencies(toClientDep))
     }

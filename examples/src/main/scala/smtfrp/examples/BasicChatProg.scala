@@ -45,7 +45,8 @@ trait BasicChatProg extends MtFrpProg with EasyHTML {
     def template(post: Rep[Entry]) = el('li)(post.name, " says ", post.msg)
     val contents = view.map(template)
     el('div)(
-      el('h1)("Multi-tier Chat"), el('hr)(),
+      el('h1)(
+        "Multi-tier Chat"), el('hr)(),
       el('div)(name, msg, send),
       el('h3)("Public"), el('ol)(contents), el('hr)())
   }

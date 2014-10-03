@@ -14,8 +14,6 @@ import scala.slick.driver.H2Driver
 trait TodoModel extends Adts with DefaultJsonProtocol with DatabaseFunctionality {
   import driver.simple._
 
-  lazy val initialServerState = Nil
-
   case class Task(id: Option[Int], description: String) extends Adt
   implicit def taskOps(p: Rep[Task]) = adtOps(p)
   implicit val taskFormat = jsonFormat2(Task)
@@ -53,8 +51,10 @@ trait TodoInterface extends EasyHTML with TodoModel {
  * Design the updates of the state in the application
  */
 trait TodoUpdate extends TodoModel with MtFrpProg {
-  def toInsert(tq: TaskQuery, newDesc: String): TableManipulation =
-    Insert(tq, Task(None, newDesc))
+  import driver.simple._
+
+  def toInsert(tq: TaskQuery, newDesc: String) = Insert(tq, Task(None, newDesc))
+  def toDelete(tq: TaskQuery, id: Int) = Delete(tq.filter(_.id === id))
 }
 
 /**
@@ -64,11 +64,11 @@ trait TodoCore extends TodoInterface with TodoUpdate with MtFrpProg with Databas
   lazy val values = addTask.values
   lazy val enters = addTask.toStream(KeyUp).filter(_.keyCode == 13)
 
-  lazy val newTasks = values.sampledBy(enters)
-  lazy val newServerTasks = newTasks.toServerAnon
+  lazy val newTasks = values.sampledBy(enters).toServerAnon
+  lazy val taskInserts = newTasks.toTableManipulation(taskQuery)(toInsert)
 
-  lazy val taskTableBehavior: TableBehavior[Tasks] =
-    newServerTasks.toTableManipulation(taskQuery)(toInsert).toTableBehavior
+  lazy val taskTableBehavior: TableBehavior[Tasks] = taskInserts.toTableBehavior
+
   lazy val tasks: ServerBehavior[List[Task]] =
     taskTableBehavior.select(identity).map(_.toList)
 

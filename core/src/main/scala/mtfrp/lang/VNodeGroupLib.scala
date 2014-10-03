@@ -10,11 +10,11 @@ trait VNodeGroupLib extends VNodeBuilderLib {
     def group: GroupBuilder = new GroupBuilder(b.tagName)
   }
 
-  trait GroupHandler[A] {
+  trait GroupHandler[A] extends Serializable {
     implicit val m1: Manifest[A]
     implicit val m2: Manifest[eventDef.Type]
     val eventDef: EventDef
-    val eventHandler: Rep[(A, eventDef.Type)] => Rep[Unit]
+    val eventHandler: Rep[((A, eventDef.Type)) => Unit]
 
     def toHandler(const: Rep[A]): Handler = {
       val constHandler = (e: Rep[eventDef.Type]) =>
@@ -30,7 +30,7 @@ trait VNodeGroupLib extends VNodeBuilderLib {
         val m2: Manifest[eventDef.Type] = m
         // help the typechecker with a singleton type
         val eventDef: evtDef.type = evtDef
-        val eventHandler = evtHandler
+        val eventHandler = fun(evtHandler)
       }
   }
 
@@ -61,6 +61,7 @@ trait VNodeGroupLib extends VNodeBuilderLib {
   class TemplatedVNodeBuilder[Id: Manifest](tagName: Rep[String], groupHandlers: GroupHandlers[Id]) {
     private def toVNodeBuilder(id: Rep[Id]): VNodeBuilder = {
       val handlers = groupHandlers.map(_.toHandler(id))
+      System.out.println(handlers)
       new VNodeBuilder(tagName, handlers)
     }
     def apply(id: Rep[Id]): Rep[VNode] = toVNodeBuilder(id)()

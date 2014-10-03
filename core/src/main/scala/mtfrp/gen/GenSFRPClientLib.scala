@@ -7,8 +7,8 @@ trait GenSFRPClientLib extends GenProxy {
   val IR: SFRPClientLibExp
   import IR._
 
-  override def quote(x: Exp[Any]): String = x match {
-    case FRPVar => "FRP()"
-    case _      => super.quote(x)
+  override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
+    case FRPVar => emitValDef(sym, "MTFRP.FRP")
+    case _      => super.emitNode(sym, rhs)
   }
 }

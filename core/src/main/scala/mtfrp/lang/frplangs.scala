@@ -32,8 +32,8 @@ trait MtFrpProg
     }
 
     val behavior = main
-    resetBody(behavior.rep.markExit(globalContext).now())
-    behavior.rep.changes.foreach(fun { resetBody(_) }, globalContext)
+    resetBody(behavior.rep.markExit(FRP.global).now())
+    behavior.rep.changes.foreach(fun { resetBody(_) }, FRP.global)
     behavior
   }
 

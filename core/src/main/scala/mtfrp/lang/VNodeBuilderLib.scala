@@ -3,9 +3,24 @@ package mtfrp.lang
 import scala.js.language.JSMaps
 import scala.js.language.dom.EventOps
 import scala.js.language.JS
+import scala.js.language.dom.ElementOps
 
-trait VNodeBuilderLib extends ClientFRPLib with EventOps with JSMaps with JS {
-  sealed abstract class Value[T]
+trait VNodeBuilderLib extends ClientFRPLib with EventOps with JSMaps with JS with ElementOps {
+  trait VNode
+  trait VNodeDiff
+
+  def createElement(vnode: Rep[VNode]): Rep[Element]
+  def diff(prev: Rep[VNode], current: Rep[VNode]): Rep[VNodeDiff]
+  def patch(rootNode: Rep[Element], diff: Rep[VNodeDiff]): Rep[Element]
+
+  def mkText(str: Rep[String]): Rep[VNode]
+  def mkNode(
+    tagName: Rep[String],
+    handlers: Handlers,
+    properties: Properties = defaultProperties(),
+    children: Children = defaultChildren): Rep[VNode]
+
+  trait Value[T]
   case class RepConst[T](node: Rep[T]) extends Value[T]
   case class RepList[T](node: Rep[List[T]]) extends Value[T]
   implicit def repNode[T](node: Rep[T]): Value[T] = RepConst(node)
@@ -25,20 +40,18 @@ trait VNodeBuilderLib extends ClientFRPLib with EventOps with JSMaps with JS {
     def :=(v: String): Rep[Attribute] = make_tuple2((k, v))
   }
 
-  sealed abstract class VNode
-
   type Attribute = (String, String)
 
-  def defaultProperties() = JSMap[String, String]()
-  type Properties = Rep[Map[String, String]]
+  def defaultProperties() = JSMap[String, Any]()
+  type Properties = Rep[Map[String, Any]]
 
-  val defaultHandlers: Handlers = collection.immutable.List.empty
+  lazy val defaultHandlers: Handlers = collection.immutable.List.empty
   type Handlers = List[Handler]
 
   trait Handler {
     val eventDef: EventDef
     val m: Manifest[eventDef.Type]
-    val eventHandler: Rep[eventDef.Type] => Rep[Unit]
+    val eventHandler: Rep[eventDef.Type => Unit]
   }
 
   object Handler {
@@ -47,19 +60,12 @@ trait VNodeBuilderLib extends ClientFRPLib with EventOps with JSMaps with JS {
         // help the typechecker with a singleton type
         val eventDef: evtDef.type = evtDef
         val m = ma
-        val eventHandler = evtHandler
+        val eventHandler = fun(evtHandler)
       }
   }
 
-  val defaultChildren = List()
+  lazy val defaultChildren = List()
   type Children = Rep[List[VNode]]
-
-  def mkText(str: Rep[String]): Rep[VNode]
-  def mkNode(
-    tagName: Rep[String],
-    properties: Properties = defaultProperties(),
-    handlers: Handlers = defaultHandlers,
-    children: Children = defaultChildren): Rep[VNode]
 
   private def handleEvent(ev: EventDef)(implicit m: Manifest[ev.Type]): (ClientEvent[ev.Type], Handler) = {
     val evt = FRP.eventSource[ev.Type](FRP.global)
@@ -94,12 +100,12 @@ trait VNodeBuilderLib extends ClientFRPLib with EventOps with JSMaps with JS {
   class VNodeBuilder(tagName: Rep[String], handlers: Handlers) {
     def apply(): Rep[VNode] = mkNode(tagName, handlers = handlers)
     def apply(children: Value[VNode]*): Rep[VNode] =
-      mkNode(tagName, children = vToRepList(children))
+      mkNode(tagName, handlers, children = vToRepList(children))
     def apply(attrs: Value[Attribute]*)(children: Value[VNode]*): Rep[VNode] = {
       val jsAttrs = vToRepList(attrs)
       val props = defaultProperties()
       jsAttrs.foreach { tuple => props.update(tuple._1, tuple._2) }
-      mkNode(tagName, properties = props, children = vToRepList(children))
+      mkNode(tagName, handlers, props, vToRepList(children))
     }
   }
 }
