@@ -14,9 +14,9 @@ trait VNodeBuilderLibExp extends VNodeBuilderLib with ClientFRPLibExp with Event
   def diff(prev: Exp[VNode], current: Exp[VNode]): Exp[VNodeDiff] =
     Diff(prev, current)
 
-  case class Patch(root: Exp[Element], patch: Exp[VNodeDiff]) extends Def[Element]
-  def patch(rootNode: Exp[Element], diff: Exp[VNodeDiff]): Exp[Element] =
-    Patch(rootNode, diff)
+  case class Patch(root: Exp[Element], patch: Exp[VNodeDiff]) extends Def[Unit]
+  def patch(rootNode: Exp[Element], diff: Exp[VNodeDiff]): Exp[Unit] =
+    reflectEffect(Patch(rootNode, diff))
 
   case class MkText(str: Exp[String]) extends Def[VNode]
   def mkText(str: Exp[String]): Exp[VNode] = MkText(str)

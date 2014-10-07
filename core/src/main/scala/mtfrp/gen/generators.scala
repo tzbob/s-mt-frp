@@ -70,6 +70,7 @@ trait GenMtFrp
     with JSGenForest
     with GenMtFrpLib
     with GenAdts
-    with GenFrpExtensions {
+    with GenFrpExtensions
+    with GenVNodeBuilderLib {
   val IR: MtFrpProgExp
 }

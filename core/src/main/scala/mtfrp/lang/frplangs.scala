@@ -7,6 +7,7 @@ import spray.json.DefaultJsonProtocol
 import spray.routing.Route
 import scala.slick.driver.JdbcProfile
 import scala.slick.driver.JdbcDriver
+import mtfrp.exp.MtFrpProgExp
 
 trait MtFrpLib
   extends ClientFRPLib
@@ -20,26 +21,47 @@ trait MtFrpProg
     with Browser
     with Adts
     with DocumentOpsExtended
-    with DefaultJsonProtocol {
-  def main: ClientBehavior[Element]
+    with DefaultJsonProtocol
+    with VNodeLib {
+  def main: ClientBehavior[VNode]
+}
 
-  private[mtfrp] def addHTMLUpdates: ClientBehavior[Element] = {
-    val resetBody: Rep[Element => Unit] = fun { el =>
-      // clean body
-      document.body.setInnerHTML("")
-      // fill body
-      document.body.appendChild(el)
-    }
-
+trait MtFrpProgRunner extends MtFrpProgExp { self: MtFrpProg =>
+  private[mtfrp] def preRun: ClientBehavior[VNode] = {
     val behavior = main
-    resetBody(behavior.rep.markExit(FRP.global).now())
-    behavior.rep.changes.foreach(fun { resetBody(_) }, FRP.global)
+    val initialState = behavior.rep.markExit(FRP.global).now()
+    val rootElem = createElement(initialState)
+    document.body.appendChild(rootElem)
+
+    val diffs = behavior.delay.combine(behavior)(diff(_, _))
+    diffs.rep.foreach(fun { patch(rootElem, _) }, FRP.global)
+
     behavior
   }
 
-  private[mtfrp] def mainGen: (Rep[JSBehavior[Element]], Option[Route]) = {
-    val behavior = addHTMLUpdates
+  private[mtfrp] def run: (Rep[JSBehavior[VNode]], Option[Route]) = {
+    val behavior = preRun
     (behavior.rep, behavior.core.route)
+  }
+}
+
+trait MtFrpProgDbRunner extends MtFrpProgRunner { self: MtFrpProg with DatabaseDefinition =>
+  import driver.simple._
+
+  override private[mtfrp] def preRun: ClientBehavior[VNode] = {
+    val behavior = self.preRun
+
+    val databaseManipulations = behavior.core.mergedManipulatorDependencies
+
+    databaseManipulations.foreach { map =>
+      database.withSession { s: Session =>
+        s.withTransaction {
+          map.keys.foreach(_(s))
+        }
+        map.values.foreach(_.foreach(_.trigger(s)))
+      }
+    }
+    behavior
   }
 }
 

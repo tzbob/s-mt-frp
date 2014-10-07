@@ -61,7 +61,6 @@ trait VNodeGroupLib extends VNodeBuilderLib {
   class TemplatedVNodeBuilder[Id: Manifest](tagName: Rep[String], groupHandlers: GroupHandlers[Id]) {
     private def toVNodeBuilder(id: Rep[Id]): VNodeBuilder = {
       val handlers = groupHandlers.map(_.toHandler(id))
-      System.out.println(handlers)
       new VNodeBuilder(tagName, handlers)
     }
     def apply(id: Rep[Id]): Rep[VNode] = toVNodeBuilder(id)()

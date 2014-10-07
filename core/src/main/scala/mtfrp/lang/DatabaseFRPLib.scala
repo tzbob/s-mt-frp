@@ -5,22 +5,6 @@ import scala.slick.jdbc.meta.MTable
 trait DatabaseFRPLib extends MtFrpProg with DatabaseDefinition {
   import driver.simple._
 
-  override private[mtfrp] def addHTMLUpdates: ClientBehavior[Element] = {
-    val behavior = super.addHTMLUpdates
-
-    val databaseManipulations = behavior.core.mergedManipulatorDependencies
-
-    databaseManipulations.foreach { map =>
-      database.withSession { s: Session =>
-        s.withTransaction {
-          map.keys.foreach(_(s))
-        }
-        map.values.foreach(_.foreach(_.trigger(s)))
-      }
-    }
-    behavior
-  }
-
   trait TableManipulationEvent[T <: Table[_]] {
     private[mtfrp] def tq: TableQuery[T]
     private[mtfrp] def evt: ServerEvent[TableManipulation]

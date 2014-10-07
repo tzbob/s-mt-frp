@@ -26,6 +26,18 @@ trait FrpExtensions extends ClientFRPLib with ElementOps with EventOps {
   case object KeyPress extends EventName[KeyboardEvent]("keypress")
   case object KeyUp extends EventName[KeyboardEvent]("keyup")
 
+  trait InputEvent extends Event {
+    def target: Rep[EventTarget]
+  }
+
+  implicit class InputEvt(rep: Rep[InputEvent]) {
+    def target: Rep[EventTarget] = targetImpl(rep)
+    def value: Rep[String] = target.asInstanceOf[Rep[Input]].value
+  }
+  def targetImpl(r: Rep[InputEvent]): Rep[EventTarget]
+
+  case object Input extends EventName[InputEvent]("input")
+
   implicit class ReactiveInputOps(e: Rep[Input]) extends Serializable {
     def values: ClientBehavior[String] = {
       val evt = e.toStream(KeyUp).map(_ => ())

@@ -27,6 +27,8 @@ trait SFRPClientLib extends Proxy {
     def hold[B >: A](init: Rep[B]): Rep[JSBehavior[B]]
     def foldPast[B](init: Rep[B], op: Rep[((B, A)) => B]): Rep[JSBehavior[B]]
     def incFoldPast[B, D >: A](initial: Rep[B], app: Rep[((B, D)) => B]): Rep[JSIncBehavior[D, B]]
+    def combine[B, C](other: Rep[JSBehavior[B]], combinator: Rep[((A, B)) => C]): Rep[JSEvent[C]]
+    def combine2[B, C, D](one: Rep[JSBehavior[B]], two: Rep[JSBehavior[C]], combinator: Rep[((A, B, C)) => D]): Rep[JSEvent[D]]
   }
   implicit def repToJSEvent[T: Manifest](x: Rep[JSEvent[T]]): JSEvent[T] =
     repProxy[JSEvent[T]](x)
@@ -39,6 +41,7 @@ trait SFRPClientLib extends Proxy {
     repProxy[JSEventSource[A]](x)
 
   trait JSBehavior[+T] {
+    def delay: Rep[JSEvent[T]]
     def map[A](modifier: Rep[T => A]): Rep[JSBehavior[A]]
     def changes: Rep[JSEvent[T]]
     def combine[A, B](other: Rep[JSBehavior[A]], f: Rep[((T, A)) => B]): Rep[JSBehavior[B]]

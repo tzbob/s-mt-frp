@@ -31,6 +31,12 @@ trait ClientFRPLib extends SFRPClientLib with ReplicationCoreLib with JS {
       ClientBehavior(folded, core)
     }
 
+    def combine[B: Manifest, C: Manifest](other: ClientBehavior[B])(combinator: (Rep[T], Rep[B]) => Rep[C]): ClientEvent[C] =
+      ClientEvent(rep.combine(other.rep, fun(combinator)), this.core.combine(other.core))
+
+    def combine2[B: Manifest, C: Manifest, D: Manifest](one: ClientBehavior[B], two: ClientBehavior[C])(combinator: (Rep[T], Rep[B], Rep[C]) => Rep[D]): ClientEvent[D] =
+      ClientEvent(rep.combine2(one.rep, two.rep, fun(combinator)), this.core.combine(one.core, two.core))
+
     def incFold[B: Manifest, D >: T: Manifest](initial: Rep[B])(app: ClientDeltaApplicator[B, D]): ClientIncBehavior[D, B] = {
       ClientIncBehavior(rep.incFoldPast(initial, fun(app)), core)
     }
@@ -48,6 +54,8 @@ trait ClientFRPLib extends SFRPClientLib with ReplicationCoreLib with JS {
   }
 
   class ClientBehavior[+T: Manifest] private[ClientFRPLib] (val rep: Rep[JSBehavior[T]], val core: ReplicationCore) {
+    def delay: ClientEvent[T] = ClientEvent(rep.delay, core)
+
     def changes: ClientEvent[T] = ClientEvent(rep.changes, core)
 
     def map[A: Manifest](modifier: Rep[T] => Rep[A]): ClientBehavior[A] =

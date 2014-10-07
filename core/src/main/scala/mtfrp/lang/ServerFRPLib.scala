@@ -32,6 +32,12 @@ trait ServerFRPLib extends ReplicationCoreLib {
 
     def incFold[B, D >: T](initial: B)(app: ServerDeltaApplicator[B, D]): ServerIncBehavior[D, B] =
       ServerIncBehavior(rep.incFoldPast(initial)(app), core)
+
+    def combine[B, C](other: ServerBehavior[B])(combinator: (T, B) => C): ServerEvent[C] =
+      ServerEvent(rep.combine(other.rep)(combinator), core.combine(other.core))
+
+    def combine2[B, C, D](one: ServerBehavior[B], two: ServerBehavior[C])(combinator: (T, B, C) => D): ServerEvent[D] =
+      ServerEvent(rep.combine2(one.rep, two.rep)(combinator), core.combine(one.core, two.core))
   }
 
   @implicitNotFound(msg = "Could not find an applicator for delta ${D}.")
@@ -46,8 +52,9 @@ trait ServerFRPLib extends ReplicationCoreLib {
       val rep: Behavior[T],
       val core: ReplicationCore) {
 
-    def changes: ServerEvent[T] =
-      ServerEvent(rep.changes, core)
+    def delay: ServerEvent[T] = ServerEvent(rep.delay, core)
+
+    def changes: ServerEvent[T] = ServerEvent(rep.changes, core)
 
     def map[A](modifier: T => A): ServerBehavior[A] =
       ServerBehavior(rep map modifier, core)

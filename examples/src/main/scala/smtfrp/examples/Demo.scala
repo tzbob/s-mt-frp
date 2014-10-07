@@ -9,30 +9,31 @@ import frp.core.Behavior
 import scala.slick.driver.JdbcProfile
 import mtfrp.lang.NoDB
 import scala.slick.driver.H2Driver
+import mtfrp.lang.MtFrpProgRunner
 
 object Demo extends App with SimpleRoutingApp {
   val bootstrap = Seq("bootstrap/css/bootstrap.css", "css/flat-ui.css")
 
   val routeMaker = PageCompiler.makeRoute(csses = bootstrap)_
-  val echoProg = new EchoProg with MtFrpProgExp with NoDB
+  val echoProg = new EchoProg with MtFrpProgRunner with NoDB
   val echoRoute = routeMaker(echoProg)("echo")
 
-  val guestProg = new GuestbookProg with MtFrpProgExp with NoDB
+  val guestProg = new GuestbookProg with MtFrpProgRunner with NoDB
   val guestRoute = routeMaker(guestProg)("guest")
 
-  val basicChatProg = new BasicChatProg with MtFrpProgExp with NoDB
+  val basicChatProg = new BasicChatProg with MtFrpProgRunner with NoDB
   val basicChatRoute = routeMaker(basicChatProg)("basicchat")
 
-  val chatProg = new ChatProg with MtFrpProgExp with NoDB
+  val chatProg = new ChatProg with MtFrpProgRunner with NoDB
   val chatRoute = routeMaker(chatProg)("chat")
 
-  val multiDepsProg = new MultipleDeps with MtFrpProgExp with NoDB
+  val multiDepsProg = new MultipleDeps with MtFrpProgRunner with NoDB
   val multiDepsRoute = routeMaker(multiDepsProg)("deps")
 
-  val glitchesProg = new TestGlitches with MtFrpProgExp with NoDB
+  val glitchesProg = new TestGlitches with MtFrpProgRunner with NoDB
   val glitchesRoute = routeMaker(glitchesProg)("glitches")
 
-  val todoProg = new TodoCore with MtFrpProgExp {
+  val todoProg = new TodoCore with MtFrpProgRunner {
     type Profile = H2Driver
     val driver = H2Driver
     val database = driver.simple.Database.forURL("jdbc:h2:mem:test1;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver")

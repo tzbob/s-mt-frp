@@ -10,12 +10,13 @@ import spray.httpx.marshalling.ToResponseMarshallable.isMarshallable
 import spray.routing.Directive.pimpApply
 import spray.routing.{ Route, Directives }
 import mtfrp.lang.Client
+import mtfrp.lang.MtFrpProgRunner
 
 object PageCompiler {
   import Directives._
 
-  def makeRoute(csses: Seq[String] = Seq.empty, scripts: Seq[String] = Seq.empty)(prog: MtFrpProgExp)(url: String): Route = {
-    lazy val (rep, route) = prog.mainGen
+  def makeRoute(csses: Seq[String] = Seq.empty, scripts: Seq[String] = Seq.empty)(prog: MtFrpProgRunner with MtFrpProgExp)(url: String): Route = {
+    lazy val (rep, route) = prog.run
     val gen = new GenMtFrp { val IR: prog.type = prog }
     val block = gen.reifyBlock(rep)
 

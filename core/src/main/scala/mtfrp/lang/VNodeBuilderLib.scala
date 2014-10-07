@@ -11,7 +11,7 @@ trait VNodeBuilderLib extends ClientFRPLib with EventOps with JSMaps with JS wit
 
   def createElement(vnode: Rep[VNode]): Rep[Element]
   def diff(prev: Rep[VNode], current: Rep[VNode]): Rep[VNodeDiff]
-  def patch(rootNode: Rep[Element], diff: Rep[VNodeDiff]): Rep[Element]
+  def patch(rootNode: Rep[Element], diff: Rep[VNodeDiff]): Rep[Unit]
 
   def mkText(str: Rep[String]): Rep[VNode]
   def mkNode(

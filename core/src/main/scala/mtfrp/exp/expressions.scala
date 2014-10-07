@@ -72,7 +72,10 @@ trait FrpExtensionsExp
     with EventOpsExp
     with FFIExp {
   def keyCodeImpl(r: Rep[KeyboardEvent]) = foreign"$r.keyCode"[Int].withEffect()
+  def targetImpl(r: Rep[InputEvent]) = foreign"$r.target"[EventTarget].withEffect()
 }
+
+trait VNodeLibExp extends VNodeBuilderLibExp
 
 trait MtFrpProgExp
   extends MtFrpProg
@@ -83,3 +86,4 @@ trait MtFrpProgExp
   with BrowserExp
   with AdtsExp
   with DocumentOpsExtendedExp
+  with VNodeLibExp
