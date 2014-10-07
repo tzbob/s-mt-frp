@@ -5,7 +5,7 @@ import mtfrp.lang.MtFrpProg
 import mtfrp.lang.Client
 import collection.{ immutable => i }
 
-trait ChatProg extends MtFrpProg with EasyHTML {
+trait ChatProg extends MtFrpProg {
   import DefaultJsonProtocol._
 
   case class Entry(
@@ -22,31 +22,41 @@ trait ChatProg extends MtFrpProg with EasyHTML {
     extends Adt
   implicit val viewFormat = jsonFormat2(View)
 
-  lazy val name: Rep[Input] = text("Name")
-  lazy val message: Rep[Input] = text("Message")
-  lazy val target: Rep[Input] = text("Target")
-  lazy val send: Rep[Button] = button("Send")
+  lazy val (nameT, nameE) = input(Input)
+  lazy val (msgT, msgE) = input(Input)
+  lazy val (tgtT, tgtE) = input(Input)
+  lazy val (sendT, sendE) = button(Click)
 
-  def template(view: Rep[View]): Rep[Element] = {
+  def template(view: Rep[View]): Rep[VNode] = {
     implicit def viewOps(p: Rep[View]) = adtOps(p)
     implicit def itemOps(p: Rep[Entry]) = adtOps(p)
-    def template(post: Rep[Entry]) = el('li)(post.name, " says ", post.content)
+
+    def template(post: Rep[Entry]) = li(post.name, " says ", post.content)
     val contents = view.pub.map(template)
     val privs = view.priv.map(template)
 
-    el('div)(
-      el('h1)("Multi-tier Chat"), el('hr)(),
-      el('div)(name, message, target, send),
-      el('h3)("Public"), el('ol)(contents), el('hr)(),
-      el('h3)("Private"), el('ol)(privs), el('hr)())
+    val name = nameT("type" := "text", "placeholder" := "Enter your name...")()
+    val message = msgT("type" := "text", "placeholder" := "Enter your message...")()
+    val target = tgtT("type" := "text", "placeholder" := "Enter your target...")()
+    val send = sendT("Submit")
+
+    div(
+      h1("Multi-tier Chat"), hr(),
+      div(name, message, target, send),
+      h3("Public"), ol(contents), hr(),
+      h3("Private"), ol(privs), hr())
   }
 
   lazy val submit: ClientEvent[Entry] = {
-    val combined: ClientBehavior[Entry] =
-      name.values.combine2(target.values, message.values) { (n, t, m) =>
+    val nameV = nameE.asTextBehavior
+    val msgV = msgE.asTextBehavior
+    val tgtV = tgtE.asTextBehavior
+
+    val combined =
+      nameV.combine2(tgtV, msgV) { (n, t, m) =>
         EntryRep(n, if (t == "") none else some(t), m)
       }
-    combined.sampledBy(send.toStream(Click))
+    combined.sampledBy(sendE)
   }
 
   lazy val serverSubmit: ServerEvent[(Client, Entry)] = submit.toServer
@@ -70,5 +80,5 @@ trait ChatProg extends MtFrpProg with EasyHTML {
         client: Client => View(pub, priv(client))
     }
 
-  def main: ClientBehavior[Element] = clientChat.toClient.map(template)
+  def main: ClientBehavior[VNode] = clientChat.toClient.map(template)
 }

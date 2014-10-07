@@ -18,8 +18,8 @@ trait BasicChatProg extends MtFrpProg {
   lazy val (sendT, sendE) = button(Click)
 
   lazy val submit: ClientEvent[Entry] = {
-    val nameV = nameE.map(_.value).hold("")
-    val msgV = msgE.map(_.value).hold("")
+    val nameV = nameE.asTextBehavior
+    val msgV = msgE.asTextBehavior
     val entry = nameV.combine(msgV) { EntryRep(_, _) }
     entry.sampledBy(sendE)
   }

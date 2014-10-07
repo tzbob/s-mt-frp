@@ -14,7 +14,7 @@ trait ClientFRPLib extends SFRPClientLib with ReplicationCoreLib with JS {
 
   class ClientEvent[+T: Manifest] private (val rep: Rep[JSEvent[T]], val core: ReplicationCore) {
     def map[A: Manifest](modifier: Rep[T] => Rep[A]): ClientEvent[A] =
-      ClientEvent(this.rep.map(fun(modifier)), core)
+      ClientEvent(rep.map(fun(modifier)), core)
 
     def or[A >: T: Manifest](that: ClientEvent[A]): ClientEvent[A] =
       ClientEvent(rep.or(that.rep), core.combine(that.core))

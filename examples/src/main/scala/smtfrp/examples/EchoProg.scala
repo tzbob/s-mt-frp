@@ -11,26 +11,33 @@ trait EchoProg extends MtFrpProg with EasyHTML {
   val ClientEchoData = adt[EchoData]
   implicit val echoFormat = jsonFormat2(EchoData)
 
-  def main: ClientBehavior[Element] =
-    singleClientInput.toAllClients.hold(ClientEchoData("<>", "<>")) map template
+  lazy val (nameT, nameE) = input(Input)
+  lazy val (msgT, msgE) = input(Input)
+  lazy val (sendT, sendE) = button(Click)
 
-  def template(data: Rep[EchoData]): Rep[Element] = {
+  lazy val clientInput: ClientEvent[EchoData] = {
+    val nameV = nameE.asTextBehavior
+    val msgV = msgE.asTextBehavior
+    val entry = nameV.combine(msgV) { ClientEchoData(_, _) }
+    entry.sampledBy(sendE)
+  }
+
+  def template(data: Rep[EchoData]): Rep[VNode] = {
     implicit def echoDataOps(p: Rep[EchoData]) = adtOps(p)
-    el('div)(
-      el('h1)("Echo prog"),
-      el('div)(data.name, " says ", data.text),
-      el('div)(name, text, send)
-    )
+
+    val name = nameT("type" := "text", "placeholder" := "Enter your name...")()
+    val msg = msgT("type" := "text", "placeholder" := "Enter your message...")()
+    val send = sendT("Submit")
+
+    div(
+      h1("Echo prog"),
+      div(data.name, " says ", data.text),
+      div(name, msg, send))
   }
 
-  lazy val singleClientInput = input.toServerAnon
-
-  lazy val input: ClientEvent[EchoData] = {
-    val combined = name.values.combine(text.values)(ClientEchoData(_, _))
-    combined sampledBy send.toStream(Click)
-  }
-
-  lazy val name: Rep[Input] = text("Name")
-  lazy val text: Rep[Input] = text("Text")
-  lazy val send: Rep[Button] = button("Send")
+  def main: ClientBehavior[VNode] =
+    clientInput.toServerAnon
+      .toAllClients
+      .hold(ClientEchoData("<>", "<>"))
+      .map(template)
 }

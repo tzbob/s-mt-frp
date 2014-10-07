@@ -4,8 +4,6 @@ import collection.{ immutable => i }
 import scala.js.language._
 import mtfrp.lang._
 import spray.json.DefaultJsonProtocol
-import mtfrp.lang.DatabaseFRPLib
-import mtfrp.lang.DatabaseFunctionality
 import scala.slick.driver.H2Driver
 
 /**
@@ -33,17 +31,17 @@ trait TodoModel extends Adts with DefaultJsonProtocol with DatabaseFunctionality
 /**
  * Design the interface elements
  */
-trait TodoInterface extends EasyHTML with TodoModel {
-  lazy val addTask: Rep[Input] = text("What needs to be done?")
+trait TodoInterface extends TodoModel with VNodeLib with FrpExtensions {
+  lazy val (newTaskT, newTaskInputE, newTaskKeyE) = input(Input, KeyUp)
 
-  def interface(state: Rep[ServerState]): Rep[Element] = el('div)(
-    el('h1)("Todo Example"),
-    el('div)(addTask),
-    el('ol)(template(state)), el('hr)())
+  def interface(state: Rep[ServerState]): Rep[VNode] = div(
+    h1("Todo Example"),
+    div(newTaskT("type" := "text", "placeholder" := "What needs to be done?")()),
+    ol(template(state)), hr())
 
-  def template(state: Rep[ServerState]): Rep[Element] = {
-    def template(task: Rep[Task]): Rep[Element] = el('li)(task.description)
-    el('ol)(state.map(template))
+  def template(state: Rep[ServerState]): Rep[VNode] = {
+    def template(task: Rep[Task]): Rep[VNode] = li(task.description)
+    ol(state.map(template))
   }
 }
 
@@ -61,8 +59,8 @@ trait TodoUpdate extends TodoModel with MtFrpProg {
  * Wrap everything together
  */
 trait TodoCore extends TodoInterface with TodoUpdate with MtFrpProg with DatabaseFRPLib {
-  lazy val values = addTask.values
-  lazy val enters = addTask.toStream(KeyUp).filter(_.keyCode == 13)
+  lazy val enters = newTaskKeyE.filter(_.keyCode == 13)
+  lazy val values = newTaskInputE.asTextBehavior
 
   lazy val newTasks = values.sampledBy(enters).toServerAnon
   lazy val taskInserts = newTasks.toTableManipulation(taskQuery)(toInsert)
@@ -72,5 +70,5 @@ trait TodoCore extends TodoInterface with TodoUpdate with MtFrpProg with Databas
   lazy val tasks: ServerBehavior[List[Task]] =
     taskTableBehavior.select(identity).map(_.toList)
 
-  def main: ClientBehavior[Element] = tasks.toAllClients.map(interface)
+  def main: ClientBehavior[VNode] = tasks.toAllClients.map(interface)
 }

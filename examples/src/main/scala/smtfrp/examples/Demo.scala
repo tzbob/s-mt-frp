@@ -10,6 +10,7 @@ import scala.slick.driver.JdbcProfile
 import mtfrp.lang.NoDB
 import scala.slick.driver.H2Driver
 import mtfrp.lang.MtFrpProgRunner
+import mtfrp.lang.MtFrpProgDbRunner
 
 object Demo extends App with SimpleRoutingApp {
   val bootstrap = Seq("bootstrap/css/bootstrap.css", "css/flat-ui.css")
@@ -18,22 +19,16 @@ object Demo extends App with SimpleRoutingApp {
   val echoProg = new EchoProg with MtFrpProgRunner with NoDB
   val echoRoute = routeMaker(echoProg)("echo")
 
-  val guestProg = new GuestbookProg with MtFrpProgRunner with NoDB
-  val guestRoute = routeMaker(guestProg)("guest")
-
   val basicChatProg = new BasicChatProg with MtFrpProgRunner with NoDB
   val basicChatRoute = routeMaker(basicChatProg)("basicchat")
 
   val chatProg = new ChatProg with MtFrpProgRunner with NoDB
   val chatRoute = routeMaker(chatProg)("chat")
 
-  val multiDepsProg = new MultipleDeps with MtFrpProgRunner with NoDB
-  val multiDepsRoute = routeMaker(multiDepsProg)("deps")
-
   val glitchesProg = new TestGlitches with MtFrpProgRunner with NoDB
   val glitchesRoute = routeMaker(glitchesProg)("glitches")
 
-  val todoProg = new TodoCore with MtFrpProgRunner {
+  val todoProg = new TodoCore with MtFrpProgDbRunner {
     type Profile = H2Driver
     val driver = H2Driver
     val database = driver.simple.Database.forURL("jdbc:h2:mem:test1;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver")
@@ -44,10 +39,8 @@ object Demo extends App with SimpleRoutingApp {
   startServer("localhost", port = 8080)(
     getFromResourceDirectory("")
       ~ echoRoute
-      ~ guestRoute
       ~ basicChatRoute
       ~ chatRoute
-      ~ multiDepsRoute
       ~ glitchesRoute
       ~ todoRoute)
 }

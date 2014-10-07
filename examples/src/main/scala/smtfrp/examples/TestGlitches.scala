@@ -3,33 +3,33 @@ package smtfrp.examples
 import mtfrp.lang.MtFrpProg
 import spray.json.DefaultJsonProtocol
 
-trait TestGlitches extends MtFrpProg with EasyHTML {
+trait TestGlitches extends MtFrpProg {
   import DefaultJsonProtocol._
 
-  lazy val btn = button("Test glitches")
-  lazy val counter = btn.toStream(Click).fold(0) { (acc, _) => acc + 1 }.changes
+  lazy val (btnT, btnE) = button(Click)
+  lazy val counter = btnE.fold(0) { (acc, _) => acc + 1 }.changes
 
   // create two streams from the same origin with identical values on the client
-  lazy val a = counter.map(identity)
-  lazy val b = counter.map(identity)
+  lazy val one = counter.map(identity)
+  lazy val two = counter.map(identity)
 
   // replicate two streams from the client to the server and turn them into behaviors
-  lazy val aOnServer = a.toServerAnon.hold(0)
-  lazy val bOnServer = b.toServerAnon.hold(0)
+  lazy val oneOnServer = one.toServerAnon.hold(0)
+  lazy val twoOnServer = two.toServerAnon.hold(0)
 
   // test server glitches, this value should always be true
-  lazy val serverGlitch = aOnServer.combine(bOnServer)(_.equals(_))
+  lazy val serverGlitch = oneOnServer.combine(twoOnServer)(_.equals(_))
 
   // create two streams from the same server origin with identical values
-  lazy val c = serverGlitch.map(_ => 1)
-  lazy val d = serverGlitch.map(_ => 1)
+  lazy val three = serverGlitch.map(_ => 1)
+  lazy val four = serverGlitch.map(_ => 1)
 
   // replicate two behaviors from the server to the client
-  lazy val cOnClient = c.toAllClients
-  lazy val dOnClient = d.toAllClients
+  lazy val threeOnClient = three.toAllClients
+  lazy val fourOnClient = four.toAllClients
 
   // test client glitches, this value should always be true
-  lazy val clientGlitch = cOnClient.combine(dOnClient)(_ == _)
+  lazy val clientGlitch = threeOnClient.combine(fourOnClient)(_ == _)
 
   case class Output(serverGlitch: Boolean, clientGlitch: Boolean) extends Adt
   lazy val OutputRep = adt[Output]
@@ -42,20 +42,19 @@ trait TestGlitches extends MtFrpProg with EasyHTML {
   // list all glitch combinations
   lazy val outputs = output.changes.fold(List[Output]()) { (acc, output) => output :: acc }
 
-  def template(outputs: Rep[List[Output]]): Rep[Element] = {
+  def template(outputs: Rep[List[Output]]): Rep[VNode] = {
     implicit def viewOps(p: Rep[Output]) = adtOps(p)
-    def outputView(output: Rep[Output]): Rep[Element] =
-      el('div)(
-        el('div)("Glitch-free client: " + output.clientGlitch),
-        el('div)("Glitch-free server: " + output.serverGlitch),
-        el('hr)())
+    def outputView(output: Rep[Output]): Rep[VNode] =
+      div(
+        div("Glitch-free client: " + output.clientGlitch),
+        div("Glitch-free server: " + output.serverGlitch),
+        hr())
 
-    el('div)(
-      el('h1)("Glitch test"),
-      el('div)(
-        outputs.map(outputView)),
-      el('div)(btn))
+    div(
+      h1("Glitch test"),
+      div(outputs.map(outputView)),
+      div(btnT("Start")))
   }
 
-  def main: ClientBehavior[Element] = outputs.map(template)
+  def main: ClientBehavior[VNode] = outputs.map(template)
 }

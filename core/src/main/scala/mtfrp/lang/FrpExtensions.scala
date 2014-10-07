@@ -47,4 +47,10 @@ trait FrpExtensions extends ClientFRPLib with ElementOps with EventOps {
     }
   }
 
+  implicit class ValueEvent(e: ClientEvent[InputEvent]) extends Serializable {
+    def asTextBehavior: ClientBehavior[String] = asTextBehaviorImpl(e)
+  }
+  private def asTextBehaviorImpl(e: ClientEvent[InputEvent]): ClientBehavior[String] =
+    e.map(_.value).hold("")
+
 }

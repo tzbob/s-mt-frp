@@ -40,9 +40,6 @@ trait ReplicationFRPLib
     def toClient: ClientBehavior[T] = {
       val ticket = beh.rep.markExit
       def insertCurrentState(client: Client) = {
-        System.out.println("BEHAVIOR TO CLIENT:")
-        System.out.println(implicitly[frp.core.TickContext])
-        System.out.println(implicitly[frp.core.TickContext].behaviorStore)
         unit(ticket.now()(client).toJson.compactPrint)
       }
       val currentState = delayForClient(insertCurrentState).convertToRep[T]

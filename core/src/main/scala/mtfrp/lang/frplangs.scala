@@ -27,8 +27,7 @@ trait MtFrpProg
 }
 
 trait MtFrpProgRunner extends MtFrpProgExp { self: MtFrpProg =>
-  private[mtfrp] def preRun: ClientBehavior[VNode] = {
-    val behavior = main
+  private[mtfrp] def patchRootNode(behavior: ClientBehavior[VNode]): ClientBehavior[VNode] = {
     val initialState = behavior.rep.markExit(FRP.global).now()
     val rootElem = createElement(initialState)
     document.body.appendChild(rootElem)
@@ -40,7 +39,7 @@ trait MtFrpProgRunner extends MtFrpProgExp { self: MtFrpProg =>
   }
 
   private[mtfrp] def run: (Rep[JSBehavior[VNode]], Option[Route]) = {
-    val behavior = preRun
+    val behavior = patchRootNode(main)
     (behavior.rep, behavior.core.route)
   }
 }
@@ -48,9 +47,7 @@ trait MtFrpProgRunner extends MtFrpProgExp { self: MtFrpProg =>
 trait MtFrpProgDbRunner extends MtFrpProgRunner { self: MtFrpProg with DatabaseDefinition =>
   import driver.simple._
 
-  override private[mtfrp] def preRun: ClientBehavior[VNode] = {
-    val behavior = self.preRun
-
+  private[mtfrp] def handleDatabaseManipulations(behavior: ClientBehavior[VNode]): ClientBehavior[VNode] = {
     val databaseManipulations = behavior.core.mergedManipulatorDependencies
 
     databaseManipulations.foreach { map =>
@@ -62,6 +59,11 @@ trait MtFrpProgDbRunner extends MtFrpProgRunner { self: MtFrpProg with DatabaseD
       }
     }
     behavior
+  }
+
+  override private[mtfrp] def run: (Rep[JSBehavior[VNode]], Option[Route]) = {
+    val behavior = handleDatabaseManipulations(patchRootNode(main))
+    (behavior.rep, behavior.core.route)
   }
 }
 
