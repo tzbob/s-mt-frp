@@ -7,10 +7,10 @@ import frp.core.{ EventSource => SEventSource }
 import spray.json._
 
 trait ReplicationFRPLib
-    extends ClientFRPLib
-    with ServerFRPLib
-    with JSJsonFormatLib
-    with EventSources {
+  extends ClientFRPLib
+  with ServerFRPLib
+  with JSJsonFormatLib
+  with EventSources {
 
   implicit class EventToServer[T: JsonReader: JSJsonWriter: Manifest](evt: ClientEvent[T]) {
     def toServer: ServerEvent[(Client, T)] = {
@@ -34,6 +34,15 @@ trait ReplicationFRPLib
     def toAllClients: ClientEvent[T] = evt.map { t =>
       c: Client => Some(t)
     }.toClient
+  }
+
+  // obvious problem; behavior starts off as an empty map
+  // while the view of a client is written based on the map
+  // this view has to incorporate the fact that the map is empty -- counterintuitive
+  implicit class BehaviorToServer[T: JsonReader: JSJsonWriter: Manifest](beh: ClientBehavior[T]) {
+    def toServer: ServerBehavior[Map[Client, T]] = {
+      beh.changes.toServer.fold(Map.empty[Client, T]) { _ + _ }
+    }
   }
 
   implicit class BehaviorToClient[T: JsonWriter: JSJsonReader: Manifest](beh: ServerBehavior[Client => T]) {

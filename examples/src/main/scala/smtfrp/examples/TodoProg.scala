@@ -1,6 +1,6 @@
 package smtfrp.examples
 
-import collection.{ immutable => i }
+import collection.immutable.{ List => SList }
 import scala.js.language._
 import mtfrp.lang._
 import spray.json.DefaultJsonProtocol
@@ -31,16 +31,16 @@ trait TodoModel extends Adts with DefaultJsonProtocol with DatabaseFunctionality
 /**
  * Design the interface elements
  */
-trait TodoInterface extends TodoModel with VNodeLib with FrpExtensions {
+trait TodoInterface extends TodoModel with HtmlNodeLib with FrpExtensions {
   lazy val (newTaskT, newTaskInputE, newTaskKeyE) = input(Input, KeyUp)
 
-  def interface(state: Rep[ServerState]): Rep[VNode] = div(
+  def interface(state: Rep[ServerState]): Rep[HtmlNode] = div(
     h1("Todo Example"),
     div(newTaskT("type" := "text", "placeholder" := "What needs to be done?")()),
     ol(template(state)), hr())
 
-  def template(state: Rep[ServerState]): Rep[VNode] = {
-    def template(task: Rep[Task]): Rep[VNode] = li(task.description)
+  def template(state: Rep[ServerState]): Rep[HtmlNode] = {
+    def template(task: Rep[Task]): Rep[HtmlNode] = li(task.description)
     ol(state.map(template))
   }
 }
@@ -68,7 +68,7 @@ trait TodoCore extends TodoInterface with TodoUpdate with MtFrpProg with Databas
   lazy val taskTableBehavior: TableBehavior[Tasks] = taskInserts.toTableBehavior
 
   lazy val tasks: ServerBehavior[List[Task]] =
-    taskTableBehavior.select(identity).map(_.toList)
+    taskTableBehavior.select(identity(_)).map(_.toList)
 
-  def main: ClientBehavior[VNode] = tasks.toAllClients.map(interface)
+  def main: ClientBehavior[HtmlNode] = tasks.toAllClients.map(interface)
 }

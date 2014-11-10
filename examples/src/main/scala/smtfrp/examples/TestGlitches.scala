@@ -42,9 +42,9 @@ trait TestGlitches extends MtFrpProg {
   // list all glitch combinations
   lazy val outputs = output.changes.fold(List[Output]()) { (acc, output) => output :: acc }
 
-  def template(outputs: Rep[List[Output]]): Rep[VNode] = {
+  def template(outputs: Rep[List[Output]]): Rep[HtmlNode] = {
     implicit def viewOps(p: Rep[Output]) = adtOps(p)
-    def outputView(output: Rep[Output]): Rep[VNode] =
+    def outputView(output: Rep[Output]): Rep[HtmlNode] =
       div(
         div("Glitch-free client: " + output.clientGlitch),
         div("Glitch-free server: " + output.serverGlitch),
@@ -56,5 +56,5 @@ trait TestGlitches extends MtFrpProg {
       div(btnT("Start")))
   }
 
-  def main: ClientBehavior[VNode] = outputs.map(template)
+  def main: ClientBehavior[HtmlNode] = outputs.map(template)
 }

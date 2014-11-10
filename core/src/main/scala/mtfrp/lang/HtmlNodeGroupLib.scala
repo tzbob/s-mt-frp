@@ -5,7 +5,7 @@ import scala.js.language.dom.EventOps
 import scala.js.language.JSMaps
 import scala.virtualization.lms.common.TupleOps
 
-trait VNodeGroupLib extends VNodeBuilderLib {
+trait HtmlNodeGroupLib extends HtmlNodeBuilderLib {
   implicit class GroupEventTargetBuilder(b: EventTargetBuilder) {
     def group: GroupBuilder = new GroupBuilder(b.tagName)
   }
@@ -42,32 +42,32 @@ trait VNodeGroupLib extends VNodeBuilderLib {
   }
 
   class GroupBuilder(tagName: Rep[String]) {
-    def apply[Id: Manifest](ev1: EventDef)(implicit m: Manifest[ev1.Type]): (TemplatedVNodeBuilder[Id], ClientEvent[(Id, ev1.Type)]) = {
+    def apply[Id: Manifest](ev1: EventDef)(implicit m: Manifest[ev1.Type]): (TemplatedHtmlNodeBuilder[Id], ClientEvent[(Id, ev1.Type)]) = {
       val (evt, handler) = handleGroupEvent[Id](ev1)
-      (new TemplatedVNodeBuilder(tagName, handler +: Nil), evt)
+      (new TemplatedHtmlNodeBuilder(tagName, handler +: Nil), evt)
     }
 
     // ugly boilerplate...
-    def apply[Id: Manifest](ev1: EventDef, ev2: EventDef)(implicit m1: Manifest[ev1.Type], m2: Manifest[ev2.Type]): (TemplatedVNodeBuilder[Id], ClientEvent[(Id, ev1.Type)], ClientEvent[(Id, ev2.Type)]) = {
+    def apply[Id: Manifest](ev1: EventDef, ev2: EventDef)(implicit m1: Manifest[ev1.Type], m2: Manifest[ev2.Type]): (TemplatedHtmlNodeBuilder[Id], ClientEvent[(Id, ev1.Type)], ClientEvent[(Id, ev2.Type)]) = {
       val (evt1, handler1) = handleGroupEvent[Id](ev1)
       val (evt2, handler2) = handleGroupEvent[Id](ev2)
 
       val handlers = handler2 +: handler1 +: Nil
-      (new TemplatedVNodeBuilder(tagName, handlers), evt1, evt2)
+      (new TemplatedHtmlNodeBuilder(tagName, handlers), evt1, evt2)
     }
     // ... 3,4,5..
   }
 
-  class TemplatedVNodeBuilder[Id: Manifest](tagName: Rep[String], groupHandlers: GroupHandlers[Id]) {
-    private def toVNodeBuilder(id: Rep[Id]): VNodeBuilder = {
+  class TemplatedHtmlNodeBuilder[Id: Manifest](tagName: Rep[String], groupHandlers: GroupHandlers[Id]) {
+    private def toHtmlNodeBuilder(id: Rep[Id]): HtmlNodeBuilder = {
       val handlers = groupHandlers.map(_.toHandler(id))
-      new VNodeBuilder(tagName, handlers)
+      new HtmlNodeBuilder(tagName, handlers)
     }
-    def apply(id: Rep[Id]): Rep[VNode] = toVNodeBuilder(id)()
-    def apply(id: Rep[Id], children: Value[VNode]*): Rep[VNode] =
-      toVNodeBuilder(id)(children: _*)
-    def apply(id: Rep[Id], attrs: Value[Attribute]*)(children: Value[VNode]*): Rep[VNode] =
-      toVNodeBuilder(id)(attrs: _*)(children: _*)
+    def apply(id: Rep[Id]): Rep[HtmlNode] = toHtmlNodeBuilder(id)()
+    def apply(id: Rep[Id], children: Value[HtmlNode]*): Rep[HtmlNode] =
+      toHtmlNodeBuilder(id)(children: _*)
+    def apply(id: Rep[Id], attrs: Value[Attribute]*)(children: Value[HtmlNode]*): Rep[HtmlNode] =
+      toHtmlNodeBuilder(id)(attrs: _*)(children: _*)
   }
 
 }

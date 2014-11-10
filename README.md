@@ -88,9 +88,9 @@ The repository is split into **examples** and **core** containing demo and frame
 - ```EasyHTML``` demonstrates how additional JavaScript modules can be defined,
 - ```TestGlitches``` demonstrates our glitch prevention when combining multiple external FRP networks,
 - ```EchoProg``` is the simplest example, a message is taken to the server anonymously and broadcasted to all connections,
-- ```GuestbookProg``` introduces an example to keep state on the server,
 - ```BasicChatProg``` is a simple implementation of a chat application that shows improved networking performance using incremental behaviors,
 - ```ChatProg``` extends on the simple chat implementation and adds private messaging, this example displays the expressive power of our approach when dealing with connection identification,
+- ```TodoProg``` demonstrates a recommended architecture for a true multitier (i.e. client-server-database) applicatio
 - ```Demo``` demonstrates how a program written using our DSL is made available.
 
 ### Core

@@ -4,12 +4,12 @@ import scala.js.gen.js.GenJSMaps
 import scala.js.gen.js.dom.GenEventOps
 import scala.js.gen.js.GenJS
 import mtfrp.exp.EventSourcesExp
-import mtfrp.exp.VNodeBuilderLibExp
+import mtfrp.exp.HtmlNodeBuilderLibExp
 import scala.js.gen.js.dom.GenElementOps
 import scala.js.gen.QuoteGen
 
-trait GenVNodeBuilderLib extends GenClientFRPLib with GenEventOps with GenJSMaps with GenJS with GenElementOps with QuoteGen {
-  val IR: VNodeBuilderLibExp
+trait GenHtmlNodeBuilderLib extends GenClientFRPLib with GenEventOps with GenJSMaps with GenJS with GenElementOps with QuoteGen {
+  val IR: HtmlNodeBuilderLibExp
   import IR._
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {

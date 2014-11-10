@@ -7,5 +7,5 @@ import scala.js.exp.JSExp
 
 trait XMLHttpRequestsExp extends XMLHttpRequests with JSExp {
   case class NewXMLHttpRequest() extends Def[XMLHttpRequest]
-  protected def newXMLHttpRequest() = NewXMLHttpRequest()
+  protected def newXMLHttpRequest() = reflectEffect(NewXMLHttpRequest())
 }

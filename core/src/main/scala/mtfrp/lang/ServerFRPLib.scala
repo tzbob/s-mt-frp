@@ -49,8 +49,8 @@ trait ServerFRPLib extends ReplicationCoreLib {
   }
 
   class ServerBehavior[+T] private[ServerFRPLib] (
-      val rep: Behavior[T],
-      val core: ReplicationCore) {
+    val rep: Behavior[T],
+    val core: ReplicationCore) {
 
     def delay: ServerEvent[T] = ServerEvent(rep.delay, core)
 
@@ -73,6 +73,9 @@ trait ServerFRPLib extends ReplicationCoreLib {
       val behavior = rep.combine2(one.rep, two.rep)(f)
       ServerBehavior(behavior, core.combine(one.core, two.core))
     }
+
+    def incrementalize[D, B >: T](differ: (B, B) => D): ServerIncBehavior[D, B] =
+      ServerIncBehavior(rep.incrementalize(differ), core)
   }
 
   object ServerIncBehavior {
@@ -81,8 +84,8 @@ trait ServerFRPLib extends ReplicationCoreLib {
   }
 
   class ServerIncBehavior[+D, T] private (
-      override val rep: IncBehavior[D, T],
-      override val core: ReplicationCore) extends ServerBehavior[T](rep, core) {
+    override val rep: IncBehavior[D, T],
+    override val core: ReplicationCore) extends ServerBehavior[T](rep, core) {
     def increments: ServerEvent[D] = ServerEvent(rep.increments, core)
   }
 }

@@ -48,6 +48,7 @@ trait SFRPClientLib extends Proxy {
     def combine2[A, B, C](one: Rep[JSBehavior[A]], two: Rep[JSBehavior[B]], f: Rep[((T, A, B)) => C]): Rep[JSBehavior[C]]
     def sampledBy(event: Rep[JSEvent[_]]): Rep[JSEvent[T]]
     def markExit(context: Rep[JSTickContext]): Rep[Ticket[T]]
+    def incrementalize[D, B >: T](differ: Rep[((B, B)) => D]): JSIncBehavior[D, B]
   }
   implicit def repToJSBehavior[T: Manifest](x: Rep[JSBehavior[T]]): JSBehavior[T] =
     repProxy[JSBehavior[T]](x)

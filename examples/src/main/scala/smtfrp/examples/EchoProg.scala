@@ -22,7 +22,7 @@ trait EchoProg extends MtFrpProg with EasyHTML {
     entry.sampledBy(sendE)
   }
 
-  def template(data: Rep[EchoData]): Rep[VNode] = {
+  def template(data: Rep[EchoData]): Rep[HtmlNode] = {
     implicit def echoDataOps(p: Rep[EchoData]) = adtOps(p)
 
     val name = nameT("type" := "text", "placeholder" := "Enter your name...")()
@@ -35,7 +35,7 @@ trait EchoProg extends MtFrpProg with EasyHTML {
       div(name, msg, send))
   }
 
-  def main: ClientBehavior[VNode] =
+  def main: ClientBehavior[HtmlNode] =
     clientInput.toServerAnon
       .toAllClients
       .hold(ClientEchoData("<>", "<>"))

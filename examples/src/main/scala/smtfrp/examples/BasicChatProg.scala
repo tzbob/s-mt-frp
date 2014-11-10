@@ -35,7 +35,7 @@ trait BasicChatProg extends MtFrpProg {
   lazy val chat: ServerIncBehavior[Entry, List[Entry]] =
     submit.toServerAnon.incFold(SList.empty[Entry])(serverListPrepender)
 
-  def template(view: Rep[List[Entry]]): Rep[VNode] = {
+  def template(view: Rep[List[Entry]]): Rep[HtmlNode] = {
     implicit def itemOps(p: Rep[Entry]) = adtOps(p)
 
     val name = nameT("type" := "text", "placeholder" := "Enter your name...")()
@@ -48,6 +48,6 @@ trait BasicChatProg extends MtFrpProg {
       h3("Public"), ol(view.map { p => li(p.name, " says ", p.msg) }), hr())
   }
 
-  lazy val main: ClientBehavior[VNode] =
+  lazy val main: ClientBehavior[HtmlNode] =
     chat.toAllClients(clientListPrepender).map(template)
 }

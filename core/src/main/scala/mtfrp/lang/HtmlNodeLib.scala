@@ -1,16 +1,16 @@
 package mtfrp.lang
 
-trait VNodeLib extends VNodeGroupLib {
-  import VNodeImplicits._
+trait HtmlNodeLib extends HtmlNodeGroupLib {
+  import HtmlNodeImplicits._
 
-  object VNodeImplicits {
+  object HtmlNodeImplicits {
     implicit class TargetBuilderString(k: String) {
       def asTag: EventTargetBuilder = new EventTargetBuilder(k)
     }
   }
 
   /*
-   * Scala Value definitions thanks to the ScalaTags project: 
+   * Scala Value definitions thanks to the ScalaTags project:
    * 	https://github.com/lihaoyi/scalatags/
    */
 

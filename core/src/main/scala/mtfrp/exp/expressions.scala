@@ -66,16 +66,16 @@ trait MtFrpLibExp
   with ReplicationFRPLibExp
 
 trait FrpExtensionsExp
-    extends FrpExtensions
-    with ClientFRPLibExp
-    with ElementOpsExp
-    with EventOpsExp
-    with FFIExp {
+  extends FrpExtensions
+  with ClientFRPLibExp
+  with ElementOpsExp
+  with EventOpsExp
+  with FFIExp {
   def keyCodeImpl(r: Rep[KeyboardEvent]) = foreign"$r.keyCode"[Int].withEffect()
   def targetImpl(r: Rep[InputEvent]) = foreign"$r.target"[EventTarget].withEffect()
 }
 
-trait VNodeLibExp extends VNodeBuilderLibExp
+trait HtmlNodeLibExp extends HtmlNodeBuilderLibExp
 
 trait MtFrpProgExp
   extends MtFrpProg
@@ -86,4 +86,6 @@ trait MtFrpProgExp
   with BrowserExp
   with AdtsExp
   with DocumentOpsExtendedExp
-  with VNodeLibExp
+  with HtmlNodeLibExp {
+  lazy val ontick: Rep[Unit => Unit] = foreign"MTFRP.ontick".withEffect()
+}

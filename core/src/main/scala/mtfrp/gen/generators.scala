@@ -23,19 +23,19 @@ trait GenJSJsonFormat extends GenJSJsonReaderContext with GenJSJsonWriterContext
 }
 
 trait GenReplicationCoreLib
-    extends GenJSJsonFormat
-    with GenEventSources
-    with GenSFRPClientLib
-    with GenXMLHttpRequests
-    with GenDelayedEval
-    with GenJSMaps {
+  extends GenJSJsonFormat
+  with GenEventSources
+  with GenSFRPClientLib
+  with GenXMLHttpRequests
+  with GenDelayedEval
+  with GenJSMaps {
   val IR: ReplicationCoreLibExp
 }
 
 trait GenClientFRPLib
-    extends GenSFRPClientLib
-    with GenReplicationCoreLib
-    with GenJS {
+  extends GenSFRPClientLib
+  with GenReplicationCoreLib
+  with GenJS {
   val IR: ClientFRPLibExp
 }
 
@@ -44,33 +44,33 @@ trait GenServerFRPLib extends GenReplicationCoreLib {
 }
 
 trait GenReplicationFRPLib
-    extends GenServerFRPLib
-    with GenJSJsonFormat
-    with GenEventSources {
+  extends GenServerFRPLib
+  with GenJSJsonFormat
+  with GenEventSources {
   val IR: ReplicationFRPLibExp
 }
 
 trait GenFrpExtensions
-    extends GenClientFRPLib
-    with GenElementOps
-    with GenEventOps
-    with GenProxy {
+  extends GenClientFRPLib
+  with GenElementOps
+  with GenEventOps
+  with GenProxy {
   val IR: FrpExtensionsExp
 }
 
 trait GenMtFrpLib
-    extends GenClientFRPLib
-    with GenServerFRPLib
-    with GenReplicationFRPLib {
+  extends GenClientFRPLib
+  with GenServerFRPLib
+  with GenReplicationFRPLib {
   val IR: MtFrpLibExp
 }
 
 trait GenMtFrp
-    extends GenBrowser
-    with JSGenForest
-    with GenMtFrpLib
-    with GenAdts
-    with GenFrpExtensions
-    with GenVNodeBuilderLib {
+  extends GenBrowser
+  with JSGenForest
+  with GenMtFrpLib
+  with GenAdts
+  with GenFrpExtensions
+  with GenHtmlNodeBuilderLib {
   val IR: MtFrpProgExp
 }

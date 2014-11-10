@@ -6,5 +6,5 @@ import mtfrp.lang.EventSources
 
 trait EventSourcesExp extends EventSources with EventOpsExp with JSLiteralExp with ProxyExp {
   case class NewEventSource(url: Exp[String]) extends Def[EventSource]
-  protected def newEvtSource(url: Exp[String]) = NewEventSource(url)
+  protected def newEvtSource(url: Exp[String]) = reflectEffect(NewEventSource(url))
 }

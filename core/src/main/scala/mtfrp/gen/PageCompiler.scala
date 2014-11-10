@@ -44,10 +44,10 @@ object PageCompiler {
 
     val pageRoute = path(url) {
       get {
-        dynamic {
-          val id = URLEncoder encode (UUID.randomUUID.toString, "UTF-8")
-          respondWithMediaType(MediaTypes.`text/html`) {
-            complete(html(Client(id), csses, scriptsD))
+        respondWithMediaType(MediaTypes.`text/html`) {
+          complete {
+            val id = URLEncoder.encode(UUID.randomUUID.toString, "UTF-8").take(4)
+            html(Client(id), csses, scriptsD)
           }
         }
       }

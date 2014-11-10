@@ -5,20 +5,20 @@ import scala.js.language.dom.EventOps
 import scala.js.language.JS
 import scala.js.language.dom.ElementOps
 
-trait VNodeBuilderLib extends ClientFRPLib with EventOps with JSMaps with JS with ElementOps {
-  trait VNode
-  trait VNodeDiff
+trait HtmlNodeBuilderLib extends ClientFRPLib with EventOps with JSMaps with JS with ElementOps {
+  trait HtmlNode
+  trait HtmlNodeDiff
 
-  def createElement(vnode: Rep[VNode]): Rep[Element]
-  def diff(prev: Rep[VNode], current: Rep[VNode]): Rep[VNodeDiff]
-  def patch(rootNode: Rep[Element], diff: Rep[VNodeDiff]): Rep[Unit]
+  def createElement(vnode: Rep[HtmlNode]): Rep[Element]
+  def diff(prev: Rep[HtmlNode], current: Rep[HtmlNode]): Rep[HtmlNodeDiff]
+  def patch(rootNode: Rep[Element], diff: Rep[HtmlNodeDiff]): Rep[Unit]
 
-  def mkText(str: Rep[String]): Rep[VNode]
+  def mkText(str: Rep[String]): Rep[HtmlNode]
   def mkNode(
     tagName: Rep[String],
     handlers: Handlers,
     properties: Properties = defaultProperties(),
-    children: Children = defaultChildren): Rep[VNode]
+    children: Children = defaultChildren): Rep[HtmlNode]
 
   trait Value[T]
   case class RepConst[T](node: Rep[T]) extends Value[T]
@@ -26,8 +26,8 @@ trait VNodeBuilderLib extends ClientFRPLib with EventOps with JSMaps with JS wit
   implicit def repNode[T](node: Rep[T]): Value[T] = RepConst(node)
   implicit def repNodes[T](nodes: Rep[List[T]]): Value[T] = RepList(nodes)
 
-  implicit def repStrToNode(s: Rep[String]): Value[VNode] = mkText(s)
-  implicit def strToVal(s: String)(implicit ev: String => Rep[String]): Value[VNode] =
+  implicit def repStrToNode(s: Rep[String]): Value[HtmlNode] = mkText(s)
+  implicit def strToVal(s: String)(implicit ev: String => Rep[String]): Value[HtmlNode] =
     repStrToNode(s)
 
   implicit class AttrString(k: String) {
@@ -65,7 +65,7 @@ trait VNodeBuilderLib extends ClientFRPLib with EventOps with JSMaps with JS wit
   }
 
   lazy val defaultChildren = List()
-  type Children = Rep[List[VNode]]
+  type Children = Rep[List[HtmlNode]]
 
   private def handleEvent(ev: EventDef)(implicit m: Manifest[ev.Type]): (ClientEvent[ev.Type], Handler) = {
     val evt = FRP.eventSource[ev.Type](FRP.global)
@@ -73,20 +73,20 @@ trait VNodeBuilderLib extends ClientFRPLib with EventOps with JSMaps with JS wit
   }
 
   class EventTargetBuilder(val tagName: Rep[String]) {
-    def apply: VNodeBuilder = new VNodeBuilder(tagName, defaultHandlers)
-    def apply(ev1: EventDef)(implicit m: Manifest[ev1.Type]): (VNodeBuilder, ClientEvent[ev1.Type]) = {
+    def apply: HtmlNodeBuilder = new HtmlNodeBuilder(tagName, defaultHandlers)
+    def apply(ev1: EventDef)(implicit m: Manifest[ev1.Type]): (HtmlNodeBuilder, ClientEvent[ev1.Type]) = {
       val (evt, handler) = handleEvent(ev1)
       val handlers = handler +: Nil
-      (new VNodeBuilder(tagName, handlers), evt)
+      (new HtmlNodeBuilder(tagName, handlers), evt)
     }
 
     // ugly boilerplate...
-    def apply(ev1: EventDef, ev2: EventDef)(implicit m1: Manifest[ev1.Type], m2: Manifest[ev2.Type]): (VNodeBuilder, ClientEvent[ev1.Type], ClientEvent[ev2.Type]) = {
+    def apply(ev1: EventDef, ev2: EventDef)(implicit m1: Manifest[ev1.Type], m2: Manifest[ev2.Type]): (HtmlNodeBuilder, ClientEvent[ev1.Type], ClientEvent[ev2.Type]) = {
       val (evt1, handler1) = handleEvent(ev1)
       val (evt2, handler2) = handleEvent(ev2)
 
       val handlers = handler2 +: handler1 +: Nil
-      (new VNodeBuilder(tagName, handlers), evt1, evt2)
+      (new HtmlNodeBuilder(tagName, handlers), evt1, evt2)
     }
     // ... 3,4,5..
   }
@@ -97,11 +97,11 @@ trait VNodeBuilderLib extends ClientFRPLib with EventOps with JSMaps with JS wit
     vnodeLists.foldLeft(List[T]())(_ ++ _)
   }
 
-  class VNodeBuilder(tagName: Rep[String], handlers: Handlers) {
-    def apply(): Rep[VNode] = mkNode(tagName, handlers = handlers)
-    def apply(children: Value[VNode]*): Rep[VNode] =
+  class HtmlNodeBuilder(tagName: Rep[String], handlers: Handlers) {
+    def apply(): Rep[HtmlNode] = mkNode(tagName, handlers = handlers)
+    def apply(children: Value[HtmlNode]*): Rep[HtmlNode] =
       mkNode(tagName, handlers, children = vToRepList(children))
-    def apply(attrs: Value[Attribute]*)(children: Value[VNode]*): Rep[VNode] = {
+    def apply(attrs: Value[Attribute]*)(children: Value[HtmlNode]*): Rep[HtmlNode] = {
       val jsAttrs = vToRepList(attrs)
       val props = defaultProperties()
       jsAttrs.foreach { tuple => props.update(tuple._1, tuple._2) }

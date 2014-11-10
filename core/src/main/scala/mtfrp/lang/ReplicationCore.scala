@@ -17,9 +17,13 @@ import spray.http.MessageChunk
 import scala.slick.jdbc.JdbcBackend.SessionDef
 import scala.slick.driver.JdbcProfile
 import frp.core.TickContext
+import spray.routing.RequestContext
+import akka.actor.Actor
+import spray.http.HttpEntity
+import scala.concurrent.Future
 
 trait ReplicationCoreLib extends JSJsonFormatLib with EventSources with DatabaseFunctionality
-    with SFRPClientLib with XMLHttpRequests with DelayedEval with JSMaps {
+  with SFRPClientLib with XMLHttpRequests with DelayedEval with JSMaps {
   import driver.simple._
 
   implicit val serverContext = new TickContext
@@ -31,15 +35,17 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources with Database
   val MessageRep = adt[Message]
 
   case class ReplicationCore(
-      toClientDeps: Set[ToClientDependency[_]] = Set.empty,
-      toServerDeps: Set[ToServerDependency[_]] = Set.empty,
-      manipDeps: Set[frp.core.Event[ManipulationDependency]] = Set.empty) {
+    toClientDeps: Set[ToClientDependency[_]] = Set.empty,
+    toServerDeps: Set[ToServerDependency[_]] = Set.empty,
+    tableManipulations: Set[frp.core.Event[Session => Unit]] = Set.empty,
+    tableSelectFires: Set[frp.core.Event[Session => Unit]] = Set.empty) {
     def combine(others: ReplicationCore*): ReplicationCore = {
       def fold[T](v: ReplicationCore => Set[T]) = others.foldLeft(v(this))(_ ++ v(_))
       val toClientDeps = fold(_.toClientDeps)
       val toServerDeps = fold(_.toServerDeps)
-      val manipDeps = fold(_.manipDeps)
-      ReplicationCore(toClientDeps, toServerDeps, manipDeps)
+      val manips = fold(_.tableManipulations)
+      val selectFires = fold(_.tableSelectFires)
+      ReplicationCore(toClientDeps, toServerDeps, manips, selectFires)
     }
 
     def addToServerDependencies(deps: ToServerDependency[_]*): ReplicationCore =
@@ -48,8 +54,11 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources with Database
     def addToClientDependencies(deps: ToClientDependency[_]*): ReplicationCore =
       this.copy(toClientDeps = this.toClientDeps ++ deps)
 
-    def addManipulationDependencies(deps: frp.core.Event[ManipulationDependency]*): ReplicationCore =
-      this.copy(manipDeps = this.manipDeps ++ deps)
+    def addManipulations(deps: frp.core.Event[Session => Unit]*): ReplicationCore =
+      this.copy(tableManipulations = this.tableManipulations ++ deps)
+
+    def addSelectFires(deps: frp.core.Event[Session => Unit]*): ReplicationCore =
+      this.copy(tableSelectFires = this.tableSelectFires ++ deps)
 
     def route: Option[Route] = {
       val r1 = initializeToClientDependencies()
@@ -60,8 +69,11 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources with Database
       else None
     }
 
-    def mergedManipulatorDependencies: frp.core.Event[Map[Session => Unit, Seq[ManipulationDependency]]] =
-      frp.core.Event.merge(manipDeps.toSeq: _*).map(_.groupBy(_.manipulator))
+    def mergedDatabaseActions: frp.core.Event[Seq[Session => Unit]] = {
+      val E = frp.core.Event
+      val databaseActions = tableManipulations ++ tableSelectFires
+      E.merge(databaseActions.toSeq: _*)
+    }
 
     /**
      * @return optionally, the Route that encompasses all involved client
@@ -115,26 +127,25 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources with Database
     // create one exit point for all involved frp.core.Events
     val messageCarriers = toClientDeps.map(_.messageCarrier).toSeq
     val exitPoint = frp.core.Event.merge(messageCarriers: _*)
+
     path(genUrl) {
       get {
         parameter('id) { id =>
-          val client = Client(id)
-          respondWithMediaType(MediaType.custom("text/event-stream")) {
-            ctx: RequestContext =>
-              ctx.responder ! ChunkedResponseStart(HttpResponse(
-                headers = HttpHeaders.`Cache-Control`(CacheDirectives.`no-cache`) :: Nil,
-                entity = ":" + (" " * 2049) + "\n" // 2k padding for IE polyfill (yaffle)
-                ))
+          ctx =>
+            val client = Client(id)
+            val padding = s""": ${" " * 2049}\n"""
+            val responseStart = HttpResponse(
+              entity = HttpEntity(MediaType.custom("text/event-stream"), padding))
+            ctx.responder ! ChunkedResponseStart(responseStart)
 
-              exitPoint.foreach { seq =>
-                val msgs = seq.map(_(client)).flatten
-                ctx.responder ! MessageChunk(s"data:${msgs.toJson.compactPrint}\n\n")
-              }
-          }
+            exitPoint.foreach { seq =>
+              val msgs = seq.map(_(client)).flatten
+              val data = s"data:${msgs.toJson.compactPrint}\n\n"
+              ctx.responder ! MessageChunk(data)
+            }
         }
       }
     }
-
   }
 
   private def initClientSideToServer(
@@ -179,8 +190,8 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources with Database
   }
 
   class ToClientDependency[T: JsonWriter: JSJsonReader: Manifest](
-      serverEvent: frp.core.Event[Client => Option[T]],
-      clientEventSource: Rep[JSEventSource[T]]) {
+    serverEvent: frp.core.Event[Client => Option[T]],
+    clientEventSource: Rep[JSEventSource[T]]) {
     val name = UUID.randomUUID.toString
 
     def clientFRPEntryPoint: Rep[((String, Batch)) => Unit] =
@@ -200,8 +211,8 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources with Database
     }
 
   class ToServerDependency[T: JsonReader: JSJsonWriter: Manifest](
-      clientEvent: Rep[JSEvent[T]],
-      serverEventSource: frp.core.EventSource[(Client, T)]) {
+    clientEvent: Rep[JSEvent[T]],
+    serverEventSource: frp.core.EventSource[(Client, T)]) {
 
     val name = UUID.randomUUID.toString
     def messageCarrier: Rep[JSEvent[Message]] =

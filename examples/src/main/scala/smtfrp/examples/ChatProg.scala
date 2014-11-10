@@ -27,7 +27,7 @@ trait ChatProg extends MtFrpProg {
   lazy val (tgtT, tgtE) = input(Input)
   lazy val (sendT, sendE) = button(Click)
 
-  def template(view: Rep[View]): Rep[VNode] = {
+  def template(view: Rep[View]): Rep[HtmlNode] = {
     implicit def viewOps(p: Rep[View]) = adtOps(p)
     implicit def itemOps(p: Rep[Entry]) = adtOps(p)
 
@@ -35,9 +35,9 @@ trait ChatProg extends MtFrpProg {
     val contents = view.pub.map(template)
     val privs = view.priv.map(template)
 
-    val name = nameT("type" := "text", "placeholder" := "Enter your name...")()
+    val name = msgT("type" := "text", "placeholder" := "Enter your name...")()
     val message = msgT("type" := "text", "placeholder" := "Enter your message...")()
-    val target = tgtT("type" := "text", "placeholder" := "Enter your target...")()
+    val target = msgT("type" := "text", "placeholder" := "Enter your target...")()
     val send = sendT("Submit")
 
     div(
@@ -80,5 +80,5 @@ trait ChatProg extends MtFrpProg {
         client: Client => View(pub, priv(client))
     }
 
-  def main: ClientBehavior[VNode] = clientChat.toClient.map(template)
+  def main: ClientBehavior[HtmlNode] = clientChat.toClient.map(template)
 }
