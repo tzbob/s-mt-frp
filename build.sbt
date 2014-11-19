@@ -1,9 +1,8 @@
 name := "s-mt-frp root project"
 
 lazy val sharedSettings = Defaults.defaultSettings ++ Seq(
-    exportJars := true,
     organization := "smtfrp",
-    version := "0.1",
+    version := "0.2",
     scalaVersion := "2.10.2",
     scalaOrganization := "org.scala-lang.virtualized",
     scalacOptions ++= Seq(
@@ -26,7 +25,6 @@ lazy val core = project.in(file("core"))
             "spray repo" at "http://repo.spray.io/"),
         libraryDependencies ++= Seq(
           "EPFL" %% "js-scala" % "0.4-SNAPSHOT",
-          "js-scala" %% "forest" % "0.5-SNAPSHOT",
           "mtfrp" %% "s-frp-jvm" % "0.1-SNAPSHOT",
           "io.spray" %% "spray-can" % "1.3.2",
           "io.spray" %% "spray-routing" % "1.3.2",
@@ -39,10 +37,7 @@ lazy val examples = project.in(file("examples"))
      .settings(
        name := "smtfrp-examples",
         libraryDependencies ++= Seq(
-          "org.testng" % "testng" % "6.8.8",
-          "com.google.inject" % "guice" % "3.0",
-          "org.scalatest" % "scalatest_2.10" % "2.0.M5b" % "test",
-          "org.seleniumhq.selenium" % "selenium-java" % "2.35.0" % "test",
+          "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
           "com.h2database" % "h2" % "1.3.166"))
      .dependsOn(core)
 

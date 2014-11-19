@@ -70,9 +70,7 @@ trait BasicPersistentChat extends MtFrpProg with DatabaseFRPLib {
   lazy val publicLog: ServerBehavior[ChatLog] =
     persistedEntries.select { table =>
       table.sortBy(_.id.desc).take(100)
-    }.map(_.toList).map(id)
-
-  def id[T](x: T) = { System.out.println(x); x }
+    }.map(_.toList)
 
   def main: ClientBehavior[HtmlNode] = publicLog.toAllClients.map(template)
 }

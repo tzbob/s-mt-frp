@@ -46,7 +46,7 @@ object PageCompiler {
       get {
         respondWithMediaType(MediaTypes.`text/html`) {
           complete {
-            val id = URLEncoder.encode(UUID.randomUUID.toString, "UTF-8").take(4)
+            val id = URLEncoder.encode(UUID.randomUUID.toString, "UTF-8")
             html(Client(id), csses, scriptsD)
           }
         }

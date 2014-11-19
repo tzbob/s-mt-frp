@@ -4,7 +4,7 @@ import spray.json.DefaultJsonProtocol
 import scala.js.language.AdtsImpl.Adt
 import mtfrp.lang.MtFrpProg
 
-trait EchoProg extends MtFrpProg with EasyHTML {
+trait EchoProg extends MtFrpProg {
   import DefaultJsonProtocol._
 
   case class EchoData(name: String, text: String) extends Adt

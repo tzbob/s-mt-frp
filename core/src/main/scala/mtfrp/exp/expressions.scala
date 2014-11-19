@@ -2,7 +2,6 @@ package mtfrp.exp
 
 import scala.js.exp.{ AdtsExp, FFIExp, JSExp, JSMapsExp }
 import scala.js.exp.dom.{ BrowserExp, ElementOpsExp, EventOpsExp }
-import forest.ForestExp
 import mtfrp.lang.{ DocumentOpsExtended, JSJsonFormatLib, JSJsonReaderLib, JSJsonWriterLib, MtFrpLib, MtFrpProg }
 import mtfrp.lang.ClientFRPLib
 import mtfrp.lang.ServerFRPLib
@@ -82,7 +81,6 @@ trait MtFrpProgExp
   with MtFrpLibExp
   with JSJsonFormatLibExp
   with FrpExtensionsExp
-  with ForestExp
   with BrowserExp
   with AdtsExp
   with DocumentOpsExtendedExp

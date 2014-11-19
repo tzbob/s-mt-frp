@@ -2,7 +2,6 @@ package mtfrp.gen
 
 import scala.js.gen.js.{ GenAdts, GenFFI, GenJS, GenJSMaps }
 import scala.js.gen.js.dom.GenBrowser
-import forest.JSGenForest
 import mtfrp.exp.{ ClientFRPLibExp, JSJsonFormatLibExp, JSJsonReaderLibExp, JSJsonWriterLibExp, MtFrpLibExp, MtFrpProgExp, ReplicationCoreLibExp, ReplicationFRPLibExp, ServerFRPLibExp }
 import scala.js.gen.js.dom.GenElementOps
 import scala.js.gen.js.dom.GenEventOps
@@ -67,7 +66,6 @@ trait GenMtFrpLib
 
 trait GenMtFrp
   extends GenBrowser
-  with JSGenForest
   with GenMtFrpLib
   with GenAdts
   with GenFrpExtensions

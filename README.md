@@ -39,15 +39,6 @@ Please follow the install guide on the official [scala-sbt.org](http://www.scala
     sbt publish-local
     cd ..
 
-### Install [Forest](https://github.com/js-scala/forest)
-
-    git clone https://github.com/Tzbob/forest.git
-    cd forest
-    git checkout 8f46c61e72891a9ded5b8898e0b8b56feea32c18
-    cd forest
-    sbt publish-local
-    cd ../..
-
 ### Install [S-FRP](https://github.com/Tzbob/s-frp)
 
     git clone https://github.com/Tzbob/s-frp.git
@@ -61,21 +52,14 @@ Please follow the install guide on the official [scala-sbt.org](http://www.scala
     cd s-mt-frp
     sbt "project examples" run
 
-The 'Demo' object contains the following code:
-```
-...
-val echoRoute = PageCompiler.makeRoute(echoProg)("echo")
-val guestRoute = PageCompiler.makeRoute(guestProg)("guest")
-val basicChatRoute = PageCompiler.makeRoute(basicChatProg)("basicchat")
-val chatRoute = PageCompiler.makeRoute(chatProg)("chat")
-startServer("::1", port = 8080)...
-```
-Which indicates that;
+The 'Demo' object contains the bootstrapping code for the following examples:
 
 - the Echo program is available at [http://localhost:8080/echo](http://localhost:8080/echo),
-- the GuestBook program is available at [http://localhost:8080/guest](http://localhost:8080/guest),
 - the BasicChat program is available at [http://localhost:8080/basicchat](http://localhost:8080/basicchat),
-- the Chat program is available at [http://localhost:8080/chat](http://localhost:8080/chat).
+- the Chat program is available at [http://localhost:8080/chat](http://localhost:8080/chat),
+- the TestGlitches program is available at [http://localhost:8080/glitches](http://localhost:8080/glitches),
+- the CounterBenchmark program is available at [http://localhost:8080/bench](http://localhost:8080/bench),
+- the DatabaseBenchmark program is available at [http://localhost:8080/dbbench](http://localhost:8080/dbbench).
 
 ## Layout
 
@@ -85,13 +69,11 @@ The repository is split into **examples** and **core** containing demo and frame
 
 "smtfrp/examples" contains some small demo applications;
 
-- ```EasyHTML``` demonstrates how additional JavaScript modules can be defined,
 - ```TestGlitches``` demonstrates our glitch prevention when combining multiple external FRP networks,
 - ```EchoProg``` is the simplest example, a message is taken to the server anonymously and broadcasted to all connections,
 - ```BasicChatProg``` is a simple implementation of a chat application that shows improved networking performance using incremental behaviors,
-- ```ChatProg``` extends on the simple chat implementation and adds private messaging, this example displays the expressive power of our approach when dealing with connection identification,
-- ```TodoProg``` demonstrates a recommended architecture for a true multitier (i.e. client-server-database) applicatio
-- ```Demo``` demonstrates how a program written using our DSL is made available.
+- ```Demo``` demonstrates how a program written using our DSL is made available,
+- ```...``` we have plenty of other small examples, some which use the database API and some that demonstrate our use of incremental behaviors.
 
 ### Core
 

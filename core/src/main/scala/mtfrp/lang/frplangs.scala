@@ -2,7 +2,6 @@ package mtfrp.lang
 
 import scala.js.language.Adts
 import scala.js.language.dom.Browser
-import forest.Forest
 import spray.json.DefaultJsonProtocol
 import spray.routing.Route
 import scala.slick.driver.JdbcProfile
@@ -17,7 +16,6 @@ trait MtFrpLib
 trait MtFrpProg
   extends MtFrpLib
   with FrpExtensions
-  with Forest
   with Browser
   with Adts
   with DocumentOpsExtended
@@ -37,7 +35,6 @@ trait MtFrpProgRunner extends MtFrpProgExp { self: MtFrpProg =>
     diffs.rep.foreach(fun {
       patch(rootElem, _)
     }, FRP.global)
-    //    behavior.rep.changes.foreach(fun { _ => ontick(()) }, FRP.global)
 
     behavior
   }
