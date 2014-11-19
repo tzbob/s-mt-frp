@@ -43,7 +43,7 @@ Please follow the install guide on the official [scala-sbt.org](http://www.scala
 
     git clone https://github.com/Tzbob/s-frp.git
     cd s-frp
-    sbt publish-local
+    sbt "project sfrpJVM" publish-local
     cd ..
 
 ### Run the examples
