@@ -43,6 +43,7 @@ Please follow the install guide on the official [scala-sbt.org](http://www.scala
 
     git clone https://github.com/Tzbob/s-frp.git
     cd s-frp
+    git checkout 3cbd1769b8933c15ceb28a96
     sbt "project sfrpJVM" publish-local
     cd ..
 
@@ -50,6 +51,7 @@ Please follow the install guide on the official [scala-sbt.org](http://www.scala
 
     git clone https://github.com/Tzbob/s-mt-frp.git
     cd s-mt-frp
+    git checkout pldi15
     sbt "project examples" run
 
 The 'Demo' object contains the bootstrapping code for the following examples:
