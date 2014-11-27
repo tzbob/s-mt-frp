@@ -29,7 +29,7 @@ trait EchoProg extends MtFrpProg {
     val msg = msgT("type" := "text", "placeholder" := "Enter your message...")()
     val send = sendT("Submit")
 
-    div(
+    div("class" := "test")(
       h1("Echo prog"),
       div(data.name, " says ", data.text),
       div(name, msg, send))

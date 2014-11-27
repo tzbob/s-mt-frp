@@ -17,7 +17,7 @@ trait HtmlNodeBuilderLib extends ClientFRPLib with EventOps with JSMaps with JS 
   def mkNode(
     tagName: Rep[String],
     handlers: Handlers,
-    properties: Properties = defaultProperties(),
+    attributes: Attributes = defaultAttributes(),
     children: Children = defaultChildren): Rep[HtmlNode]
 
   trait Value[T]
@@ -42,8 +42,8 @@ trait HtmlNodeBuilderLib extends ClientFRPLib with EventOps with JSMaps with JS 
 
   type Attribute = (String, String)
 
-  def defaultProperties() = JSMap[String, Any]()
-  type Properties = Rep[Map[String, Any]]
+  def defaultAttributes() = JSMap[String, Any]()
+  type Attributes = Rep[Map[String, Any]]
 
   lazy val defaultHandlers: Handlers = collection.immutable.List.empty
   type Handlers = List[Handler]
@@ -103,7 +103,7 @@ trait HtmlNodeBuilderLib extends ClientFRPLib with EventOps with JSMaps with JS 
       mkNode(tagName, handlers, children = vToRepList(children))
     def apply(attrs: Value[Attribute]*)(children: Value[HtmlNode]*): Rep[HtmlNode] = {
       val jsAttrs = vToRepList(attrs)
-      val props = defaultProperties()
+      val props = defaultAttributes()
       jsAttrs.foreach { tuple => props.update(tuple._1, tuple._2) }
       mkNode(tagName, handlers, props, vToRepList(children))
     }

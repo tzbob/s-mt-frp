@@ -46,6 +46,8 @@ trait ServerFRPLib extends ReplicationCoreLib {
   object ServerBehavior {
     def apply[T](rep: Behavior[T], core: ReplicationCore) =
       new ServerBehavior(rep, core)
+    def constant[T](const: T): ServerBehavior[T] =
+      this.apply(Behavior.constant(const), ReplicationCore())
   }
 
   class ServerBehavior[+T] private[ServerFRPLib] (

@@ -23,13 +23,16 @@ trait HtmlNodeBuilderLibExp extends HtmlNodeBuilderLib with ClientFRPLibExp with
 
   case class MkNode(
     tag: Exp[String],
-    properties: Exp[Map[String, Any]],
+    attributes: Exp[Map[String, Any]],
     children: Exp[List[HtmlNode]]) extends Def[HtmlNode]
   def mkNode(
     tagName: Exp[String],
     handlers: Handlers,
-    properties: Properties,
+    attributes: Attributes,
     children: Children): Exp[HtmlNode] = {
+
+    val properties = JSMap[String, Any]()
+    properties.update("attributes", attributes)
 
     handlers.foreach { h =>
       implicit val m: Manifest[h.eventDef.Type] = h.m

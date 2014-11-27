@@ -37,6 +37,7 @@ trait HtmlNodeLib extends HtmlNodeGroupLib {
   val figure = "figure".asTag
   val figcaption = "figcaption".asTag
   val div = "div".asTag
+  val nav = "nav".asTag
   // Text-level semantics
   val a = "a".asTag
   val em = "em".asTag
