@@ -1,13 +1,9 @@
 package mtfrp.exp
 
-import scala.js.exp.{ AdtsExp, FFIExp, JSExp, JSMapsExp }
-import scala.js.exp.dom.{ BrowserExp, ElementOpsExp, EventOpsExp }
-import mtfrp.lang.{ DocumentOpsExtended, JSJsonFormatLib, JSJsonReaderLib, JSJsonWriterLib, MtFrpLib, MtFrpProg }
-import mtfrp.lang.ClientFRPLib
-import mtfrp.lang.ServerFRPLib
-import mtfrp.lang.ReplicationFRPLib
-import mtfrp.lang.FrpExtensions
-import scala.js.exp.ProxyExp
+import scala.js.exp._
+import scala.js.exp.dom._
+import mtfrp.lang._
+import scala.virtualization.lms.common._
 
 trait JSJsonReaderLibExp extends JSJsonReaderLib with JSExp with FFIExp with AdtsExp {
   def parse[T: Manifest](raw: Exp[String]): Exp[T] =
@@ -47,7 +43,15 @@ trait ClientFRPLibExp
   extends ClientFRPLib
   with SFRPClientLibExp
   with ReplicationCoreLibExp
-  with JSExp
+  // with JSExp - remove support for recursive functions
+  // manually put JSExp together
+  with JsScalaExp with DynamicsExp with ArraysExp
+  with RegExpsExp with OptionOpsExp
+  with EffectExp with NumericOpsExp with OrderingOpsExp with EqualExp
+  with IfThenElseExp with WhileExp with BooleanOpsExp with StringOpsExp with VariablesExp with ListOpsExp
+  with ObjectOpsExp /*with TupledFunctionsRecursiveExp*/ with StructExp with PrimitiveOpsExp with MiscOpsExp
+  with TupleOpsExp with ListOps2Exp
+
 
 trait ServerFRPLibExp extends ServerFRPLib with ReplicationCoreLibExp
 
