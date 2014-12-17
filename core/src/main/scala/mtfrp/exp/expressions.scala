@@ -5,12 +5,19 @@ import scala.js.exp.dom._
 import mtfrp.lang._
 import scala.virtualization.lms.common._
 
-trait JSJsonReaderLibExp extends JSJsonReaderLib with JSExp with FFIExp with AdtsExp {
+trait NonRecJSExp extends DynamicsExp with ArraysExp
+  with RegExpsExp with OptionOpsExp
+  with EffectExp with NumericOpsExp with OrderingOpsExp with EqualExp
+  with IfThenElseExp with WhileExp with BooleanOpsExp with StringOpsExp with VariablesExp with ListOpsExp
+  with ObjectOpsExp with TupledFunctionsExp /*with TupledFunctionsRecursiveExp*/ with StructExp with PrimitiveOpsExp with MiscOpsExp
+  with TupleOpsExp with ListOps2Exp
+
+trait JSJsonReaderLibExp extends JSJsonReaderLib with FFIExp with AdtsExp {
   def parse[T: Manifest](raw: Exp[String]): Exp[T] =
     foreign"JSON.parse($raw)"[T].withEffect()
 }
 
-trait JSJsonWriterLibExp extends JSJsonWriterLib with JSExp with FFIExp with AdtsExp {
+trait JSJsonWriterLibExp extends JSJsonWriterLib with FFIExp with AdtsExp {
   def stringify[T](raw: Exp[T]): Exp[String] =
     foreign"JSON.stringify($raw)"[String].withEffect()
 }
@@ -38,20 +45,14 @@ trait ReplicationCoreLibExp
   with XMLHttpRequestsExp
   with DelayedEvalExp
   with JSMapsExp
+  with ListOps2Exp
 
 trait ClientFRPLibExp
   extends ClientFRPLib
   with SFRPClientLibExp
   with ReplicationCoreLibExp
-  // with JSExp - remove support for recursive functions
-  // manually put JSExp together
-  with JsScalaExp with DynamicsExp with ArraysExp
-  with RegExpsExp with OptionOpsExp
-  with EffectExp with NumericOpsExp with OrderingOpsExp with EqualExp
-  with IfThenElseExp with WhileExp with BooleanOpsExp with StringOpsExp with VariablesExp with ListOpsExp
-  with ObjectOpsExp /*with TupledFunctionsRecursiveExp*/ with StructExp with PrimitiveOpsExp with MiscOpsExp
-  with TupleOpsExp with ListOps2Exp
-
+// with JSExp - remove support for recursive functions
+// manually put JSExp together
 
 trait ServerFRPLibExp extends ServerFRPLib with ReplicationCoreLibExp
 
@@ -88,6 +89,7 @@ trait MtFrpProgExp
   with BrowserExp
   with AdtsExp
   with DocumentOpsExtendedExp
-  with HtmlNodeLibExp {
+  with HtmlNodeLibExp
+  with NonRecJSExp {
   lazy val ontick: Rep[Unit => Unit] = foreign"MTFRP.ontick".withEffect()
 }

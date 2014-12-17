@@ -1,11 +1,9 @@
 package mtfrp.exp
 
-import scala.js.exp.JSLiteralExp
-import scala.js.exp.ProxyExp
 import mtfrp.lang.XMLHttpRequests
-import scala.js.exp.JSExp
+import scala.virtualization.lms.common._
 
-trait XMLHttpRequestsExp extends XMLHttpRequests with JSExp {
+trait XMLHttpRequestsExp extends XMLHttpRequests with BaseExp with EffectExp {
   case class NewXMLHttpRequest() extends Def[XMLHttpRequest]
   protected def newXMLHttpRequest() = reflectEffect(NewXMLHttpRequest())
 }

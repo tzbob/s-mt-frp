@@ -8,7 +8,7 @@ import mtfrp.exp.HtmlNodeBuilderLibExp
 import scala.js.gen.js.dom.GenElementOps
 import scala.js.gen.QuoteGen
 
-trait GenHtmlNodeBuilderLib extends GenClientFRPLib with GenEventOps with GenJSMaps with GenJS with GenElementOps with QuoteGen {
+trait GenHtmlNodeBuilderLib extends GenClientFRPLib with GenEventOps with GenJSMaps with GenElementOps with QuoteGen {
   val IR: HtmlNodeBuilderLibExp
   import IR._
 

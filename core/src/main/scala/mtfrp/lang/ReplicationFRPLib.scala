@@ -1,6 +1,5 @@
 package mtfrp.lang
 
-import scala.js.exp.JSExp
 import frp.core.{ Event => SEvent }
 import frp.core.Behavior
 import frp.core.{ EventSource => SEventSource }

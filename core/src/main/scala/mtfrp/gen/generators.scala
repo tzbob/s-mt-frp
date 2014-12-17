@@ -1,19 +1,23 @@
 package mtfrp.gen
 
-import scala.js.gen.js.{ GenAdts, GenFFI, GenJS, GenJSMaps }
-import scala.js.gen.js.dom.GenBrowser
-import mtfrp.exp.{ ClientFRPLibExp, JSJsonFormatLibExp, JSJsonReaderLibExp, JSJsonWriterLibExp, MtFrpLibExp, MtFrpProgExp, ReplicationCoreLibExp, ReplicationFRPLibExp, ServerFRPLibExp }
-import scala.js.gen.js.dom.GenElementOps
-import scala.js.gen.js.dom.GenEventOps
-import scala.js.gen.js.GenProxy
-import mtfrp.lang.FrpExtensions
-import mtfrp.exp.FrpExtensionsExp
+import mtfrp.exp._
+import scala.js.gen.js._
+import scala.js.gen.js.dom._
+import scala.virtualization.lms.common.GenericGenUnboxedTupleAccess
 
-trait GenJSJsonReaderContext extends GenJS with GenFFI with GenAdts {
+trait GenNonRecJS extends GenEffect with GenNumericOps with GenOrderingOps with GenEqual
+  with GenIfThenElse with GenWhile with GenBooleanOps with GenStringOps with GenVariables
+  with GenListOps with GenObjectOps with GenFunctions with GenStruct with GenPrimitiveOps
+  with GenMiscOps with GenTupleOps with GenericGenUnboxedTupleAccess with GenListOps2
+  with GenDynamics with GenArrays with GenRegExps with GenOptionOps {
+  val IR: NonRecJSExp
+}
+
+trait GenJSJsonReaderContext extends GenFFI with GenAdts {
   val IR: JSJsonReaderLibExp
 }
 
-trait GenJSJsonWriterContext extends GenJS with GenFFI with GenAdts {
+trait GenJSJsonWriterContext extends GenFFI with GenAdts {
   val IR: JSJsonWriterLibExp
 }
 
@@ -27,14 +31,14 @@ trait GenReplicationCoreLib
   with GenSFRPClientLib
   with GenXMLHttpRequests
   with GenDelayedEval
-  with GenJSMaps {
+  with GenJSMaps
+  with GenListOps2 {
   val IR: ReplicationCoreLibExp
 }
 
 trait GenClientFRPLib
   extends GenSFRPClientLib
-  with GenReplicationCoreLib
-  with GenJS {
+  with GenReplicationCoreLib {
   val IR: ClientFRPLibExp
 }
 
@@ -69,6 +73,7 @@ trait GenMtFrp
   with GenMtFrpLib
   with GenAdts
   with GenFrpExtensions
-  with GenHtmlNodeBuilderLib {
+  with GenHtmlNodeBuilderLib
+  with GenNonRecJS {
   val IR: MtFrpProgExp
 }

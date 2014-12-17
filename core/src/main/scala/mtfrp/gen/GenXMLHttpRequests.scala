@@ -1,10 +1,9 @@
 package mtfrp.gen
 
-import scala.js.gen.js.GenJS
-
 import mtfrp.exp.XMLHttpRequestsExp
+import scala.js.gen.js._
 
-trait GenXMLHttpRequests extends GenJS {
+trait GenXMLHttpRequests extends GenBase with GenEffect {
   val IR: XMLHttpRequestsExp
   import IR._
 

@@ -1,12 +1,8 @@
 package mtfrp.lang
 
-import scala.js.exp.JSExp
+import frp.core._
 import frp.core.{ Event => SEvent }
-import frp.core.Behavior
-import frp.core.IncBehavior
-import frp.core.DeltaApplicator
 import scala.annotation.implicitNotFound
-import frp.core.TickContext
 
 trait ServerFRPLib extends ReplicationCoreLib {
   object ServerEvent {

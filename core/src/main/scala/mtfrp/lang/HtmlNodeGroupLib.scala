@@ -1,10 +1,5 @@
 package mtfrp.lang
 
-import scala.js.language.JS
-import scala.js.language.dom.EventOps
-import scala.js.language.JSMaps
-import scala.virtualization.lms.common.TupleOps
-
 trait HtmlNodeGroupLib extends HtmlNodeBuilderLib {
   implicit class GroupEventTargetBuilder(b: EventTargetBuilder) {
     def group: GroupBuilder = new GroupBuilder(b.tagName)

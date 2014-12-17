@@ -3,10 +3,9 @@ package mtfrp.exp
 import mtfrp.lang.HtmlNodeBuilderLib
 import scala.js.exp.dom.EventOpsExp
 import scala.js.exp.JSMapsExp
-import scala.js.exp.JSExp
 import scala.js.exp.dom.ElementOpsExp
 
-trait HtmlNodeBuilderLibExp extends HtmlNodeBuilderLib with ClientFRPLibExp with EventOpsExp with JSMapsExp with JSExp with ElementOpsExp {
+trait HtmlNodeBuilderLibExp extends HtmlNodeBuilderLib with ClientFRPLibExp with EventOpsExp with JSMapsExp with ElementOpsExp {
   case class CreateElem(node: Exp[HtmlNode]) extends Def[Element]
   def createElement(vnode: Exp[HtmlNode]): Exp[Element] = CreateElem(vnode)
 

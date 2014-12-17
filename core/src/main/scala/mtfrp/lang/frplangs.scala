@@ -1,12 +1,11 @@
 package mtfrp.lang
 
-import scala.js.language.Adts
+import mtfrp.exp.MtFrpProgExp
+import scala.js.language._
 import scala.js.language.dom.Browser
+import scala.slick.driver.{JdbcDriver, JdbcProfile}
 import spray.json.DefaultJsonProtocol
 import spray.routing.Route
-import scala.slick.driver.JdbcProfile
-import scala.slick.driver.JdbcDriver
-import mtfrp.exp.MtFrpProgExp
 
 trait MtFrpLib
   extends ClientFRPLib
@@ -20,9 +19,9 @@ trait MtFrpProg
   with Adts
   with DocumentOpsExtended
   with DefaultJsonProtocol
-  with HtmlNodeLib {
+  with HtmlNodeLib
+  with JS {
   def main: ClientBehavior[HtmlNode]
-  //  val ontick: Rep[Unit => Unit]
 }
 
 trait MtFrpProgRunner extends MtFrpProgExp { self: MtFrpProg =>

@@ -1,9 +1,8 @@
 package mtfrp.lang
 
-import scala.js.language.JS
 import scala.js.language.Adts
 
-trait JSJsonReaderLib extends JS with Adts {
+trait JSJsonReaderLib extends Adts {
 
   def parse[T: Manifest](raw: Rep[String]): Rep[T]
 
@@ -44,7 +43,7 @@ trait JSJsonReaderLib extends JS with Adts {
   }
 }
 
-trait JSJsonWriterLib extends JS with Adts {
+trait JSJsonWriterLib extends Adts {
 
   def stringify[T](raw: Rep[T]): Rep[String]
 

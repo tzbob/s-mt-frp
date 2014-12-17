@@ -1,11 +1,9 @@
 package mtfrp.lang
 
 import scala.js.language.JSMaps
-import scala.js.language.dom.EventOps
-import scala.js.language.JS
-import scala.js.language.dom.ElementOps
+import scala.js.language.dom._
 
-trait HtmlNodeBuilderLib extends ClientFRPLib with EventOps with JSMaps with JS with ElementOps {
+trait HtmlNodeBuilderLib extends ClientFRPLib with EventOps with JSMaps with ElementOps {
   trait HtmlNode
   trait HtmlNodeDiff
 
