@@ -7,6 +7,8 @@ import scala.slick.driver.{JdbcDriver, JdbcProfile}
 import spray.json.DefaultJsonProtocol
 import spray.routing.Route
 
+import hokko.core.Behavior
+
 trait MtFrpLib
   extends ClientFRPLib
   with ServerFRPLib
@@ -38,7 +40,7 @@ trait MtFrpProgRunner extends MtFrpProgExp { self: MtFrpProg =>
     behavior
   }
 
-  private[mtfrp] def run: (Rep[JSBehavior[HtmlNode]], Option[Route]) = {
+  private[mtfrp] def run: (Rep[Behavior[HtmlNode]], Option[Route]) = {
     val behavior = transformMain(main)
     val rep = behavior.rep
     val route = behavior.core.route

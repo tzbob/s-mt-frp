@@ -33,7 +33,7 @@ trait GenReplicationCoreLib
 }
 
 trait GenClientFRPLib
-  extends GenSFRPClientLib
+  extends GenDelegator
   with GenReplicationCoreLib {
   val IR: ClientFRPLibExp
 }
