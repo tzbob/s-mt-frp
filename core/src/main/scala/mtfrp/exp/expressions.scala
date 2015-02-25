@@ -4,6 +4,7 @@ import scala.js.exp._
 import scala.js.exp.dom._
 import mtfrp.lang._
 import scala.virtualization.lms.common._
+import scalajs2jsscala.DelegatorExp
 
 trait NonRecJSExp extends DynamicsExp with ArraysExp
   with RegExpsExp with OptionOpsExp
@@ -40,16 +41,11 @@ trait DocumentOpsExtendedExp extends DocumentOpsExtended with BrowserExp with FF
 
 trait ReplicationCoreLibExp
   extends JSJsonFormatLibExp
-  with EventSourcesExp
-  with SFRPClientLibExp
-  with XMLHttpRequestsExp
-  with DelayedEvalExp
-  with JSMapsExp
-  with ListOps2Exp
+  with DelegatorExp
 
 trait ClientFRPLibExp
   extends ClientFRPLib
-  with SFRPClientLibExp
+  with DelegatorExp
   with ReplicationCoreLibExp
 // with JSExp - remove support for recursive functions
 // manually put JSExp together

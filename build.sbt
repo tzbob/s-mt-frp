@@ -3,7 +3,7 @@ name := "s-mt-frp root project"
 lazy val sharedSettings = Defaults.defaultSettings ++ Seq(
   isSnapshot := true,
   organization := "mtfrp",
-  version := "0.2-SNAPSHOT",
+  version := "0.3-SNAPSHOT",
   scalaVersion := "2.10.2",
   scalaOrganization := "org.scala-lang.virtualized",
   scalacOptions ++= Seq(
@@ -25,8 +25,12 @@ lazy val core = project.in(file("core"))
       Resolver.sonatypeRepo("snapshots"),
       "spray repo" at "http://repo.spray.io/"),
     libraryDependencies ++= Seq(
+      "org.scala-lang.virtualized" % "scala-compiler" % "2.10.2",
+      "org.scala-lang.virtualized" % "scala-library" % "2.10.2",
+      "org.scala-lang.virtualized" % "scala-reflect" % "2.10.2",
+      "EPFL" %% "lms" % "0.3-SNAPSHOT",
       "EPFL" %% "js-scala" % "0.4-SNAPSHOT",
-      "mtfrp" %% "s-frp-jvm" % "0.1-SNAPSHOT",
+      "com.github.tzbob" %% "hokko" % "0.1-SNAPSHOT",
       "io.spray" %% "spray-can" % "1.3.2",
       "io.spray" %% "spray-routing" % "1.3.2",
       "io.spray" %% "spray-json" % "1.2.6",

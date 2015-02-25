@@ -1,16 +1,12 @@
 package smtfrp.examples
 
 import akka.actor.ActorSystem
-import spray.routing.SimpleRoutingApp
-import scala.slick.driver._
-import mtfrp.lang._
-import mtfrp.gen.PageCompiler
-import scala.concurrent.ExecutionContext
-import mtfrp.lang.MtFrpProgDbRunner
-import mtfrp.lang.NoDB
-import mtfrp.lang.MtFrpProgRunner
 import java.util.concurrent.Executors
-import scala.collection.mutable.ListBuffer
+import mtfrp.gen.PageCompiler
+import mtfrp.lang._
+import scala.concurrent.ExecutionContext
+import scala.slick.driver._
+import spray.routing.SimpleRoutingApp
 
 object Demo extends App with SimpleRoutingApp {
   val bootstrap = Seq("bootstrap/css/bootstrap.css", "css/flat-ui.css")

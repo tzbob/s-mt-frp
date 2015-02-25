@@ -4,6 +4,7 @@ import mtfrp.exp._
 import scala.js.gen.js._
 import scala.js.gen.js.dom._
 import scala.virtualization.lms.common.GenericGenUnboxedTupleAccess
+import scalajs2jsscala.GenDelegator
 
 trait GenNonRecJS extends GenEffect with GenNumericOps with GenOrderingOps with GenEqual
   with GenIfThenElse with GenWhile with GenBooleanOps with GenStringOps with GenVariables
@@ -27,12 +28,7 @@ trait GenJSJsonFormat extends GenJSJsonReaderContext with GenJSJsonWriterContext
 
 trait GenReplicationCoreLib
   extends GenJSJsonFormat
-  with GenEventSources
-  with GenSFRPClientLib
-  with GenXMLHttpRequests
-  with GenDelayedEval
-  with GenJSMaps
-  with GenListOps2 {
+  with GenDelegator {
   val IR: ReplicationCoreLibExp
 }
 
