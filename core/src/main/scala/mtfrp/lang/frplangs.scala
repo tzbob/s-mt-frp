@@ -1,13 +1,11 @@
 package mtfrp.lang
 
+import hokko.core.{DiscreteBehavior, Engine}
 import mtfrp.exp.MtFrpProgExp
 import scala.js.language._
 import scala.js.language.dom.Browser
-import scala.slick.driver.{JdbcDriver, JdbcProfile}
 import spray.json.DefaultJsonProtocol
 import spray.routing.Route
-
-import hokko.core.Behavior
 
 trait MtFrpLib
   extends ClientFRPLib
@@ -23,50 +21,38 @@ trait MtFrpProg
   with DefaultJsonProtocol
   with HtmlNodeLib
   with JS {
-  def main: ClientBehavior[HtmlNode]
+  def main: ClientDiscreteBehavior[HtmlNode]
 }
 
 trait MtFrpProgRunner extends MtFrpProgExp { self: MtFrpProg =>
-  private[mtfrp] def transformMain(behavior: ClientBehavior[HtmlNode]): ClientBehavior[HtmlNode] = {
-    val initialState = behavior.rep.markExit(FRP.global).now()
-    val rootElem = createElement(initialState)
-    document.body.appendChild(rootElem)
+  private[mtfrp] def run: (Rep[DiscreteBehavior[HtmlNode]], Option[Route]) = {
+    val behavior = main
 
-    val diffs = behavior.delay.combine(behavior)(diff(_, _))
-    diffs.rep.foreach(fun {
-      patch(rootElem, _)
-    }, FRP.global)
-
-    behavior
-  }
-
-  private[mtfrp] def run: (Rep[Behavior[HtmlNode]], Option[Route]) = {
-    val behavior = transformMain(main)
     val rep = behavior.rep
-    val route = behavior.core.route
-    (rep, route)
-  }
-}
+    val core = behavior.core
 
-trait MtFrpProgDbRunner extends MtFrpProgRunner { self: MtFrpProg with DatabaseDefinition =>
-  import driver.simple._
+    // compile the FRP networks (this has all the bottom nodes of the graph)
+    val serverEngine = Engine.compile(core.serverCarrier)()
+    val clientEngine = EngineRep.compile(List(core.clientCarrier))(List(rep))
 
-  override private[mtfrp] def transformMain(behavior: ClientBehavior[HtmlNode]): ClientBehavior[HtmlNode] = {
-    val beh = super.transformMain(behavior)
-    val databaseManipulations = beh.core.mergedDatabaseActions
+    // populate the document body asap
+    val clientState = clientEngine.askCurrentValues()
+    clientState(rep).foreach { (initialState: Rep[HtmlNode]) =>
+      val rootElem = createElement(initialState)
+      document.body.appendChild(rootElem)
 
-    databaseManipulations.foreach { seq =>
-      database.withSession { s: Session =>
-        s.withTransaction {
-          seq.foreach(_(s))
+      var currentNode = initialState
+      clientEngine.subscribeForPulses { (pulses: Rep[Engine.Pulses]) =>
+        pulses(rep.changes).foreach { (change: Rep[HtmlNode]) =>
+          val delta = diff(currentNode, change)
+          currentNode = change
+          patch(rootElem, delta)
         }
       }
+      () // explicitly mark a unit function for Rep[Unit]
     }
-    beh
-  }
-}
 
-trait NoDB {
-  type Profile = JdbcDriver
-  val driver = JdbcDriver
+    val routeMaker = new RouteCreator(core, serverEngine, clientEngine)
+    (rep, routeMaker.makeRoute())
+  }
 }

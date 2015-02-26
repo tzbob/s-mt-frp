@@ -14,7 +14,7 @@ import spray.routing.RequestContext
 trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
   with HEvent.EventLib with HEvent.EventStaticLib
   with Engine.EngineLib with Engine.EngineStaticLib
-  with Engine.Pulses.PulsesLib
+  with Engine.Pulses.PulsesLib with Engine.Values.ValuesLib
   with XMLHttpRequests with DelayedEval
   with JSMaps with ListOps with ListOps2 with TupleOps with OptionOps {
 
@@ -68,6 +68,9 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
       }
   }
 
+  type NamedServerPulseMaker = Map[String, (String, String) => (HEventSource[(Client, T)], (Client, T)) forSome { type T }]
+  type NamedClientPulseMaker = Map[String, String => (HEventSource[T], T) forSome { type T }]
+
   case class ReplicationCore(
     toClientDeps: Set[ToClientDependency[_]] = Set.empty,
     toServerDeps: Set[ToServerDependency[_]] = Set.empty
@@ -80,50 +83,83 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
       ReplicationCore(toClientDeps, toServerDeps)
     }
 
-    // merge the server exit nodes into 1 message carrier
-    val serverCarrier =
+    /**
+     * merge the server exit nodes into 1 message carrier
+     */
+    def serverCarrier: HEvent[Seq[Client => Option[Message]]] =
       HEvent.merge(toClientDeps.map(_.messageCarrier).toSeq)
-    // compile the FRP network (this has all the bottom nodes of the graph)
-    val serverEngine = Engine.compile(serverCarrier)()
 
-    // merge the client exit nodes into 1 message carrier
-    val clientCarrier = {
+    /**
+     * merge the client exit nodes into 1 message carrier
+     */
+    def clientCarrier: Rep[HEvent[Seq[Message]]] = {
       val carriers = toServerDeps.map(_.messageCarrier).toSeq
       EventRep.merge(List(carriers: _*))
     }
-    // compile the FRP network (this has all the bottom nodes of the graph)
-    val clientEngine = EngineRep.compile(List(clientCarrier))(List())
 
-    def route: Option[Route] = {
-      val r1 = initializeToClientDependencies()
-      val r2 = initializeToServerDependencies()
-      if (r1.isDefined)
-        if (r2.isDefined) Some(r1.get ~ r2.get)
-        else Some(r1.get)
-      else None
+    /**
+     * named pulse makers to inject data in the FRP network
+     */
+    def clientNamedPulseMakers: Rep[NamedClientPulseMaker] = {
+      val map = JSMap[String, String => (HEventSource[T], T) forSome { type T }]()
+      val namedToClientDeps = toClientDeps.map { d =>
+        (d.name, d.mkPulse)
+      }
+      namedToClientDeps.foreach {
+        case (name, entry) =>
+          map.update(unit(name), entry)
+      }
+      map
+    }
+
+    /**
+     * named pulse makers to inject data in the FRP network
+     */
+    def serverNamedPulseMakers: NamedServerPulseMaker =
+      toServerDeps.map { d =>
+        (d.name, d.pulse _)
+      }.toMap
+
+  }
+
+  /**
+   * Responsible for creating server routes and client-side logic to
+   * make replication between client and server tiers possible
+   */
+  class RouteCreator(
+    core: ReplicationCore,
+    serverEngine: Engine,
+    clientEngine: Rep[Engine]
+  ) {
+    val serverCarrier = core.serverCarrier
+    val serverNamedPulseMakers = core.serverNamedPulseMakers
+
+    val clientCarrier = core.clientCarrier
+    val clientNamedPulseMakers = core.clientNamedPulseMakers
+
+    def makeRoute(): Option[Route] = {
+      val r1 =
+        if (core.toClientDeps.isEmpty)
+          Some(initializeToClientDependencies())
+        else None
+
+      val r2 =
+        if (core.toServerDeps.isEmpty)
+        Some(initializeToServerDependencies())
+        else None
+
+      r1.fold(r2)(_ ~ r2)
     }
 
     /**
      * @return optionally, the Route that encompasses all involved client
      * functionality
      */
-    def initializeToClientDependencies(): Option[Route] =
-      if (!toClientDeps.isEmpty) {
-        val url = URLEncoder.encode(UUID.randomUUID.toString, "UTF-8")
-        initClientSideToClient(url)
-        Some(initServerSideToClient(url))
-      } else None
-
-    /**
-     *  @return optionally, the Route that encompasses all involved server
-     *  functionality
-     */
-    def initializeToServerDependencies(): Option[Route] =
-      if (!toServerDeps.isEmpty) {
-        val url = URLEncoder.encode(UUID.randomUUID.toString, "UTF-8")
-        initClientSideToServer(url)
-        Some(initServerSideToServer(url))
-      } else None
+    def initializeToClientDependencies(): Route = {
+      val url = URLEncoder.encode(UUID.randomUUID.toString, "UTF-8")
+      initClientSideToClient(url)
+      initServerSideToClient(url)
+    }
 
     /**
      * initialize the client section of 'toClient' calls
@@ -133,23 +169,11 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
     private def initClientSideToClient(url: String): Unit = {
       implicit def messageOps(m: Rep[Message]) = adtOps(m)
 
-      val namedPulseMakers = {
-        val map = JSMap[String, String => (HEventSource[T], T) forSome { type T }]()
-        val namedToClientDeps = toClientDeps.map { d =>
-          (d.name, d.mkPulse)
-        }
-        namedToClientDeps.foreach {
-          case (name, entry) =>
-            map.update(unit(name), entry)
-        }
-        map
-      }
-
       val sseSource = EventSource(includeClientIdParam(url))
       sseSource.onmessage = fun { ev: Rep[Dataliteral] =>
         val messages = implicitly[JSJsonReader[List[Message]]].read(ev.data)
         val pulses = messages.map { (message: Rep[Message]) =>
-          namedPulseMakers(message.name)(message.json)
+          clientNamedPulseMakers(message.name)(message.json)
         }
         clientEngine.fire(pulses)
       }
@@ -185,6 +209,16 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
       }
 
     /**
+     *  @return optionally, the Route that encompasses all involved server
+     *  functionality
+     */
+    def initializeToServerDependencies(): Route = {
+      val url = URLEncoder.encode(UUID.randomUUID.toString, "UTF-8")
+      initClientSideToServer(url)
+      initServerSideToServer(url)
+    }
+
+    /**
      * initialize the client section of 'toServer' calls
      *  i.e., subscribe to the clientCarrier and push new values
      *  to the server using XMLHttpRequest
@@ -205,11 +239,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
      *  i.e., listen to POST requests from clients
      *  and push new values to the server EventSources
      */
-    private def initServerSideToServer(url: String): Route = {
-      val namedToServerDeps = toServerDeps.map { d =>
-        (d.name, d)
-      }.toMap[String, ToServerDependency[_]]
-
+    private def initServerSideToServer(url: String): Route =
       path(url) {
         parameter('id) { id =>
           post {
@@ -217,7 +247,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
               complete {
                 val messages = data.parseJson.convertTo[List[Message]]
                 val pulses = messages.map { message =>
-                  namedToServerDeps(message.name).pulse(message.json, id)
+                  serverNamedPulseMakers(message.name)(message.json, id)
                 }
                 serverEngine.fire(pulses)
                 "OK"
@@ -226,6 +256,5 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
           }
         }
       }
-    }
   }
 }
