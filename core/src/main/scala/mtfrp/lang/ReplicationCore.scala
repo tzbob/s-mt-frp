@@ -148,7 +148,9 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
         Some(initializeToServerDependencies())
         else None
 
-      r1.fold(r2)(_ ~ r2)
+      r1.fold(r2) { route =>
+        r2.map(_ ~ route)
+      }
     }
 
     /**
