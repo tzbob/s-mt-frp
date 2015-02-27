@@ -1,6 +1,6 @@
 package mtfrp.lang
 
-import hokko.core.{ Event => HEvent, EventSource => HEventSource, Engine }
+import hokko.core.{ Event => HEvent, EventSource => HEventSource, Engine, Behavior }
 import java.net.URLEncoder
 import java.util.UUID
 import scala.js.language._
@@ -25,16 +25,24 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
   }
 
   class ToClientDependency[T: JsonWriter: JSJsonReader: Manifest](
+    initialDataSource: Option[Behavior[Client => T]] = None,
     exit: HEvent[Client => Option[T]],
     entry: Rep[HEventSource[T]]
   ) {
     val name = UUID.randomUUID.toString
 
+    private def tToMessage(t: T) = Message(name, t.toJson.compactPrint)
+
+    val initialCarrier: Option[Behavior[Client => Message]] =
+      initialDataSource.map { beh =>
+        beh.map { fun =>
+          c: Client => tToMessage(fun(c))
+        }
+      }
+
     val messageCarrier: HEvent[Client => Option[Message]] =
       exit.map { fun =>
-        (c: Client) => fun(c).map { t =>
-          Message(name, t.toJson.compactPrint)
-        }
+        (c: Client) => fun(c).map(tToMessage)
       }
 
     val mkPulse: Rep[String => (HEventSource[T], T)] =
@@ -75,6 +83,11 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
     toClientDeps: Set[ToClientDependency[_]] = Set.empty,
     toServerDeps: Set[ToServerDependency[_]] = Set.empty
   ) {
+    def +(clientDep: ToClientDependency[_]): ReplicationCore =
+      this.copy(toClientDeps = toClientDeps + clientDep)
+    def +(serverDep: ToServerDependency[_]): ReplicationCore =
+      this.copy(toServerDeps = toServerDeps + serverDep)
+
     def +(others: ReplicationCore*): ReplicationCore = {
       def fold[T](v: ReplicationCore => Set[T]) =
         others.foldLeft(v(this))(_ ++ v(_))
@@ -84,13 +97,33 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
     }
 
     /**
-     * merge the server exit nodes into 1 message carrier
+     * @returns an initial message carrier from which the client specific
+     * to-be-transfered state can be pulled
      */
-    def serverCarrier: HEvent[Seq[Client => Option[Message]]] =
-      HEvent.merge(toClientDeps.map(_.messageCarrier).toSeq)
+    def initialCarrier: Behavior[Client => Seq[Message]] = {
+      val carriers = toClientDeps.map(_.initialCarrier).flatten
+      val seqCarrier = carriers.foldLeft(Behavior.constant(collection.Seq.empty[Client => Message])) { (acc, n) =>
+        val fa = n.map { newVal =>
+          seq: Seq[Client => Message] => seq :+ newVal
+        }
+        acc.reverseApply(fa)
+      }
+      seqCarrier.map { seq =>
+        c: Client => seq.map(_(c))
+      }
+    }
 
     /**
-     * merge the client exit nodes into 1 message carrier
+     * @returns a message carrier that pushes client specific
+     * to-be-transfered state
+     */
+    def serverCarrier: HEvent[Client => Seq[Message]] =
+      HEvent.merge(toClientDeps.map(_.messageCarrier).toSeq).map { seq =>
+        c: Client => seq.map(_(c)).flatten
+      }
+
+    /**
+     * @returns a message carrier that pushes to-be-transfered state
      */
     def clientCarrier: Rep[HEvent[Seq[Message]]] = {
       val carriers = toServerDeps.map(_.messageCarrier).toSeq
@@ -145,7 +178,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
 
       val r2 =
         if (core.toServerDeps.isEmpty)
-        Some(initializeToServerDependencies())
+          Some(initializeToServerDependencies())
         else None
 
       r1.fold(r2) { route =>
@@ -198,10 +231,17 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
               )
               ctx.responder ! ChunkedResponseStart(responseStart)
 
+              val values = serverEngine.askCurrentValues()
+              values(core.initialCarrier).foreach { msgsForClient =>
+                val msgs = msgsForClient(client)
+                val data = s"data:${msgs.toJson.compactPrint}\n\n"
+                ctx.responder ! MessageChunk(data)
+              }
+
               serverEngine.subscribeForPulses { pulses =>
                 val pulse = pulses(serverCarrier)
-                pulse.foreach { seq =>
-                  val msgs = seq.map(_(client)).flatten
+                pulse.foreach { msgsForClient =>
+                  val msgs = msgsForClient(client)
                   val data = s"data:${msgs.toJson.compactPrint}\n\n"
                   ctx.responder ! MessageChunk(data)
                 }

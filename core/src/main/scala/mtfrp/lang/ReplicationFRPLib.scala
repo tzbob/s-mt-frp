@@ -32,9 +32,8 @@ trait ReplicationFRPLib
     }.toClient
   }
 
-  implicit class BehaviorToClient[T: JsonWriter: JSJsonReader: Manifest](beh: ServerBehavior[Client => T]) {
-    def toClient: ClientBehavior[T] = {
-
+  implicit class DiscreteBehaviorToClient[T: JsonWriter: JSJsonReader: Manifest](beh: ServerDiscreteBehavior[Client => T]) {
+    def toClient: ClientDiscreteBehavior[T] = {
       val x = { (engine: Engine, repEngine: Rep[Engine]) =>
         val values = engine.askCurrentValues()
         val now = values(beh)
