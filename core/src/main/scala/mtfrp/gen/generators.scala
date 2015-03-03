@@ -28,7 +28,8 @@ trait GenJSJsonFormat extends GenJSJsonReaderContext with GenJSJsonWriterContext
 
 trait GenReplicationCoreLib
   extends GenJSJsonFormat
-  with GenDelegator {
+  with GenDelegator
+  with GenDelayedEval {
   val IR: ReplicationCoreLibExp
 }
 

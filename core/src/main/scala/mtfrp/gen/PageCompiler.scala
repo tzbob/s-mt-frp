@@ -16,7 +16,7 @@ object PageCompiler {
   import Directives._
 
   def makeRoute(csses: Seq[String] = Seq.empty, scripts: Seq[String] = Seq.empty)(prog: MtFrpProgRunner with MtFrpProgExp)(url: String): Route = {
-    lazy val (rep, route) = prog.run
+    lazy val (rep, route, engine) = prog.run
     val gen = new GenMtFrp { val IR: prog.type = prog }
     val block = gen.reifyBlock(rep)
 
@@ -25,7 +25,7 @@ object PageCompiler {
     def html(client: Client, csses: Seq[String], scripts: Seq[String]) = {
       val sw = new StringWriter
       val out = new PrintWriter(sw)
-      gen.emitSourceForClient(client, Nil, block, "", out)
+      gen.emitSourceForClient(client, engine, Nil, block, "", out)
       val js = sw.toString
 
       <html>
@@ -55,7 +55,7 @@ object PageCompiler {
 
     route match {
       case Some(route) => pageRoute ~ route
-      case None        => pageRoute
+      case None => pageRoute
     }
   }
 
