@@ -38,8 +38,8 @@ trait ClientFRPLib extends JS
 
     // Derived ops
 
-    def hold[U >: T](initial: Rep[U]): ClientBehavior[U] =
-      ClientBehavior(rep.hold(initial), core)
+    def hold[U >: T](initial: Rep[U]): ClientDiscreteBehavior[U] =
+      ClientDiscreteBehavior(rep.hold(initial), core)
 
     def map[A](modifier: Rep[T => A]): ClientEvent[A] =
       ClientEvent(rep.map(modifier), core)

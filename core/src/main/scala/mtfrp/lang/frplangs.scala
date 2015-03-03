@@ -25,7 +25,7 @@ trait MtFrpProg
 }
 
 trait MtFrpProgRunner extends MtFrpProgExp { self: MtFrpProg =>
-  private[mtfrp] def run: (Rep[DiscreteBehavior[HtmlNode]], Option[Route]) = {
+  private[mtfrp] def run: (Rep[DiscreteBehavior[HtmlNode]], Option[Route], Engine) = {
     val behavior = main
 
     val rep = behavior.rep
@@ -53,6 +53,6 @@ trait MtFrpProgRunner extends MtFrpProgExp { self: MtFrpProg =>
     }
 
     val routeMaker = new RouteCreator(core, serverEngine, clientEngine)
-    (rep, routeMaker.makeRoute())
+    (rep, routeMaker.makeRoute(), serverEngine)
   }
 }

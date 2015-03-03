@@ -21,7 +21,7 @@ trait ReplicationFRPLib
   implicit class EventToClient[T: JsonWriter: JSJsonReader: Manifest](evt: ServerEvent[Client => Option[T]]) {
     def toClient: ClientEvent[T] = {
       val source = EventRep.source[T]
-      val toClientDep = new ToClientDependency(evt.rep, source)
+      val toClientDep = new ToClientDependency(exit = evt.rep, entry = source)
       ClientEvent(source, evt.core + toClientDep)
     }
   }
@@ -34,24 +34,19 @@ trait ReplicationFRPLib
 
   implicit class DiscreteBehaviorToClient[T: JsonWriter: JSJsonReader: Manifest](beh: ServerDiscreteBehavior[Client => T]) {
     def toClient: ClientDiscreteBehavior[T] = {
-      val x = { (engine: Engine, repEngine: Rep[Engine]) =>
-        val values = engine.askCurrentValues()
-        val now = values(beh)
-        def calculateCurrentState(client: Client) =
-          if (now.isDefined)
-            unit(now(client).toJson.compactPrint)
-          else throw new RuntimeException(s"There is no value for $beh in $engine")
-        val currentState = delayForClient(calculateCurrentState).convertToRep[T]
+      def calculateCurrentState(c: Client, e: Engine): T = {
+        val values = e.askCurrentValues()
+        val current = values(beh.rep)
+        if (current.isDefined) current.get(c)
+        else throw new RuntimeException(s"${beh.rep} is not present in $e")
       }
 
-      val ticket = beh.rep.markExit
-      def insertCurrentState(client: Client) = {
-        unit(ticket.now()(client).toJson.compactPrint)
-      }
-      val currentState = delayForClient(insertCurrentState).convertToRep[T]
+      val currentState = delay(calculateCurrentState)
+
       val targetedChanges = beh.changes.map { fun =>
         client: Client => Some(fun(client))
       }
+
       targetedChanges.toClient.hold(currentState)
     }
   }
