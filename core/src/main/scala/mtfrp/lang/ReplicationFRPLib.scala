@@ -21,7 +21,8 @@ trait ReplicationFRPLib
   implicit class EventToClient[T: JsonWriter: JSJsonReader: Manifest](evt: ServerEvent[Client => Option[T]]) {
     def toClient: ClientEvent[T] = {
       val source = EventRep.source[T]
-      val toClientDep = new ToClientDependency(exit = evt.rep, entry = source)
+      val toClientDep =
+        new ToClientDependency(exit = evt.rep, entry = source)
       ClientEvent(source, evt.core + toClientDep)
     }
   }
@@ -41,13 +42,18 @@ trait ReplicationFRPLib
         else throw new RuntimeException(s"${beh.rep} is not present in $e")
       }
 
+      val source = EventRep.source[T]
       val currentState = delay(calculateCurrentState)
+      val behavior = source.hold(currentState)
 
-      val targetedChanges = beh.changes.map { fun =>
-        client: Client => Some(fun(client))
+      val optionalChanges = beh.rep.changes.map { fun =>
+        c: Client => Some(fun(c))
       }
 
-      targetedChanges.toClient.hold(currentState)
+      val toClientDep =
+        new ToClientDependency(Some(beh.rep), optionalChanges, source)
+
+      ClientDiscreteBehavior(behavior, beh.core + toClientDep)
     }
   }
 
