@@ -1,11 +1,18 @@
 package mtfrp.exp
 
+import hokko.core.Engine
+import mtfrp.lang.{ Client, DelayedEval }
 import scala.virtualization.lms.common.BaseExp
-import mtfrp.lang.DelayedEval
-import mtfrp.lang.Client
+import spray.json._
 
-trait DelayedEvalExp extends DelayedEval with BaseExp {
-  case class DelayedForClient[T](thunk: Client => Exp[T]) extends Def[T]
-  def delayForClient[T: Manifest](thunk: Client => Exp[T]): Exp[T] =
-    DelayedForClient(thunk)
+trait DelayedEvalExp extends DelayedEval with JSJsonFormatLibExp {
+  case class DelayedForClient[T](thunk: (Client, Engine) => Exp[T]) extends Def[T]
+
+  def delayForClient[T: Manifest: JsonWriter: JSJsonReader](thunk: (Client, Engine) => T): Exp[T] =
+    DelayedForClient { (client, engine) =>
+      val data = thunk(client, engine)
+      val serverJson = data.toJson.compactPrint
+      val clientJson = unit(serverJson)
+      clientJson.convertToRep[T]
+    }
 }

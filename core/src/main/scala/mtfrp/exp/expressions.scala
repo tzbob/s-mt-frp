@@ -42,6 +42,7 @@ trait DocumentOpsExtendedExp extends DocumentOpsExtended with BrowserExp with FF
 trait ReplicationCoreLibExp
   extends JSJsonFormatLibExp
   with DelegatorExp
+  with DelayedEvalExp
 
 trait ClientFRPLibExp
   extends ClientFRPLib
