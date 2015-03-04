@@ -26,9 +26,9 @@ trait HtmlNodeBuilderLibExp extends HtmlNodeBuilderLib with ClientFRPLibExp with
     children: Exp[List[HtmlNode]]) extends Def[HtmlNode]
   def mkNode(
     tagName: Exp[String],
-    handlers: Handlers,
+    handlers: List[Handler],
     attributes: Attributes,
-    children: Children): Exp[HtmlNode] = {
+    children: Rep[List[HtmlNode]]): Exp[HtmlNode] = {
 
     val properties = JSMap[String, Any]()
     properties.update("attributes", attributes)

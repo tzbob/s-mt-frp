@@ -3,6 +3,8 @@ package mtfrp.lang
 import scala.js.language.JSMaps
 import scala.js.language.dom._
 
+import hokko.core.Engine
+
 trait HtmlNodeBuilderLib extends ClientFRPLib with EventOps with JSMaps with ElementOps {
   trait HtmlNode
   trait HtmlNodeDiff
@@ -14,9 +16,10 @@ trait HtmlNodeBuilderLib extends ClientFRPLib with EventOps with JSMaps with Ele
   def mkText(str: Rep[String]): Rep[HtmlNode]
   def mkNode(
     tagName: Rep[String],
-    handlers: Handlers,
+    handlers: List[Handler],
     attributes: Attributes = defaultAttributes(),
-    children: Children = defaultChildren): Rep[HtmlNode]
+    children: Rep[List[HtmlNode]] = defaultChildren
+  ): Rep[HtmlNode]
 
   trait Value[T]
   case class RepConst[T](node: Rep[T]) extends Value[T]
@@ -43,9 +46,6 @@ trait HtmlNodeBuilderLib extends ClientFRPLib with EventOps with JSMaps with Ele
   def defaultAttributes() = JSMap[String, Any]()
   type Attributes = Rep[Map[String, Any]]
 
-  lazy val defaultHandlers: Handlers = collection.immutable.List.empty
-  type Handlers = List[Handler]
-
   trait Handler {
     val eventDef: EventDef
     val m: Manifest[eventDef.Type]
@@ -63,15 +63,18 @@ trait HtmlNodeBuilderLib extends ClientFRPLib with EventOps with JSMaps with Ele
   }
 
   lazy val defaultChildren = List()
-  type Children = Rep[List[HtmlNode]]
+  type Children = Rep[List[Html]]
 
-  private def handleEvent(ev: EventDef)(implicit m: Manifest[ev.Type]): (ClientEvent[ev.Type], Handler) = {
-    val evt = FRP.eventSource[ev.Type](FRP.global)
-    (ClientEvent(evt, ReplicationCore()), Handler(ev)(evt.fire))
+  private def handleEvent(ev: EventDef)(implicit m: Manifest[ev.Type]): (ClientEvent[ev.Type], Rep[Engine] => Handler) = {
+    val source = EventRep.source[ev.Type]
+    val mkHandler = (engine: Rep[Engine]) => Handler(ev) { occ =>
+      engine.fire(List(source -> occ))
+    }
+    (ClientEvent(source, ReplicationCore()), mkHandler)
   }
 
   class EventTargetBuilder(val tagName: Rep[String]) {
-    def apply: HtmlNodeBuilder = new HtmlNodeBuilder(tagName, defaultHandlers)
+    def apply(): HtmlNodeBuilder = new HtmlNodeBuilder(tagName, scala.List.empty)
     def apply(ev1: EventDef)(implicit m: Manifest[ev1.Type]): (HtmlNodeBuilder, ClientEvent[ev1.Type]) = {
       val (evt, handler) = handleEvent(ev1)
       val handlers = handler +: Nil
@@ -95,15 +98,31 @@ trait HtmlNodeBuilderLib extends ClientFRPLib with EventOps with JSMaps with Ele
     vnodeLists.foldLeft(List[T]())(_ ++ _)
   }
 
-  class HtmlNodeBuilder(tagName: Rep[String], handlers: Handlers) {
-    def apply(): Rep[HtmlNode] = mkNode(tagName, handlers = handlers)
-    def apply(children: Value[HtmlNode]*): Rep[HtmlNode] =
-      mkNode(tagName, handlers, children = vToRepList(children))
-    def apply(attrs: Value[Attribute]*)(children: Value[HtmlNode]*): Rep[HtmlNode] = {
-      val jsAttrs = vToRepList(attrs)
-      val props = defaultAttributes()
-      jsAttrs.foreach { tuple => props.update(tuple._1, tuple._2) }
-      mkNode(tagName, handlers, props, vToRepList(children))
-    }
+  // I need to make an HTML Node
+  // This node needs the handlers that fire events into the FRP network.
+  // Firing events into the FRP network requires an Engine and the corresponding EventSource
+  // THUS, creating an HTML Node requires an Engine and the EventSource
+
+  // An Engine is only accessible after compiling the FRP network(which uses the EventSource)
+  // THUS, creating an HTML Node is impossible without recursive values
+
+  // FIX: Do the HTML stuff after the Engine is compiled
+  // FIX: HTML Nodes on which handlers can be subscribed
+  // FIX: Firing events without an Engine
+
+  type Html = Engine => HtmlNode
+
+  class HtmlNodeBuilder(tagName: Rep[String], handlers: List[Rep[Engine] => Handler]) {
+    def apply(attrs: Value[Attribute]*)(children: Value[Html]*): Rep[Html] =
+      fun { e: Rep[Engine] =>
+        val jsAttrs = vToRepList(attrs)
+        val props = defaultAttributes()
+
+        val repList = vToRepList(children)
+        val htmlNodes = repList.map(_(e))
+
+        jsAttrs.foreach { tuple => props.update(tuple._1, tuple._2) }
+        mkNode(tagName, handlers.map(_(e)), props, htmlNodes)
+      }
   }
 }

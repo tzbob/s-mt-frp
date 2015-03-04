@@ -1,6 +1,6 @@
 package mtfrp.lang
 
-import hokko.core.{Behavior, DiscreteBehavior, Event => HEvent, IncrementalBehavior}
+import hokko.core.{ Behavior, DiscreteBehavior, Event => HEvent, IncrementalBehavior }
 import scala.annotation.implicitNotFound
 
 trait ServerFRPLib extends ReplicationCoreLib { selfLib =>
@@ -15,7 +15,10 @@ trait ServerFRPLib extends ReplicationCoreLib { selfLib =>
     }
   }
 
-  class ServerEvent[+T] private (val rep: HEvent[T], val core: ReplicationCore) {
+  class ServerEvent[+T] private (
+    val rep: HEvent[T],
+    val core: ReplicationCore
+  ) {
     def fold[B, AA >: T](initial: B)(f: (B, AA) => B): ServerIncBehavior[B, AA] =
       ServerIncBehavior(rep.fold(initial)(f), core)
 
@@ -44,7 +47,10 @@ trait ServerFRPLib extends ReplicationCoreLib { selfLib =>
       this.apply(Behavior.constant(const), ReplicationCore.empty)
   }
 
-  class ServerBehavior[+A] private[ServerFRPLib] (val rep: Behavior[A], val core: ReplicationCore) {
+  class ServerBehavior[+A] private[ServerFRPLib] (
+    val rep: Behavior[A],
+    val core: ReplicationCore
+  ) {
     def reverseApply[B, AA >: A](fb: ServerBehavior[AA => B]): ServerBehavior[B] =
       ServerBehavior(rep.reverseApply(fb.rep), core + fb.core)
 
@@ -68,8 +74,8 @@ trait ServerFRPLib extends ReplicationCoreLib { selfLib =>
   }
 
   class ServerDiscreteBehavior[+A] private[ServerFRPLib] (
-    val rep: DiscreteBehavior[A],
-    val core: ReplicationCore
+    override val rep: DiscreteBehavior[A],
+    override val core: ReplicationCore
   ) extends ServerBehavior[A](rep, core) {
     def changes(): ServerEvent[A] = ServerEvent(rep.changes(), core)
 
@@ -89,8 +95,8 @@ trait ServerFRPLib extends ReplicationCoreLib { selfLib =>
   }
 
   class ServerIncBehavior[+A, +DeltaA] private (
-    val rep: IncrementalBehavior[A, DeltaA],
-    val core: ReplicationCore
+    override val rep: IncrementalBehavior[A, DeltaA],
+    override val core: ReplicationCore
   ) extends ServerBehavior[A](rep, core) {
     def deltas: ServerEvent[DeltaA] = ServerEvent(rep.deltas, core)
   }

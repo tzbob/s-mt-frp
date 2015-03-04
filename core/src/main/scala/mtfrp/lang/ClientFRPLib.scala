@@ -1,6 +1,6 @@
 package mtfrp.lang
 
-import hokko.core.{Behavior, DiscreteBehavior, Event => HEvent, IncrementalBehavior}
+import hokko.core.{ Behavior, DiscreteBehavior, Event => HEvent, IncrementalBehavior }
 import scala.js.language.JS
 
 trait ClientFRPLib extends JS
@@ -26,7 +26,10 @@ trait ClientFRPLib extends JS
     }
   }
 
-  class ClientEvent[+T] private (val rep: Rep[HEvent[T]], val core: ReplicationCore) {
+  class ClientEvent[+T] private (
+    val rep: Rep[HEvent[T]],
+    val core: ReplicationCore
+  ) {
     def fold[B, AA >: T](initial: Rep[B])(f: Rep[(B, AA) => B]): ClientIncBehavior[B, AA] =
       ClientIncBehavior(rep.fold(initial)(f), core)
 
@@ -55,7 +58,10 @@ trait ClientFRPLib extends JS
       this.apply(BehaviorRep.constant(const), ReplicationCore.empty)
   }
 
-  class ClientBehavior[+A] private[ClientFRPLib] (val rep: Rep[Behavior[A]], val core: ReplicationCore) {
+  class ClientBehavior[+A] private[ClientFRPLib] (
+    val rep: Rep[Behavior[A]],
+    val core: ReplicationCore
+  ) {
     def reverseApply[B, AA >: A](fb: ClientBehavior[AA => B]): ClientBehavior[B] =
       ClientBehavior(rep.reverseApply(fb.rep), core + fb.core)
 
@@ -79,8 +85,8 @@ trait ClientFRPLib extends JS
   }
 
   class ClientDiscreteBehavior[+A] private[ClientFRPLib] (
-    val rep: Rep[DiscreteBehavior[A]],
-    val core: ReplicationCore
+    override val rep: Rep[DiscreteBehavior[A]],
+    override val core: ReplicationCore
   ) extends ClientBehavior[A](rep, core) {
     def changes(): ClientEvent[A] = ClientEvent(rep.changes(), core)
 
@@ -100,8 +106,8 @@ trait ClientFRPLib extends JS
   }
 
   class ClientIncBehavior[+A, +DeltaA] private (
-    val rep: Rep[IncrementalBehavior[A, DeltaA]],
-    val core: ReplicationCore
+    override val rep: Rep[IncrementalBehavior[A, DeltaA]],
+    override val core: ReplicationCore
   ) extends ClientBehavior[A](rep, core) {
     def deltas: ClientEvent[DeltaA] = ClientEvent(rep.deltas, core)
   }

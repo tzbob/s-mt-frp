@@ -87,12 +87,13 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
       this.copy(toClientDeps = toClientDeps + clientDep)
     def +(serverDep: ToServerDependency[_]): ReplicationCore =
       this.copy(toServerDeps = toServerDeps + serverDep)
-
     def +(others: ReplicationCore*): ReplicationCore = {
       def fold[T](v: ReplicationCore => Set[T]) =
         others.foldLeft(v(this))(_ ++ v(_))
+
       val toClientDeps = fold(_.toClientDeps)
       val toServerDeps = fold(_.toServerDeps)
+
       ReplicationCore(toClientDeps, toServerDeps)
     }
 

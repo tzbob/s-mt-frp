@@ -21,11 +21,11 @@ trait MtFrpProg
   with DefaultJsonProtocol
   with HtmlNodeLib
   with JS {
-  def main: ClientDiscreteBehavior[HtmlNode]
+  def main: ClientDiscreteBehavior[Html]
 }
 
 trait MtFrpProgRunner extends MtFrpProgExp { self: MtFrpProg =>
-  private[mtfrp] def run: (Rep[DiscreteBehavior[HtmlNode]], Option[Route], Engine) = {
+  private[mtfrp] def run: (Rep[Any], Option[Route], Engine) = {
     val behavior = main
 
     val rep = behavior.rep
@@ -35,17 +35,21 @@ trait MtFrpProgRunner extends MtFrpProgExp { self: MtFrpProg =>
     val serverEngine = Engine.compile(core.serverCarrier)()
     val clientEngine = EngineRep.compile(List(core.clientCarrier))(List(rep))
 
-    // populate the document body asap
+    // initial population of the DOM
     val clientState = clientEngine.askCurrentValues()
-    clientState(rep).foreach { (initialState: Rep[HtmlNode]) =>
-      val rootElem = createElement(initialState)
+    clientState(rep).foreach { (initialNodeMaker: Rep[Html]) =>
+      // Creat the root element
+      val initialNode = initialNodeMaker(clientEngine)
+      val rootElem = createElement(initialNode)
       document.body.appendChild(rootElem)
 
-      var currentNode = initialState
+      // Create differences and patch them on the root element
+      var currentNode = initialNode
       clientEngine.subscribeForPulses { (pulses: Rep[Engine.Pulses]) =>
-        pulses(rep.changes).foreach { (change: Rep[HtmlNode]) =>
-          val delta = diff(currentNode, change)
-          currentNode = change
+        pulses(rep.changes).foreach { (nodeMaker: Rep[Html]) =>
+          val changedNode = nodeMaker(clientEngine)
+          val delta = diff(currentNode, changedNode)
+          currentNode = changedNode
           patch(rootElem, delta)
         }
       }

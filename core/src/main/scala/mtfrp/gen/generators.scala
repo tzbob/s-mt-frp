@@ -53,8 +53,7 @@ trait GenReplicationFRPLib
 trait GenFrpExtensions
   extends GenClientFRPLib
   with GenElementOps
-  with GenEventOps
-  with GenProxy {
+  with GenEventOps {
   val IR: FrpExtensionsExp
 }
 

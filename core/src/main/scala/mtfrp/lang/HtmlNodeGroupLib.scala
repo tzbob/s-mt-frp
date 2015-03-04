@@ -1,5 +1,7 @@
 package mtfrp.lang
 
+import hokko.core.Engine
+
 trait HtmlNodeGroupLib extends HtmlNodeBuilderLib {
   implicit class GroupEventTargetBuilder(b: EventTargetBuilder) {
     def group: GroupBuilder = new GroupBuilder(b.tagName)
@@ -29,11 +31,12 @@ trait HtmlNodeGroupLib extends HtmlNodeBuilderLib {
       }
   }
 
-  type GroupHandlers[Id] = List[GroupHandler[Id]]
-
-  private def handleGroupEvent[A: Manifest](ev: EventDef)(implicit m: Manifest[ev.Type]): (ClientEvent[(A, ev.Type)], GroupHandler[A]) = {
-    val evt = FRP.eventSource[(A, ev.Type)](FRP.global)
-    (ClientEvent(evt, ReplicationCore()), GroupHandler(ev)(evt.fire))
+  private def handleGroupEvent[A: Manifest](ev: EventDef)(implicit m: Manifest[ev.Type]): (ClientEvent[(A, ev.Type)], Rep[Engine] => GroupHandler[A]) = {
+    val source = EventRep.source[(A, ev.Type)]
+    val mkHandler = (engine: Rep[Engine]) => GroupHandler(ev) { occ: Rep[(A, ev.Type)] =>
+      engine.fire(List(source -> occ))
+    }
+    (ClientEvent(source, ReplicationCore()), mkHandler)
   }
 
   class GroupBuilder(tagName: Rep[String]) {
@@ -53,15 +56,14 @@ trait HtmlNodeGroupLib extends HtmlNodeBuilderLib {
     // ... 3,4,5..
   }
 
-  class TemplatedHtmlNodeBuilder[Id: Manifest](tagName: Rep[String], groupHandlers: GroupHandlers[Id]) {
+  class TemplatedHtmlNodeBuilder[Id: Manifest](tagName: Rep[String], groupHandlers: List[Rep[Engine] => GroupHandler[Id]]) {
     private def toHtmlNodeBuilder(id: Rep[Id]): HtmlNodeBuilder = {
-      val handlers = groupHandlers.map(_.toHandler(id))
+      val handlers = groupHandlers.map { handlerMk =>
+        e: Rep[Engine] => handlerMk(e).toHandler(id)
+      }
       new HtmlNodeBuilder(tagName, handlers)
     }
-    def apply(id: Rep[Id]): Rep[HtmlNode] = toHtmlNodeBuilder(id)()
-    def apply(id: Rep[Id], children: Value[HtmlNode]*): Rep[HtmlNode] =
-      toHtmlNodeBuilder(id)(children: _*)
-    def apply(id: Rep[Id], attrs: Value[Attribute]*)(children: Value[HtmlNode]*): Rep[HtmlNode] =
+    def apply(id: Rep[Id], attrs: Value[Attribute]*)(children: Value[Html]*): Rep[Html] =
       toHtmlNodeBuilder(id)(attrs: _*)(children: _*)
   }
 
