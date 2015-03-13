@@ -57,10 +57,10 @@ trait ReplicationFRPLib
     }
   }
 
-  // implicit class BehaviorToAllClients[T: JsonWriter: JSJsonReader: Manifest](beh: ServerBehavior[T]) {
-  //   def toAllClients: ClientBehavior[T] =
-  //     beh.map { t => c: Client => t }.toClient
-  // }
+  implicit class DiscreteBehaviorToAllClients[T: JsonWriter: JSJsonReader: Manifest](beh: ServerDiscreteBehavior[T]) {
+    def toAllClients: ClientDiscreteBehavior[T] =
+      beh.map { t => c: Client => t }.toClient
+  }
 
   // implicit class IncBehaviorToClient[D: JsonWriter: JSJsonReader: Manifest, T: JsonWriter: JSJsonReader: Manifest](beh: ServerIncBehavior[Client => D, Client => T]) {
   //   def toClient(app: ClientDeltaApplicator[T, D]): ClientIncBehavior[D, T] = {

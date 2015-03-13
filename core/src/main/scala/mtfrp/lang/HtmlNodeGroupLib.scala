@@ -31,10 +31,10 @@ trait HtmlNodeGroupLib extends HtmlNodeBuilderLib {
       }
   }
 
-  private def handleGroupEvent[A: Manifest](ev: EventDef)(implicit m: Manifest[ev.Type]): (ClientEvent[(A, ev.Type)], Rep[Engine] => GroupHandler[A]) = {
+  private def handleGroupEvent[A: Manifest](ev: EventDef)(implicit m: Manifest[ev.Type]): (ClientEvent[(A, ev.Type)], Rep[ScalaJs[Engine]] => GroupHandler[A]) = {
     val source = EventRep.source[(A, ev.Type)]
-    val mkHandler = (engine: Rep[Engine]) => GroupHandler(ev) { occ: Rep[(A, ev.Type)] =>
-      engine.fire(List(source -> occ))
+    val mkHandler = (engine: Rep[ScalaJs[Engine]]) => GroupHandler(ev) { occ: Rep[(A, ev.Type)] =>
+      engine.fire(List(make_tuple2(source -> occ).encode))
     }
     (ClientEvent(source, ReplicationCore()), mkHandler)
   }
@@ -56,10 +56,10 @@ trait HtmlNodeGroupLib extends HtmlNodeBuilderLib {
     // ... 3,4,5..
   }
 
-  class TemplatedHtmlNodeBuilder[Id: Manifest](tagName: Rep[String], groupHandlers: List[Rep[Engine] => GroupHandler[Id]]) {
+  class TemplatedHtmlNodeBuilder[Id: Manifest](tagName: Rep[String], groupHandlers: List[Rep[ScalaJs[Engine]] => GroupHandler[Id]]) {
     private def toHtmlNodeBuilder(id: Rep[Id]): HtmlNodeBuilder = {
       val handlers = groupHandlers.map { handlerMk =>
-        e: Rep[Engine] => handlerMk(e).toHandler(id)
+        e: Rep[ScalaJs[Engine]] => handlerMk(e).toHandler(id)
       }
       new HtmlNodeBuilder(tagName, handlers)
     }

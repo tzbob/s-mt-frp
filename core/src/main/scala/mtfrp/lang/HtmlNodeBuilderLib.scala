@@ -27,8 +27,9 @@ trait HtmlNodeBuilderLib extends ClientFRPLib with EventOps with JSMaps with Ele
   implicit def repNode[T](node: Rep[T]): Value[T] = RepConst(node)
   implicit def repNodes[T](nodes: Rep[List[T]]): Value[T] = RepList(nodes)
 
-  implicit def repStrToNode(s: Rep[String]): Value[HtmlNode] = mkText(s)
-  implicit def strToVal(s: String)(implicit ev: String => Rep[String]): Value[HtmlNode] =
+  implicit def repStrToNode(s: Rep[String]): Value[Html] =
+    fun((e: Rep[ScalaJs[Engine]]) => mkText(s))
+  implicit def strToVal(s: String)(implicit ev: String => Rep[String]): Value[Html] =
     repStrToNode(s)
 
   implicit class AttrString(k: String) {
@@ -65,10 +66,10 @@ trait HtmlNodeBuilderLib extends ClientFRPLib with EventOps with JSMaps with Ele
   lazy val defaultChildren = List()
   type Children = Rep[List[Html]]
 
-  private def handleEvent(ev: EventDef)(implicit m: Manifest[ev.Type]): (ClientEvent[ev.Type], Rep[Engine] => Handler) = {
+  private def handleEvent(ev: EventDef)(implicit m: Manifest[ev.Type]): (ClientEvent[ev.Type], Rep[ScalaJs[Engine]] => Handler) = {
     val source = EventRep.source[ev.Type]
-    val mkHandler = (engine: Rep[Engine]) => Handler(ev) { occ =>
-      engine.fire(List(source -> occ))
+    val mkHandler = (engine: Rep[ScalaJs[Engine]]) => Handler(ev) { occ =>
+      engine.fire(List(make_tuple2(source -> occ).encode))
     }
     (ClientEvent(source, ReplicationCore()), mkHandler)
   }
@@ -98,23 +99,11 @@ trait HtmlNodeBuilderLib extends ClientFRPLib with EventOps with JSMaps with Ele
     vnodeLists.foldLeft(List[T]())(_ ++ _)
   }
 
-  // I need to make an HTML Node
-  // This node needs the handlers that fire events into the FRP network.
-  // Firing events into the FRP network requires an Engine and the corresponding EventSource
-  // THUS, creating an HTML Node requires an Engine and the EventSource
+  type Html = ScalaJs[Engine] => HtmlNode
 
-  // An Engine is only accessible after compiling the FRP network(which uses the EventSource)
-  // THUS, creating an HTML Node is impossible without recursive values
-
-  // FIX: Do the HTML stuff after the Engine is compiled
-  // FIX: HTML Nodes on which handlers can be subscribed
-  // FIX: Firing events without an Engine
-
-  type Html = Engine => HtmlNode
-
-  class HtmlNodeBuilder(tagName: Rep[String], handlers: List[Rep[Engine] => Handler]) {
+  class HtmlNodeBuilder(tagName: Rep[String], handlers: List[Rep[ScalaJs[Engine]] => Handler]) {
     def apply(attrs: Value[Attribute]*)(children: Value[Html]*): Rep[Html] =
-      fun { e: Rep[Engine] =>
+      fun { e: Rep[ScalaJs[Engine]] =>
         val jsAttrs = vToRepList(attrs)
         val props = defaultAttributes()
 

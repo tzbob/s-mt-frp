@@ -27,7 +27,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
   class ToClientDependency[T: JsonWriter: JSJsonReader: Manifest](
     initialDataSource: Option[Behavior[Client => T]] = None,
     exit: HEvent[Client => Option[T]],
-    entry: Rep[HEventSource[T]]
+    entry: Rep[ScalaJs[HEventSource[T]]]
   ) {
     val name = UUID.randomUUID.toString
 
@@ -45,22 +45,22 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
         (c: Client) => fun(c).map(tToMessage)
       }
 
-    val mkPulse: Rep[String => (HEventSource[T], T)] =
+    val mkPulse: Rep[String => ScalaJs[(ScalaJs[HEventSource[T]], T)]] =
       fun { jsonPulse =>
-        (entry, jsonPulse.convertToRep[T])
+        make_tuple2(entry, jsonPulse.convertToRep[T]).encode
       }
   }
 
   class ToServerDependency[T: JsonReader: JSJsonWriter: Manifest](
-    exit: Rep[HEvent[T]],
+    exit: Rep[ScalaJs[HEvent[T]]],
     entry: HEventSource[(Client, T)]
   ) {
     val name = UUID.randomUUID.toString
 
-    val messageCarrier: Rep[HEvent[Message]] =
+    val messageCarrier: Rep[ScalaJs[HEvent[Message]]] =
       exit.map(fun { (t: Rep[T]) =>
         MessageRep(unit(name), t.toJSONString)
-      })
+      }.encode)
 
     def pulse(jsonPulse: String, clientId: String): (HEventSource[(Client, T)], (Client, T)) = {
       val newPulse = Client(clientId) -> jsonPulse.parseJson.convertTo[T]
@@ -77,7 +77,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
   }
 
   type NamedServerPulseMaker = Map[String, (String, String) => (HEventSource[(Client, T)], (Client, T)) forSome { type T }]
-  type NamedClientPulseMaker = Map[String, String => (HEventSource[T], T) forSome { type T }]
+  type NamedClientPulseMaker = Map[String, String => ScalaJs[(ScalaJs[HEventSource[T]], T)] forSome { type T }]
 
   case class ReplicationCore(
     toClientDeps: Set[ToClientDependency[_]] = Set.empty,
@@ -126,7 +126,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
     /**
      * @returns a message carrier that pushes to-be-transfered state
      */
-    def clientCarrier: Rep[HEvent[Seq[Message]]] = {
+    def clientCarrier: Rep[ScalaJs[HEvent[Seq[Message]]]] = {
       val carriers = toServerDeps.map(_.messageCarrier).toSeq
       EventRep.merge(List(carriers: _*))
     }
@@ -135,7 +135,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
      * named pulse makers to inject data in the FRP network
      */
     def clientNamedPulseMakers: Rep[NamedClientPulseMaker] = {
-      val map = JSMap[String, String => (HEventSource[T], T) forSome { type T }]()
+      val map = JSMap[String, String => ScalaJs[(ScalaJs[HEventSource[T]], T)] forSome { type T }]()
       val namedToClientDeps = toClientDeps.map { d =>
         (d.name, d.mkPulse)
       }
@@ -163,7 +163,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
   class RouteCreator(
     core: ReplicationCore,
     serverEngine: Engine,
-    clientEngine: Rep[Engine]
+    clientEngine: Rep[ScalaJs[Engine]]
   ) {
     val serverCarrier = core.serverCarrier
     val serverNamedPulseMakers = core.serverNamedPulseMakers
@@ -267,14 +267,14 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
      *  to the server using XMLHttpRequest
      */
     private def initClientSideToServer(url: String): Unit = {
-      clientEngine.subscribeForPulses { pulses: Rep[Engine.Pulses] =>
+      clientEngine.subscribeForPulses(fun { pulses: Rep[ScalaJs[Engine.Pulses]] =>
         val pulse = pulses(clientCarrier)
-        pulse.foreach { seq: Rep[Seq[Message]] =>
+        pulse.decode.foreach { seq: Rep[Seq[Message]] =>
           val req = XMLHttpRequest()
           req.open(unit("POST"), includeClientIdParam(url))
           req.send(seq.toJSONString)
         }
-      }
+      }.encode)
     }
 
     /**

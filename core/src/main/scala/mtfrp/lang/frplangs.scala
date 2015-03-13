@@ -32,12 +32,12 @@ trait MtFrpProgRunner extends MtFrpProgExp { self: MtFrpProg =>
     val core = behavior.core
 
     // compile the FRP networks (this has all the bottom nodes of the graph)
-    val serverEngine = Engine.compile(core.serverCarrier)()
-    val clientEngine = EngineRep.compile(List(core.clientCarrier))(List(rep))
+    val serverEngine = Engine.compile(Seq(core.serverCarrier), Seq.empty)
+    val clientEngine = EngineRep.compile(List(core.clientCarrier), List(rep))
 
     // initial population of the DOM
     val clientState = clientEngine.askCurrentValues()
-    clientState(rep).foreach { (initialNodeMaker: Rep[Html]) =>
+    clientState(rep).decode.foreach { (initialNodeMaker: Rep[Html]) =>
       // Creat the root element
       val initialNode = initialNodeMaker(clientEngine)
       val rootElem = createElement(initialNode)
@@ -45,14 +45,14 @@ trait MtFrpProgRunner extends MtFrpProgExp { self: MtFrpProg =>
 
       // Create differences and patch them on the root element
       var currentNode = initialNode
-      clientEngine.subscribeForPulses { (pulses: Rep[Engine.Pulses]) =>
-        pulses(rep.changes).foreach { (nodeMaker: Rep[Html]) =>
+      clientEngine.subscribeForPulses(fun { (pulses: Rep[ScalaJs[Engine.Pulses]]) =>
+        pulses(rep.changes).decode.foreach { (nodeMaker: Rep[Html]) =>
           val changedNode = nodeMaker(clientEngine)
           val delta = diff(currentNode, changedNode)
           currentNode = changedNode
           patch(rootElem, delta)
         }
-      }
+      }.encode)
       () // explicitly mark a unit function for Rep[Unit]
     }
 

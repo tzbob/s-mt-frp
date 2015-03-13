@@ -39,8 +39,8 @@ trait Utils { self: MtFrpProg with FFIExp =>
   def serverDiffer(a: List[String], b: List[String]): StringListDiff =
     Incrementalize.getRemoves(a, b, StringListDiff(Nil, Nil))
 
-  def clientPatcher = new ClientDeltaApplicator[List[String], StringListDiff] {
-    def apply(acc: Rep[List[String]], delta: Rep[StringListDiff]): Rep[List[String]] =
-      Incrementalize.stringPatch(acc, delta)
-  }
+  // def clientPatcher = new ClientDeltaApplicator[List[String], StringListDiff] {
+  //   def apply(acc: Rep[List[String]], delta: Rep[StringListDiff]): Rep[List[String]] =
+  //     Incrementalize.stringPatch(acc, delta)
+  // }
 }

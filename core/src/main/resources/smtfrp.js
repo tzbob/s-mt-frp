@@ -1,4 +1,4 @@
-require('./s-frp-js-opt.js')
+require('./hokko-fastopt.js')
 window.MTFRP = {}
 MTFRP.FRP = FRP()
 MTFRP.VNode = require('vtree/vnode');

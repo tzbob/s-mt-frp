@@ -97,7 +97,7 @@ trait ServerFRPLib extends ReplicationCoreLib { selfLib =>
   class ServerIncBehavior[+A, +DeltaA] private (
     override val rep: IncrementalBehavior[A, DeltaA],
     override val core: ReplicationCore
-  ) extends ServerBehavior[A](rep, core) {
+  ) extends ServerDiscreteBehavior[A](rep, core) {
     def deltas: ServerEvent[DeltaA] = ServerEvent(rep.deltas, core)
   }
 }

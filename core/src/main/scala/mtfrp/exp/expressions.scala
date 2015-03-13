@@ -15,12 +15,12 @@ trait NonRecJSExp extends DynamicsExp with ArraysExp
 
 trait JSJsonReaderLibExp extends JSJsonReaderLib with FFIExp with AdtsExp {
   def parse[T: Manifest](raw: Exp[String]): Exp[T] =
-    foreign"JSON.parse($raw)"[T].withEffect()
+    foreign"JSON.parse($raw)"[T]
 }
 
 trait JSJsonWriterLibExp extends JSJsonWriterLib with FFIExp with AdtsExp {
   def stringify[T](raw: Exp[T]): Exp[String] =
-    foreign"JSON.stringify($raw)"[String].withEffect()
+    foreign"JSON.stringify($raw)"[String]
 }
 
 trait JSJsonFormatLibExp
@@ -41,8 +41,14 @@ trait DocumentOpsExtendedExp extends DocumentOpsExtended with BrowserExp with FF
 
 trait ReplicationCoreLibExp
   extends JSJsonFormatLibExp
+  with EventSourcesExp
   with DelegatorExp
   with DelayedEvalExp
+  with XMLHttpRequestsExp
+  with ListOpsExp
+  with ListOps2Exp
+  with TupleOpsExp
+  with OptionOpsExp
 
 trait ClientFRPLibExp
   extends ClientFRPLib
