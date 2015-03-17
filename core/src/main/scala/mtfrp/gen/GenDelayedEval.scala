@@ -14,7 +14,8 @@ trait GenDelayedEval extends GenBase {
   var engine: Engine = _
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-    case DelayedForClient(thunk) => emitValDef(sym, quote(thunk(client, engine)))
+    case DelayedForClient(thunk) =>
+      emitValDef(sym, quote(thunk(client, engine)))
     case _ => super.emitNode(sym, rhs)
   }
 

@@ -44,7 +44,7 @@ trait ReplicationFRPLib
 
       val source = EventRep.source[T]
       val currentState = delay(calculateCurrentState)
-      val behavior = source.hold(currentState)
+      val behavior = source.hold(currentState.convertToRep[T])
 
       val optionalChanges = beh.rep.changes.map { fun =>
         c: Client => Some(fun(c))
