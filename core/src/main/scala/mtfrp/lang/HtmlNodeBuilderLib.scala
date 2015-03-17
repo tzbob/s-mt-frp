@@ -69,7 +69,9 @@ trait HtmlNodeBuilderLib extends ClientFRPLib with EventOps with JSMaps with Ele
   private def handleEvent(ev: EventDef)(implicit m: Manifest[ev.Type]): (ClientEvent[ev.Type], Rep[ScalaJs[Engine]] => Handler) = {
     val source = EventRep.source[ev.Type]
     val mkHandler = (engine: Rep[ScalaJs[Engine]]) => Handler(ev) { occ =>
-      engine.fire(List(make_tuple2(source -> occ).encode))
+      val lst = 
+        ScalaJsRuntime.encodeListAsSeq(List(make_tuple2(source -> occ).encode))
+      engine.fire(lst)
     }
     (ClientEvent(source, ReplicationCore()), mkHandler)
   }

@@ -47,7 +47,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
 
     val mkPulse: Rep[String => ScalaJs[(ScalaJs[HEventSource[T]], T)]] =
       fun { jsonPulse =>
-        make_tuple2(entry, jsonPulse.convertToRep[T]).encode
+        make_tuple2(entry -> jsonPulse.convertToRep[T]).encode
       }
   }
 
@@ -128,7 +128,8 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
      */
     def clientCarrier: Rep[ScalaJs[HEvent[Seq[Message]]]] = {
       val carriers = toServerDeps.map(_.messageCarrier).toSeq
-      EventRep.merge(List(carriers: _*))
+      val lst: Rep[Seq[ScalaJs[HEvent[Message]]]] = List(carriers: _*)
+      EventRep.merge(lst.encode)
     }
 
     /**
@@ -208,10 +209,11 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
       val sseSource = EventSource(includeClientIdParam(url))
       sseSource.onmessage = fun { ev: Rep[Dataliteral] =>
         val messages = implicitly[JSJsonReader[List[Message]]].read(ev.data)
-        val pulses = messages.map { (message: Rep[Message]) =>
-          clientNamedPulseMakers(message.name)(message.json)
-        }
-        clientEngine.fire(pulses)
+        val pulses: Rep[Seq[ScalaJs[(ScalaJs[hokko.core.EventSource[T]], T)] forSome { type T }]] =
+          messages.map { (message: Rep[Message]) =>
+            clientNamedPulseMakers(message.name)(message.json)
+          }
+        clientEngine.fire(pulses.encode)
       }
     }
 

@@ -33,7 +33,10 @@ trait MtFrpProgRunner extends MtFrpProgExp { self: MtFrpProg =>
 
     // compile the FRP networks (this has all the bottom nodes of the graph)
     val serverEngine = Engine.compile(Seq(core.serverCarrier), Seq.empty)
-    val clientEngine = EngineRep.compile(List(core.clientCarrier), List(rep))
+    val clientEngine = EngineRep.compile(
+      ScalaJsRuntime.encodeListAsSeq(List(core.clientCarrier)),
+      ScalaJsRuntime.encodeListAsSeq(List(rep))
+    )
 
     // initial population of the DOM
     val clientState = clientEngine.askCurrentValues()

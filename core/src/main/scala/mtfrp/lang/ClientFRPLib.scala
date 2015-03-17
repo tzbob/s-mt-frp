@@ -18,10 +18,10 @@ trait ClientFRPLib extends JS
     def apply[T: Manifest](rep: Rep[ScalaJs[HEvent[T]]], core: ReplicationCore): ClientEvent[T] =
       new ClientEvent(rep, core)
 
-    def merge[A: Manifest](events: ClientEvent[A]*): ClientEvent[Seq[A]] = {
+    def merge[A: Manifest](events: ClientEvent[A]*): ClientEvent[ScalaJs[Seq[A]]] = {
       val hokkoParams = events.map(_.rep)
-      val hokkoSeqEvents = List(hokkoParams: _*)
-      val hokkoMerge = EventRep.merge(hokkoSeqEvents)
+      val hokkoSeqEvents: Rep[Seq[ScalaJs[HEvent[A]]]] = List(hokkoParams: _*)
+      val hokkoMerge = EventRep.merge(hokkoSeqEvents.encode)
       ClientEvent(hokkoMerge, ReplicationCore.merge(events.map(_.core)))
     }
 
@@ -97,6 +97,8 @@ trait ClientFRPLib extends JS
   object ClientDiscreteBehavior {
     def apply[T: Manifest](rep: Rep[ScalaJs[DiscreteBehavior[T]]], core: ReplicationCore): ClientDiscreteBehavior[T] =
       new ClientDiscreteBehavior(rep, core)
+    def constant[T: Manifest](const: Rep[T]): ClientDiscreteBehavior[T] =
+      this.apply(DiscreteBehaviorRep.constant(const), ReplicationCore.empty)
 
     def toBoxedFuns[A: Manifest, B: Manifest](f: ClientDiscreteBehavior[A => B]): ClientDiscreteBehavior[ScalaJs[A => B]] =
       f.map(fun { (p: Rep[A => B]) => p.encode })
