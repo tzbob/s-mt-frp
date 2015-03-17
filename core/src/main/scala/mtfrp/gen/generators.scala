@@ -45,6 +45,7 @@ trait GenServerFRPLib extends GenReplicationCoreLib {
 
 trait GenReplicationFRPLib
   extends GenServerFRPLib
+  with GenXMLHttpRequests
   with GenJSJsonFormat
   with GenEventSources {
   val IR: ReplicationFRPLibExp
