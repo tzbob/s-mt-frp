@@ -1,6 +1,6 @@
 package mtfrp.lang
 
-import hokko.core.{DiscreteBehavior, Engine}
+import hokko.core.{ DiscreteBehavior, Engine }
 import mtfrp.exp.MtFrpProgExp
 import scala.js.language._
 import scala.js.language.dom.Browser

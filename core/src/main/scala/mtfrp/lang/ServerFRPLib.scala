@@ -71,6 +71,8 @@ trait ServerFRPLib extends ReplicationCoreLib { selfLib =>
   object ServerDiscreteBehavior {
     def apply[T](rep: DiscreteBehavior[T], core: ReplicationCore): ServerDiscreteBehavior[T] =
       new ServerDiscreteBehavior(rep, core)
+    def constant[T](const: T): ServerDiscreteBehavior[T] =
+      this.apply(DiscreteBehavior.constant(const), ReplicationCore.empty)
   }
 
   class ServerDiscreteBehavior[+A] private[ServerFRPLib] (

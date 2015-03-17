@@ -8,7 +8,7 @@ trait BasicChatProg extends MtFrpProg {
   import DefaultJsonProtocol._
 
   case class Entry(name: String, msg: String) extends Adt
-  val EntryRep: (Rep[String], Rep[String]) => Rep[Entry] = adt[Entry]
+  val EntryRep = adt[Entry]
   implicit val itemFormat = jsonFormat2(Entry)
 
   lazy val (nameT, nameE) = input(Input)
@@ -18,8 +18,8 @@ trait BasicChatProg extends MtFrpProg {
   lazy val submit = {
     val nameV = nameE.asTextBehavior
     val msgV = msgE.asTextBehavior
-    val entryMaker = msgV.map(fun { msg: Rep[String] =>
-      fun((name: Rep[String]) => EntryRep(msg, name))
+    val entryMaker = msgV.map(fun { msg =>
+      fun((name: Rep[String]) => EntryRep(name, msg))
     })
     val entry = nameV.reverseApply(entryMaker)
     val snapshotter: ClientEvent[Entry => Entry] = sendE.map(fun { _ =>

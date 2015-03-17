@@ -101,7 +101,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
      * @returns an initial message carrier from which the client specific
      * to-be-transfered state can be pulled
      */
-    def initialCarrier: Behavior[Client => Seq[Message]] = {
+    lazy val initialCarrier: Behavior[Client => Seq[Message]] = {
       val carriers = toClientDeps.map(_.initialCarrier).flatten
       val seqCarrier = carriers.foldLeft(Behavior.constant(collection.Seq.empty[Client => Message])) { (acc, n) =>
         val fa = n.map { newVal =>
@@ -118,7 +118,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
      * @returns a message carrier that pushes client specific
      * to-be-transfered state
      */
-    def serverCarrier: HEvent[Client => Seq[Message]] =
+    lazy val serverCarrier: HEvent[Client => Seq[Message]] =
       HEvent.merge(toClientDeps.map(_.messageCarrier).toSeq).map { seq =>
         c: Client => seq.map(_(c)).flatten
       }
@@ -126,7 +126,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
     /**
      * @returns a message carrier that pushes to-be-transfered state
      */
-    def clientCarrier: Rep[ScalaJs[HEvent[Seq[Message]]]] = {
+    lazy val clientCarrier: Rep[ScalaJs[HEvent[ScalaJs[Seq[Message]]]]] = {
       val carriers = toServerDeps.map(_.messageCarrier).toSeq
       val lst: Rep[Seq[ScalaJs[HEvent[Message]]]] = List(carriers: _*)
       EventRep.merge(lst.encode)
@@ -135,7 +135,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
     /**
      * named pulse makers to inject data in the FRP network
      */
-    def clientNamedPulseMakers: Rep[NamedClientPulseMaker] = {
+    lazy val clientNamedPulseMakers: Rep[NamedClientPulseMaker] = {
       val map = JSMap[String, String => ScalaJs[(ScalaJs[HEventSource[T]], T)] forSome { type T }]()
       val namedToClientDeps = toClientDeps.map { d =>
         (d.name, d.mkPulse)
@@ -150,7 +150,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
     /**
      * named pulse makers to inject data in the FRP network
      */
-    def serverNamedPulseMakers: NamedServerPulseMaker =
+    lazy val serverNamedPulseMakers: NamedServerPulseMaker =
       toServerDeps.map { d =>
         (d.name, d.pulse _)
       }.toMap
@@ -166,25 +166,32 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
     serverEngine: Engine,
     clientEngine: Rep[ScalaJs[Engine]]
   ) {
-    val serverCarrier = core.serverCarrier
-    val serverNamedPulseMakers = core.serverNamedPulseMakers
+    lazy val serverCarrier = core.serverCarrier
+    lazy val serverNamedPulseMakers = core.serverNamedPulseMakers
 
-    val clientCarrier = core.clientCarrier
-    val clientNamedPulseMakers = core.clientNamedPulseMakers
+    lazy val clientCarrier = core.clientCarrier
+    lazy val clientNamedPulseMakers = core.clientNamedPulseMakers
 
     def makeRoute(): Option[Route] = {
       val r1 =
-        if (core.toClientDeps.isEmpty)
+        if (!core.toClientDeps.isEmpty)
           Some(initializeToClientDependencies())
         else None
 
       val r2 =
-        if (core.toServerDeps.isEmpty)
+        if (!core.toServerDeps.isEmpty)
           Some(initializeToServerDependencies())
         else None
 
-      r1.fold(r2) { route =>
-        r2.map(_ ~ route)
+      r1 match {
+        case Some(route1) => r2 match {
+          case Some(route2) => Some(route1 ~ route2)
+          case None => Some(route1)
+        }
+        case None => r2 match {
+          case Some(route2) => Some(route2)
+          case None => None
+        }
       }
     }
 
@@ -192,7 +199,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
      * @return optionally, the Route that encompasses all involved client
      * functionality
      */
-    def initializeToClientDependencies(): Route = {
+    private def initializeToClientDependencies(): Route = {
       val url = URLEncoder.encode(UUID.randomUUID.toString, "UTF-8")
       initClientSideToClient(url)
       initServerSideToClient(url)
@@ -257,7 +264,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
      *  @return optionally, the Route that encompasses all involved server
      *  functionality
      */
-    def initializeToServerDependencies(): Route = {
+    private def initializeToServerDependencies(): Route = {
       val url = URLEncoder.encode(UUID.randomUUID.toString, "UTF-8")
       initClientSideToServer(url)
       initServerSideToServer(url)
@@ -271,10 +278,10 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
     private def initClientSideToServer(url: String): Unit = {
       clientEngine.subscribeForPulses(fun { pulses: Rep[ScalaJs[Engine.Pulses]] =>
         val pulse = pulses(clientCarrier)
-        pulse.decode.foreach { seq: Rep[Seq[Message]] =>
+        pulse.decode.foreach { seq: Rep[ScalaJs[Seq[Message]]] =>
           val req = XMLHttpRequest()
           req.open(unit("POST"), includeClientIdParam(url))
-          req.send(seq.toJSONString)
+          req.send(seq.decode.toJSONString)
         }
       }.encode)
     }
