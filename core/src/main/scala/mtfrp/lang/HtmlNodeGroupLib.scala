@@ -34,8 +34,10 @@ trait HtmlNodeGroupLib extends HtmlNodeBuilderLib {
   private def handleGroupEvent[A: Manifest](ev: EventDef)(implicit m: Manifest[ev.Type]): (ClientEvent[(A, ev.Type)], Rep[ScalaJs[Engine]] => GroupHandler[A]) = {
     val source = EventRep.source[(A, ev.Type)]
     val mkHandler = (engine: Rep[ScalaJs[Engine]]) => GroupHandler(ev) { occ: Rep[(A, ev.Type)] =>
-      val lst = 
-        ScalaJsRuntime.encodeListAsSeq(List(make_tuple2(source -> occ).encode))
+      val lst =
+        ScalaJsRuntime.encodeListAsSeq(List(
+          ScalaJsRuntime.encodeTup2(make_tuple2(source -> occ))
+        ))
       engine.fire(lst)
     }
     (ClientEvent(source, ReplicationCore()), mkHandler)

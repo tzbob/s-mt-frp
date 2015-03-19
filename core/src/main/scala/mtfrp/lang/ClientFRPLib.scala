@@ -20,29 +20,29 @@ trait ClientFRPLib extends JS
 
     def merge[A: Manifest](events: ClientEvent[A]*): ClientEvent[ScalaJs[Seq[A]]] = {
       val hokkoParams = events.map(_.rep)
-      val hokkoSeqEvents: Rep[Seq[ScalaJs[HEvent[A]]]] = List(hokkoParams: _*)
-      val hokkoMerge = EventRep.merge(hokkoSeqEvents.encode)
+      val hokkoSeqEvents = ScalaJsRuntime.encodeListAsSeq(List(hokkoParams: _*))
+      val hokkoMerge = EventRep.merge(hokkoSeqEvents)
       ClientEvent(hokkoMerge, ReplicationCore.merge(events.map(_.core)))
     }
 
     def toBoxedFuns[A: Manifest, B: Manifest](f: ClientEvent[A => B]): ClientEvent[ScalaJs[A => B]] =
-      f.map(fun { (p: Rep[A => B]) => p.encode })
+      f.map(fun { (p: Rep[A => B]) => ScalaJsRuntime.encodeFn1(p) })
   }
 
   class ClientEvent[+T: Manifest] private (
     val rep: Rep[ScalaJs[HEvent[T]]],
     val core: ReplicationCore
   ) {
-    def fold[B: Manifest, AA >: T: Manifest](initial: Rep[B])(f: Rep[(B, AA) => B]): ClientIncBehavior[B, AA] =
-      ClientIncBehavior(rep.fold(initial)(f.encode), core)
+    def fold[B: Manifest, AA >: T: Manifest](initial: Rep[B])(f: (Rep[B], Rep[AA]) => Rep[B]): ClientIncBehavior[B, AA] =
+      ClientIncBehavior(rep.fold(initial)(ScalaJsRuntime.encodeFn2(fun(f))), core)
 
-    def unionWith[B: Manifest, C: Manifest, AA >: T: Manifest](b: ClientEvent[B])(f1: Rep[AA => C])(f2: Rep[B => C])(f3: Rep[(AA, B) => C]): ClientEvent[C] =
-      ClientEvent(rep.unionWith(b.rep)(f1.encode)(f2.encode)(f3.encode), core + b.core)
+    def unionWith[B: Manifest, C: Manifest, AA >: T: Manifest](b: ClientEvent[B])(f1: Rep[AA] => Rep[C])(f2: Rep[B] => Rep[C])(f3: (Rep[AA], Rep[B]) => Rep[C]): ClientEvent[C] =
+      ClientEvent(rep.unionWith(b.rep)(ScalaJsRuntime.encodeFn1(fun(f1)))(ScalaJsRuntime.encodeFn1(fun(f2)))(ScalaJsRuntime.encodeFn2(fun(f3))), core + b.core)
 
     def collect[B: Manifest, AA >: T: Manifest](fb: Rep[T => Option[B]]): ClientEvent[B] = {
-      val scalaJsFun = fun { (p: Rep[T]) =>
-        fb(p).encode
-      }.encode
+      val scalaJsFun = ScalaJsRuntime.encodeFn1(fun { (p: Rep[T]) =>
+        ScalaJsRuntime.encodeOptions(fb(p))
+      })
       ClientEvent(rep.collect(scalaJsFun), core)
     }
 
@@ -52,10 +52,10 @@ trait ClientFRPLib extends JS
       ClientDiscreteBehavior(rep.hold(initial), core)
 
     def map[A: Manifest](modifier: Rep[T => A]): ClientEvent[A] =
-      ClientEvent(rep.map(modifier.encode), core)
+      ClientEvent(rep.map(ScalaJsRuntime.encodeFn1(modifier)), core)
 
     def dropIf(pred: Rep[T => Boolean]): ClientEvent[T] =
-      ClientEvent(rep.dropIf(pred.encode), core)
+      ClientEvent(rep.dropIf(ScalaJsRuntime.encodeFn1(pred)), core)
   }
 
   object ClientBehavior {
@@ -65,7 +65,7 @@ trait ClientFRPLib extends JS
       this.apply(BehaviorRep.constant(const), ReplicationCore.empty)
 
     def toBoxedFuns[A: Manifest, B: Manifest](f: ClientBehavior[A => B]): ClientBehavior[ScalaJs[A => B]] =
-      f.map(fun { (p: Rep[A => B]) => p.encode })
+      f.map(fun { (p: Rep[A => B]) => ScalaJsRuntime.encodeFn1(p) })
   }
 
   class ClientBehavior[+A: Manifest] private[ClientFRPLib] (
@@ -88,7 +88,7 @@ trait ClientFRPLib extends JS
     // Derived ops
 
     def map[B: Manifest](f: Rep[A => B]): ClientBehavior[B] =
-      ClientBehavior(rep.map(f.encode), core)
+      ClientBehavior(rep.map(ScalaJsRuntime.encodeFn1(f)), core)
 
     def markChanges(marks: ClientEvent[Unit]): ClientDiscreteBehavior[A] =
       ClientDiscreteBehavior(rep.markChanges(marks.rep), core + marks.core)
@@ -101,7 +101,7 @@ trait ClientFRPLib extends JS
       this.apply(DiscreteBehaviorRep.constant(const), ReplicationCore.empty)
 
     def toBoxedFuns[A: Manifest, B: Manifest](f: ClientDiscreteBehavior[A => B]): ClientDiscreteBehavior[ScalaJs[A => B]] =
-      f.map(fun { (p: Rep[A => B]) => p.encode })
+      f.map(fun { (p: Rep[A => B]) => ScalaJsRuntime.encodeFn1(p) })
   }
 
   class ClientDiscreteBehavior[+A: Manifest] private[ClientFRPLib] (
@@ -122,7 +122,7 @@ trait ClientFRPLib extends JS
       ClientIncBehavior(rep.withDeltas(init, deltas.rep), deltas.core + core)
 
     override def map[B: Manifest](f: Rep[A => B]): ClientDiscreteBehavior[B] =
-      ClientDiscreteBehavior(rep.map(f.encode), core)
+      ClientDiscreteBehavior(rep.map(ScalaJsRuntime.encodeFn1(f)), core)
   }
 
   object ClientIncBehavior {
@@ -135,5 +135,8 @@ trait ClientFRPLib extends JS
     override val core: ReplicationCore
   ) extends ClientDiscreteBehavior[A](rep, core) {
     def deltas: ClientEvent[DeltaA] = ClientEvent(rep.deltas, core)
+
+    def map[B: Manifest, DeltaB: Manifest](accumulator: Rep[((B, DeltaB)) => B])(fa: Rep[A => B])(fb: Rep[DeltaA => DeltaB]) =
+      ClientIncBehavior(rep.map(ScalaJsRuntime.encodeFn2(accumulator))(ScalaJsRuntime.encodeFn1(fa))(ScalaJsRuntime.encodeFn1(fb)), core)
   }
 }
