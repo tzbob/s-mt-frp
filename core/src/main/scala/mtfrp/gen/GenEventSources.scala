@@ -12,6 +12,8 @@ trait GenEventSources extends GenEventOps with GenJSLiteral with GenProxy {
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case NewEventSource(url) =>
       emitValDef(sym, s"new EventSource(${quote(url)})")
+    case NewListener(src, evt, f) =>
+      emitValDef(sym, s"${quote(src)}.addEventListener(${quote(evt)}, ${quote(f)})")
     case _ => super.emitNode(sym, rhs)
   }
 }

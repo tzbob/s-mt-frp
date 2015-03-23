@@ -8,8 +8,10 @@ import scala.js.language.dom.EventOps
 trait EventSources extends EventOps with JSLiteral with Proxy {
   object EventSource {
     def apply(url: Rep[String]) = newEvtSource(url)
+    def listen(src: Rep[EventSource])(evt: Rep[String])(f: Rep[Dataliteral => Unit]) = newListener(src, evt, f)
   }
   protected def newEvtSource(url: Rep[String]): Rep[EventSource]
+  protected def newListener(src: Rep[EventSource], evt: Rep[String], f: Rep[Dataliteral => Unit]): Rep[EventSource]
 
   type Dataliteral = JSLiteral { val data: String }
   trait EventSource extends EventTarget {
