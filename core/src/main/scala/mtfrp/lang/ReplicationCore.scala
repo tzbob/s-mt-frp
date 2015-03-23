@@ -24,30 +24,55 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
     implicit val messageFormat = jsonFormat2(Message.apply)
   }
 
-  class ToClientDependency[Init: JsonWriter: JSJsonReader: Manifest, T: JsonWriter: JSJsonReader: Manifest](
-    initialDataSource: Option[Behavior[Client => Init]] = None,
-    exit: HEvent[Client => Option[T]],
-    entry: Rep[ScalaJs[HEventSource[T]]]
-  ) {
+  trait ToClientDependency[Res, U] {
     val name = UUID.randomUUID.toString
+    val updateData: ToClientDependency.UpdateData[U]
+    val stateData: Option[ToClientDependency.StateData[Res]] = None
+  }
 
-    private def tToMessage[F: JsonWriter](t: F) = Message(name, t.toJson.compactPrint)
+  object ToClientDependency {
+    private def tToMessage[F: JsonWriter](name: String)(t: F) = Message(name, t.toJson.compactPrint)
 
-    val initialCarrier: Option[Behavior[Client => Message]] =
-      initialDataSource.map { beh =>
-        beh.map { fun =>
-          c: Client => tToMessage(fun(c))
+    class ReplicationData[A: JSJsonReader: Manifest] {
+      val source: Rep[ScalaJs[HEventSource[A]]] = EventRep.source[A]
+      val mkPulse: Rep[String => ScalaJs[(ScalaJs[HEventSource[A]], A)]] =
+        fun { jsonPulse =>
+          ScalaJsRuntime.encodeTup2(make_tuple2(source -> jsonPulse.convertToRep[A]))
         }
+    }
+
+    case class UpdateData[A: JsonWriter: JSJsonReader: Manifest](
+      name: String,
+      exit: HEvent[Client => Option[A]]
+    ) extends ReplicationData[A] {
+      val carrier: HEvent[Client => Option[Message]] = exit.map { fun =>
+        (c: Client) => fun(c).map(tToMessage[A](name))
+      }
+    }
+
+    case class StateData[Init: JsonWriter: JSJsonReader: Manifest](
+      name: String,
+      behavior: Behavior[Client => Init]
+    ) extends ReplicationData[Init] {
+      val carrier: Behavior[Client => Message] = behavior.map { fun =>
+        c: Client => tToMessage(name)(fun(c))
+      }
+    }
+
+    def update[U: JsonWriter: JSJsonReader: Manifest](exit: HEvent[Client => Option[U]]): ToClientDependency[U, U] =
+      new ToClientDependency[U, U] {
+        val updateData = UpdateData(name, exit)
       }
 
-    val messageCarrier: HEvent[Client => Option[Message]] =
-      exit.map { fun =>
-        (c: Client) => fun(c).map(tToMessage[T])
-      }
-
-    val mkPulse: Rep[String => ScalaJs[(ScalaJs[HEventSource[T]], T)]] =
-      fun { jsonPulse =>
-        ScalaJsRuntime.encodeTup2(make_tuple2(entry -> jsonPulse.convertToRep[T]))
+    def stateUpdate[Init: JsonWriter: JSJsonReader: Manifest, U: JsonWriter: JSJsonReader: Manifest](
+      stateBehavior: Behavior[Client => Init],
+      updates: HEvent[Client => U]
+    ): ToClientDependency[Init, U] =
+      new ToClientDependency[Init, U] {
+        val updateData = UpdateData(name, updates.map { fun =>
+          c: Client => Some(fun(c))
+        })
+        override val stateData = Some(StateData(name, stateBehavior))
       }
   }
 
@@ -102,7 +127,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
      * to-be-transfered state can be pulled
      */
     lazy val initialCarrier: Behavior[Client => Seq[Message]] = {
-      val carriers = toClientDeps.map(_.initialCarrier).flatten
+      val carriers = toClientDeps.map(_.stateData.map(_.carrier)).flatten
       val seqCarrier = carriers.foldLeft(Behavior.constant(collection.Seq.empty[Client => Message])) { (acc, n) =>
         val fa = n.map { newVal =>
           seq: Seq[Client => Message] => seq :+ newVal
@@ -119,7 +144,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
      * to-be-transfered state
      */
     lazy val serverCarrier: HEvent[Client => Seq[Message]] =
-      HEvent.merge(toClientDeps.map(_.messageCarrier).toSeq).map { seq =>
+      HEvent.merge(toClientDeps.map(_.updateData.carrier).toSeq).map { seq =>
         c: Client => seq.map(_(c)).flatten
       }
 
@@ -132,20 +157,27 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
       EventRep.merge(lst)
     }
 
-    /**
-     * named pulse makers to inject data in the FRP network
-     */
-    lazy val clientNamedPulseMakers: Rep[NamedClientPulseMaker] = {
+    def namedPulseMaker(select: ToClientDependency[_, _] => Option[Rep[String => ScalaJs[(ScalaJs[HEventSource[T]], T)] forSome { type T }]]): Rep[NamedClientPulseMaker] = {
       val map = JSMap[String, String => ScalaJs[(ScalaJs[HEventSource[T]], T)] forSome { type T }]()
-      val namedToClientDeps = toClientDeps.map { d =>
-        (d.name, d.mkPulse)
-      }
-      namedToClientDeps.foreach {
-        case (name, entry) =>
-          map.update(unit(name), entry)
+      val namedToClientDeps = toClientDeps.foreach { d =>
+        select(d).foreach { mkPulse =>
+          map.update(unit(d.name), mkPulse)
+        }
       }
       map
     }
+
+    /**
+     * named pulse makers to inject updates in the FRP network
+     */
+    lazy val clientNamedUpdatePulseMakers: Rep[NamedClientPulseMaker] =
+      namedPulseMaker(x => Some(x.updateData.mkPulse))
+
+    /**
+     * named pulse makers to inject resets in the FRP network
+     */
+    lazy val clientNamedResetPulseMakers: Rep[NamedClientPulseMaker] =
+      namedPulseMaker(_.stateData.map(_.mkPulse))
 
     /**
      * named pulse makers to inject data in the FRP network
@@ -170,7 +202,6 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
     lazy val serverNamedPulseMakers = core.serverNamedPulseMakers
 
     lazy val clientCarrier = core.clientCarrier
-    lazy val clientNamedPulseMakers = core.clientNamedPulseMakers
 
     def makeRoute(): Option[Route] = {
       val r1 =
@@ -214,13 +245,20 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
       implicit def messageOps(m: Rep[Message]) = adtOps(m)
 
       val sseSource = EventSource(includeClientIdParam(url))
-      sseSource.onmessage = fun { ev: Rep[Dataliteral] =>
-        val messages = implicitly[JSJsonReader[List[Message]]].read(ev.data)
-        val pulses = messages.map { (message: Rep[Message]) =>
-          clientNamedPulseMakers(message.name)(message.json)
+
+      def listen(rep: Rep[NamedClientPulseMaker])(evt: String) =
+        EventSource.listen(sseSource)(unit(evt)) {
+          fun { ev: Rep[Dataliteral] =>
+            val messages = implicitly[JSJsonReader[List[Message]]].read(ev.data)
+            val pulses = messages.map { (message: Rep[Message]) =>
+              rep(message.name)(message.json)
+            }
+            clientEngine.fire(ScalaJsRuntime.encodeListAsSeq(pulses))
+          }
         }
-        clientEngine.fire(ScalaJsRuntime.encodeListAsSeq(pulses))
-      }
+
+      listen(core.clientNamedResetPulseMakers)("reset")
+      listen(core.clientNamedUpdatePulseMakers)("update")
     }
 
     /**
@@ -243,7 +281,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
               val values = serverEngine.askCurrentValues()
               values(core.initialCarrier).foreach { msgsForClient =>
                 val msgs = msgsForClient(client)
-                val data = s"data:${msgs.toJson.compactPrint}\n\n"
+                val data = s"event: reset\ndata:${msgs.toJson.compactPrint}\n\n"
                 ctx.responder ! MessageChunk(data)
               }
 
@@ -251,7 +289,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
                 val pulse = pulses(serverCarrier)
                 pulse.foreach { msgsForClient =>
                   val msgs = msgsForClient(client)
-                  val data = s"data:${msgs.toJson.compactPrint}\n\n"
+                  val data = s"event: update\ndata:${msgs.toJson.compactPrint}\n\n"
                   ctx.responder ! MessageChunk(data)
                 }
               }

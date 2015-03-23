@@ -28,7 +28,7 @@ trait BasicChatProg extends MtFrpProg {
     entry.snapshotWith(snapshotter)
   }
 
-  lazy val chat: ServerDiscreteBehavior[List[Entry]] =
+  lazy val chat: ServerIncBehavior[List[Entry], Entry] =
     submit.toServerAnon.fold(scala.List.empty[Entry]) { (acc, n) =>
       n :: acc
     }
@@ -47,5 +47,9 @@ trait BasicChatProg extends MtFrpProg {
     )
   }
 
-  lazy val main: ClientDiscreteBehavior[Html] = chat.toAllClients.map(template _)
+  lazy val main: ClientDiscreteBehavior[Html] = chat.toAllClients {
+    fun { (entries, entry) =>
+      entry :: entries
+    }
+  }.map(template _)
 }
