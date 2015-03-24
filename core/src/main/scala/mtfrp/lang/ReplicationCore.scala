@@ -1,11 +1,17 @@
 package mtfrp.lang
 
-import hokko.core.{ Event => HEvent, EventSource => HEventSource, Engine, Behavior }
+import akka.actor._
+import akka.pattern.ask
+import hokko.core.{ Behavior, Engine, Event => HEvent, EventSource => HEventSource }
 import java.net.URLEncoder
 import java.util.UUID
+import scala.concurrent.duration._
 import scala.js.language._
 import scala.virtualization.lms.common._
+import spray.can.Http
 import spray.http._
+import spray.http.HttpHeaders._
+import spray.http.MediaTypes._
 import spray.json._
 import spray.routing._
 import spray.routing.Directives._
@@ -197,7 +203,8 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
     core: ReplicationCore,
     serverEngine: Engine,
     clientEngine: Rep[ScalaJs[Engine]]
-  ) {
+  )(implicit actorRef: ActorRefFactory) {
+
     lazy val serverCarrier = core.serverCarrier
     lazy val serverNamedPulseMakers = core.serverNamedPulseMakers
 
@@ -261,41 +268,61 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
       listen(core.clientNamedUpdatePulseMakers)("update")
     }
 
+    import HttpHeaders.{ `Cache-Control`, `Connection` }
+    import CacheDirectives.`no-cache`
+    private def respondAsEventStream =
+      respondWithHeader(`Cache-Control`(`no-cache`)) &
+        respondWithHeader(`Connection`("Keep-Alive")) &
+        respondWithMediaType(MediaType.custom("text/event-stream"))
+
     /**
      * initialize the server section of 'toClient' calls
      *  i.e., subscribe to the serverCarrier and push new values
      *  to the client using server sent events
      */
-    private def initServerSideToClient(url: String): Route =
+    private def initServerSideToClient(url: String)(implicit refFactory: ActorRefFactory): Route = {
       path(url) {
         get {
           parameter('id) { id =>
-            ctx =>
-              val client = Client(id)
-              val padding = s""": ${" " * 2049}\n"""
-              val responseStart = HttpResponse(
-                entity = HttpEntity(MediaType.custom("text/event-stream"), padding)
-              )
-              ctx.responder ! ChunkedResponseStart(responseStart)
+            respondAsEventStream {
+              ctx =>
+                val client = Client(id)
 
-              val values = serverEngine.askCurrentValues()
-              values(core.initialCarrier).foreach { msgsForClient =>
-                val msgs = msgsForClient(client)
-                val data = s"event: reset\ndata:${msgs.toJson.compactPrint}\n\n"
-                ctx.responder ! MessageChunk(data)
-              }
+                val streamActor = refFactory.actorOf(Props(new Actor {
+                  ctx.responder ! ChunkedResponseStart(
+                    HttpResponse(entity = s""": ${" " * 2049}\n""")
+                  )
 
-              serverEngine.subscribeForPulses { pulses =>
-                val pulse = pulses(serverCarrier)
-                pulse.foreach { msgsForClient =>
-                  val msgs = msgsForClient(client)
-                  val data = s"event: update\ndata:${msgs.toJson.compactPrint}\n\n"
-                  ctx.responder ! MessageChunk(data)
-                }
-              }
+                  def sendMessageChunk(evt: String)(msgsForClient: Client => Seq[Message]) = {
+                    val msgs = msgsForClient(client)
+                    val data = s"event: $evt\ndata:${msgs.toJson.compactPrint}\n\n"
+                    ctx.responder ! MessageChunk(data)
+                  }
+
+                  val values = serverEngine.askCurrentValues()
+                  values(core.initialCarrier).foreach(sendMessageChunk("reset"))
+
+                  val subscription = serverEngine.subscribeForPulses { pulses =>
+                    pulses(serverCarrier).foreach(sendMessageChunk("update"))
+                  }
+
+                  // Keep-Alive
+                  context.setReceiveTimeout(15 seconds)
+
+                  def receive = {
+                    case Http.Close | Http.ConfirmedClose | Http.Abort | Http.PeerClosed | Http.ErrorClosed =>
+                      subscription.cancel()
+                      context.stop(self)
+
+                    // Comment to keep connection alive
+                    case ReceiveTimeout => ctx.responder ! MessageChunk(":\n")
+                  }
+                }))
+            }
           }
         }
       }
+    }
 
     /**
      *  @return optionally, the Route that encompasses all involved server
@@ -312,16 +339,17 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
      *  i.e., subscribe to the clientCarrier and push new values
      *  to the server using XMLHttpRequest
      */
-    private def initClientSideToServer(url: String): Unit = {
-      clientEngine.subscribeForPulses(ScalaJsRuntime.encodeFn1(fun { pulses: Rep[ScalaJs[Engine.Pulses]] =>
-        val pulse = pulses(clientCarrier)
-        ScalaJsRuntime.decodeOptions(pulse).foreach { seq: Rep[ScalaJs[Seq[Message]]] =>
-          val req = XMLHttpRequest()
-          req.open(unit("POST"), includeClientIdParam(url))
-          req.send(ScalaJsRuntime.decodeSeqs(seq).toJSONString)
+    private def initClientSideToServer(url: String): Unit =
+      clientEngine.subscribeForPulses(ScalaJsRuntime.encodeFn1(
+        fun { pulses: Rep[ScalaJs[Engine.Pulses]] =>
+          val pulse = pulses(clientCarrier)
+          ScalaJsRuntime.decodeOptions(pulse).foreach { seq: Rep[ScalaJs[Seq[Message]]] =>
+            val req = XMLHttpRequest()
+            req.open(unit("POST"), includeClientIdParam(url))
+            req.send(ScalaJsRuntime.decodeSeqs(seq).toJSONString)
+          }
         }
-      }))
-    }
+      ))
 
     /**
      * initialize the server section of 'toServer' calls

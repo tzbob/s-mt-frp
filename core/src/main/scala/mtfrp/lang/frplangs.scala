@@ -1,11 +1,13 @@
 package mtfrp.lang
 
-import hokko.core.{ DiscreteBehavior, Engine }
+import akka.actor._
+import hokko.core.Engine
 import mtfrp.exp.MtFrpProgExp
 import scala.js.language._
 import scala.js.language.dom.Browser
 import spray.json.DefaultJsonProtocol
-import spray.routing.Route
+import spray.routing.{ Route, Directives }
+import spray.routing.Directives._
 
 trait MtFrpLib
   extends ClientFRPLib
@@ -25,7 +27,7 @@ trait MtFrpProg
 }
 
 trait MtFrpProgRunner extends MtFrpProgExp { self: MtFrpProg =>
-  private[mtfrp] def run: (Rep[Any], Option[Route], Engine) = {
+  private[mtfrp] def run(implicit f: ActorRefFactory): (Rep[Any], Option[Route], Engine) = {
     val behavior = main
 
     val rep = behavior.rep

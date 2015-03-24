@@ -1,21 +1,21 @@
 package mtfrp.gen
 
+import akka.actor._
 import java.io.{ PrintWriter, StringWriter }
 import java.net.URLEncoder
 import java.util.UUID
-import scala.xml.Unparsed
 import mtfrp.exp.MtFrpProgExp
-import spray.http.{ HttpCookie, MediaTypes }
+import mtfrp.lang.{ Client, MtFrpProgRunner }
+import scala.xml.Unparsed
+import spray.http.MediaTypes
 import spray.httpx.marshalling.ToResponseMarshallable.isMarshallable
-import spray.routing.Directive.pimpApply
 import spray.routing.{ Route, Directives }
-import mtfrp.lang.Client
-import mtfrp.lang.MtFrpProgRunner
+import spray.routing.Directives._
 
 object PageCompiler {
   import Directives._
 
-  def makeRoute(csses: Seq[String] = Seq.empty, scripts: Seq[String] = Seq.empty)(prog: MtFrpProgRunner with MtFrpProgExp)(url: String): Route = {
+  def makeRoute(csses: Seq[String] = Seq.empty, scripts: Seq[String] = Seq.empty)(prog: MtFrpProgRunner with MtFrpProgExp)(url: String)(implicit f: ActorRefFactory): Route = {
     lazy val (rep, route, engine) = prog.run
     val gen = new GenMtFrp { val IR: prog.type = prog }
     val block = gen.reifyBlock(rep)
