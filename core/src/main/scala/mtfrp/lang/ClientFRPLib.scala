@@ -14,6 +14,7 @@ trait ClientFRPLib extends JS
   with DiscreteBehavior.DiscreteBehaviorLib
   with DiscreteBehavior.DiscreteBehaviorStaticLib {
 
+
   object ClientEvent {
     def apply[T: Manifest](rep: Rep[ScalaJs[HEvent[T]]], core: ReplicationCore): ClientEvent[T] =
       new ClientEvent(rep, core)
@@ -92,6 +93,9 @@ trait ClientFRPLib extends JS
 
     def markChanges(marks: ClientEvent[Unit]): ClientDiscreteBehavior[A] =
       ClientDiscreteBehavior(rep.markChanges(marks.rep), core + marks.core)
+
+    def sampledBy(ev: ClientEvent[_]): ClientEvent[A] =
+      ClientEvent(rep.sampledBy(ev.rep), core + ev.core)
   }
 
   object ClientDiscreteBehavior {

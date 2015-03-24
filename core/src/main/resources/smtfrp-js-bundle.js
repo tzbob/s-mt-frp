@@ -969,6 +969,11 @@ ScalaJS.m.Lhokko_core_Behavior$ = (function() {
 ScalaJS.e["hokko"] = (ScalaJS.e["hokko"] || {});
 ScalaJS.e["hokko"]["core"] = (ScalaJS.e["hokko"]["core"] || {});
 ScalaJS.e["hokko"]["core"]["Behavior"] = ScalaJS.m.Lhokko_core_Behavior$;
+ScalaJS.s.Lhokko_core_Behavior$class__sampledBy__Lhokko_core_Behavior__Lhokko_core_Event__Lhokko_core_Event = (function($$this, ev) {
+  var f = new ScalaJS.c.Lhokko_core_Behavior$$anonfun$sampledBy$1().init___Lhokko_core_Behavior($$this);
+  var ev$1 = ScalaJS.s.Lhokko_core_Event$class__map__Lhokko_core_Event__F1__Lhokko_core_Event(ev, f);
+  return ScalaJS.m.Lhokko_core_Event$().snapshotted__Lhokko_core_Event__Lhokko_core_Behavior__Lhokko_core_Event(ev$1, $$this)
+});
 ScalaJS.s.Lhokko_core_Behavior$class__map__Lhokko_core_Behavior__F1__Lhokko_core_Behavior = (function($$this, f) {
   var fb = ScalaJS.m.Lhokko_core_DiscreteBehavior$().constant__O__Lhokko_core_DiscreteBehavior(f);
   return new ScalaJS.c.Lhokko_core_Behavior$ReverseApply().init___Lhokko_core_Behavior__Lhokko_core_Behavior($$this, fb)
@@ -1408,8 +1413,8 @@ ScalaJS.c.Lhokko_core_Event$.prototype.merge__sc_Seq__Lhokko_core_Event = (funct
   var o11 = new ScalaJS.c.s_Some().init___O(events);
   if (((o11.x$2 !== null) && (ScalaJS.as.sc_SeqLike(o11.x$2).lengthCompare__I__I(1) === 0))) {
     var x = ScalaJS.as.Lhokko_core_Event(ScalaJS.as.sc_SeqLike(o11.x$2).apply__I__O(0));
-    var f = new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(x$6$2) {
-      return ScalaJS.as.sc_Seq(ScalaJS.m.sc_Seq$().apply__sc_Seq__sc_GenTraversable(new ScalaJS.c.sjs_js_WrappedArray().init___sjs_js_Array([x$6$2])))
+    var f = new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(x$8$2) {
+      return ScalaJS.as.sc_Seq(ScalaJS.m.sc_Seq$().apply__sc_Seq__sc_GenTraversable(new ScalaJS.c.sjs_js_WrappedArray().init___sjs_js_Array([x$8$2])))
     }));
     return ScalaJS.s.Lhokko_core_Event$class__map__Lhokko_core_Event__F1__Lhokko_core_Event(x, f)
   };
@@ -1454,9 +1459,21 @@ ScalaJS.s.Lhokko_core_Event$class__hold__Lhokko_core_Event__O__Lhokko_core_Discr
   }));
   return ScalaJS.m.Lhokko_core_IncrementalBehavior$().folded__Lhokko_core_Event__O__F2__Lhokko_core_IncrementalBehavior($$this, initial, f)
 });
+ScalaJS.s.Lhokko_core_Event$class__unionLeft__Lhokko_core_Event__Lhokko_core_Event__Lhokko_core_Event = (function($$this, other) {
+  var f1 = new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(x$2) {
+    return x$2
+  }));
+  var f2 = new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(x$2$1) {
+    return x$2$1
+  }));
+  var f3 = new ScalaJS.c.sjsr_AnonFunction2().init___sjs_js_Function2((function(left$2, x$2$2) {
+    return left$2
+  }));
+  return ScalaJS.s.Lhokko_core_Event$class__unionWith__Lhokko_core_Event__Lhokko_core_Event__F1__F1__F2__Lhokko_core_Event($$this, other, f1, f2, f3)
+});
 ScalaJS.s.Lhokko_core_Event$class__mergeWith__Lhokko_core_Event__sc_Seq__Lhokko_core_Event = (function($$this, events) {
-  var f = new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(x$2$2) {
-    return ScalaJS.as.sc_Seq(ScalaJS.m.sc_Seq$().apply__sc_Seq__sc_GenTraversable(new ScalaJS.c.sjs_js_WrappedArray().init___sjs_js_Array([x$2$2])))
+  var f = new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(x$4$2) {
+    return ScalaJS.as.sc_Seq(ScalaJS.m.sc_Seq$().apply__sc_Seq__sc_GenTraversable(new ScalaJS.c.sjs_js_WrappedArray().init___sjs_js_Array([x$4$2])))
   }));
   var selfSeq = ScalaJS.s.Lhokko_core_Event$class__map__Lhokko_core_Event__F1__Lhokko_core_Event($$this, f);
   return ScalaJS.as.Lhokko_core_Event(events.foldLeft__O__F2__O(selfSeq, new ScalaJS.c.Lhokko_core_Event$$anonfun$mergeWith$1().init___Lhokko_core_Event($$this)))
@@ -1472,6 +1489,18 @@ ScalaJS.s.Lhokko_core_Event$class__map__Lhokko_core_Event__F1__Lhokko_core_Event
     })
   })(f));
   return ScalaJS.s.Lhokko_core_Event$class__collect__Lhokko_core_Event__F1__Lhokko_core_Event($$this, fb)
+});
+ScalaJS.s.Lhokko_core_Event$class__unionRight__Lhokko_core_Event__Lhokko_core_Event__Lhokko_core_Event = (function($$this, other) {
+  var f1 = new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(x$2) {
+    return x$2
+  }));
+  var f2 = new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(x$2$1) {
+    return x$2$1
+  }));
+  var f3 = new ScalaJS.c.sjsr_AnonFunction2().init___sjs_js_Function2((function(x$3$2, right$2) {
+    return right$2
+  }));
+  return ScalaJS.s.Lhokko_core_Event$class__unionWith__Lhokko_core_Event__Lhokko_core_Event__F1__F1__F2__Lhokko_core_Event($$this, other, f1, f2, f3)
 });
 ScalaJS.s.Lhokko_core_Event$class__unionWith__Lhokko_core_Event__Lhokko_core_Event__F1__F1__F2__Lhokko_core_Event = (function($$this, b, f1, f2, f3) {
   var n = new ScalaJS.c.Lhokko_core_Event$UnionWith().init___Lhokko_core_Event__Lhokko_core_Event__F1__F1__F2($$this, b, f1, f2, f3);
@@ -1599,6 +1628,12 @@ ScalaJS.m.Lhokko_core_IncrementalBehavior$ = (function() {
 ScalaJS.e["hokko"] = (ScalaJS.e["hokko"] || {});
 ScalaJS.e["hokko"]["core"] = (ScalaJS.e["hokko"]["core"] || {});
 ScalaJS.e["hokko"]["core"]["IncrementalBehavior"] = ScalaJS.m.Lhokko_core_IncrementalBehavior$;
+ScalaJS.s.Lhokko_core_IncrementalBehavior$class__map__Lhokko_core_IncrementalBehavior__F2__F1__F1__Lhokko_core_IncrementalBehavior = (function($$this, accumulator, fa, fb) {
+  var this$1 = $$this.deltas__Lhokko_core_Event();
+  var newDeltas = ScalaJS.s.Lhokko_core_Event$class__map__Lhokko_core_Event__F1__Lhokko_core_Event(this$1, fb);
+  var newInitial = fa.apply__O__O($$this.initial__O());
+  return ScalaJS.m.Lhokko_core_IncrementalBehavior$().folded__Lhokko_core_Event__O__F2__Lhokko_core_IncrementalBehavior(newDeltas, newInitial, accumulator)
+});
 ScalaJS.s.Lhokko_core_Node$class__level__Lhokko_core_Node__I = (function($$this) {
   if ($$this.dependencies__sci_List().isEmpty__Z()) {
     return 0
@@ -5626,6 +5661,9 @@ ScalaJS.c.Lhokko_core_Behavior$$anon$3.prototype.$$js$exported$meth$snapshotWith
 ScalaJS.c.Lhokko_core_Behavior$$anon$3.prototype.node__Lhokko_core_Pull = (function() {
   return this.node$1
 });
+ScalaJS.c.Lhokko_core_Behavior$$anon$3.prototype.$$js$exported$meth$sampledBy__Lhokko_core_Event__O = (function(ev) {
+  return ScalaJS.s.Lhokko_core_Behavior$class__sampledBy__Lhokko_core_Behavior__Lhokko_core_Event__Lhokko_core_Event(this, ev)
+});
 ScalaJS.c.Lhokko_core_Behavior$$anon$3.prototype.$$js$exported$meth$reverseApply__Lhokko_core_Behavior__O = (function(fb) {
   return new ScalaJS.c.Lhokko_core_Behavior$ReverseApply().init___Lhokko_core_Behavior__Lhokko_core_Behavior(this, fb)
 });
@@ -5650,6 +5688,10 @@ ScalaJS.c.Lhokko_core_Behavior$$anon$3.prototype["withChanges"] = (function(arg$
 ScalaJS.c.Lhokko_core_Behavior$$anon$3.prototype["map"] = (function(arg$1) {
   var preparg$1 = ScalaJS.as.F1(arg$1);
   return this.$$js$exported$meth$map__F1__O(preparg$1)
+});
+ScalaJS.c.Lhokko_core_Behavior$$anon$3.prototype["sampledBy"] = (function(arg$1) {
+  var preparg$1 = ScalaJS.as.Lhokko_core_Event(arg$1);
+  return this.$$js$exported$meth$sampledBy__Lhokko_core_Event__O(preparg$1)
 });
 ScalaJS.c.Lhokko_core_Behavior$$anon$3.prototype["markChanges"] = (function(arg$1) {
   var preparg$1 = ScalaJS.as.Lhokko_core_Event(arg$1);
@@ -5678,6 +5720,12 @@ ScalaJS.h.Lhokko_core_Event$$anon$2.prototype = ScalaJS.c.Lhokko_core_Event$$ano
 ScalaJS.c.Lhokko_core_Event$$anon$2.prototype.$$js$exported$meth$collect__F1__O = (function(fb) {
   return ScalaJS.s.Lhokko_core_Event$class__collect__Lhokko_core_Event__F1__Lhokko_core_Event(this, fb)
 });
+ScalaJS.c.Lhokko_core_Event$$anon$2.prototype.$$js$exported$meth$unionRight__Lhokko_core_Event__O = (function(other) {
+  return ScalaJS.s.Lhokko_core_Event$class__unionRight__Lhokko_core_Event__Lhokko_core_Event__Lhokko_core_Event(this, other)
+});
+ScalaJS.c.Lhokko_core_Event$$anon$2.prototype.$$js$exported$meth$unionLeft__Lhokko_core_Event__O = (function(other) {
+  return ScalaJS.s.Lhokko_core_Event$class__unionLeft__Lhokko_core_Event__Lhokko_core_Event__Lhokko_core_Event(this, other)
+});
 ScalaJS.c.Lhokko_core_Event$$anon$2.prototype.node__Lhokko_core_Push = (function() {
   return this.node$1
 });
@@ -5696,9 +5744,6 @@ ScalaJS.c.Lhokko_core_Event$$anon$2.prototype.$$js$exported$meth$hold__O__O = (f
 });
 ScalaJS.c.Lhokko_core_Event$$anon$2.prototype.$$js$exported$meth$fold__O__F2__O = (function(initial, f) {
   return ScalaJS.m.Lhokko_core_IncrementalBehavior$().folded__Lhokko_core_Event__O__F2__Lhokko_core_IncrementalBehavior(this, initial, f)
-});
-ScalaJS.c.Lhokko_core_Event$$anon$2.prototype.$$js$exported$meth$mergeWith__sc_Seq__O = (function(events) {
-  return ScalaJS.s.Lhokko_core_Event$class__mergeWith__Lhokko_core_Event__sc_Seq__Lhokko_core_Event(this, events)
 });
 ScalaJS.c.Lhokko_core_Event$$anon$2.prototype.$$js$exported$meth$map__F1__O = (function(f) {
   return ScalaJS.s.Lhokko_core_Event$class__map__Lhokko_core_Event__F1__Lhokko_core_Event(this, f)
@@ -5723,9 +5768,13 @@ ScalaJS.c.Lhokko_core_Event$$anon$2.prototype["hold"] = (function(arg$1) {
   var preparg$1 = arg$1;
   return this.$$js$exported$meth$hold__O__O(preparg$1)
 });
-ScalaJS.c.Lhokko_core_Event$$anon$2.prototype["mergeWith"] = (function(arg$1) {
-  var preparg$1 = ScalaJS.as.sc_Seq(arg$1);
-  return this.$$js$exported$meth$mergeWith__sc_Seq__O(preparg$1)
+ScalaJS.c.Lhokko_core_Event$$anon$2.prototype["unionLeft"] = (function(arg$1) {
+  var preparg$1 = ScalaJS.as.Lhokko_core_Event(arg$1);
+  return this.$$js$exported$meth$unionLeft__Lhokko_core_Event__O(preparg$1)
+});
+ScalaJS.c.Lhokko_core_Event$$anon$2.prototype["unionRight"] = (function(arg$1) {
+  var preparg$1 = ScalaJS.as.Lhokko_core_Event(arg$1);
+  return this.$$js$exported$meth$unionRight__Lhokko_core_Event__O(preparg$1)
 });
 ScalaJS.c.Lhokko_core_Event$$anon$2.prototype["map"] = (function(arg$1) {
   var preparg$1 = ScalaJS.as.F1(arg$1);
@@ -6669,6 +6718,9 @@ ScalaJS.c.Lhokko_core_DiscreteBehavior$$anon$1.prototype.$$js$exported$meth$with
 ScalaJS.c.Lhokko_core_DiscreteBehavior$$anon$1.prototype.node__Lhokko_core_Pull = (function() {
   return this.node$1
 });
+ScalaJS.c.Lhokko_core_DiscreteBehavior$$anon$1.prototype.$$js$exported$meth$sampledBy__Lhokko_core_Event__O = (function(ev) {
+  return ScalaJS.s.Lhokko_core_Behavior$class__sampledBy__Lhokko_core_Behavior__Lhokko_core_Event__Lhokko_core_Event(this, ev)
+});
 ScalaJS.c.Lhokko_core_DiscreteBehavior$$anon$1.prototype.changes__Lhokko_core_Event = (function() {
   return this.changes$1
 });
@@ -6714,6 +6766,10 @@ ScalaJS.c.Lhokko_core_DiscreteBehavior$$anon$1.prototype["withChanges"] = (funct
   var preparg$1 = ScalaJS.as.Lhokko_core_Event(arg$1);
   return this.$$js$exported$meth$withChanges__Lhokko_core_Event__O(preparg$1)
 });
+ScalaJS.c.Lhokko_core_DiscreteBehavior$$anon$1.prototype["sampledBy"] = (function(arg$1) {
+  var preparg$1 = ScalaJS.as.Lhokko_core_Event(arg$1);
+  return this.$$js$exported$meth$sampledBy__Lhokko_core_Event__O(preparg$1)
+});
 ScalaJS.c.Lhokko_core_DiscreteBehavior$$anon$1.prototype["markChanges"] = (function(arg$1) {
   var preparg$1 = ScalaJS.as.Lhokko_core_Event(arg$1);
   return this.$$js$exported$meth$markChanges__Lhokko_core_Event__O(preparg$1)
@@ -6757,6 +6813,9 @@ ScalaJS.c.Lhokko_core_DiscreteBehavior$$anon$2.prototype.$$js$exported$meth$with
 });
 ScalaJS.c.Lhokko_core_DiscreteBehavior$$anon$2.prototype.node__Lhokko_core_Pull = (function() {
   return ScalaJS.as.Lhokko_core_Pull(this.node$1)
+});
+ScalaJS.c.Lhokko_core_DiscreteBehavior$$anon$2.prototype.$$js$exported$meth$sampledBy__Lhokko_core_Event__O = (function(ev) {
+  return ScalaJS.s.Lhokko_core_Behavior$class__sampledBy__Lhokko_core_Behavior__Lhokko_core_Event__Lhokko_core_Event(this, ev)
 });
 ScalaJS.c.Lhokko_core_DiscreteBehavior$$anon$2.prototype.init___Lhokko_core_Push = (function(n$1) {
   this.node$1 = n$1;
@@ -6803,6 +6862,10 @@ ScalaJS.c.Lhokko_core_DiscreteBehavior$$anon$2.prototype["withChanges"] = (funct
   var preparg$1 = ScalaJS.as.Lhokko_core_Event(arg$1);
   return this.$$js$exported$meth$withChanges__Lhokko_core_Event__O(preparg$1)
 });
+ScalaJS.c.Lhokko_core_DiscreteBehavior$$anon$2.prototype["sampledBy"] = (function(arg$1) {
+  var preparg$1 = ScalaJS.as.Lhokko_core_Event(arg$1);
+  return this.$$js$exported$meth$sampledBy__Lhokko_core_Event__O(preparg$1)
+});
 ScalaJS.c.Lhokko_core_DiscreteBehavior$$anon$2.prototype["markChanges"] = (function(arg$1) {
   var preparg$1 = ScalaJS.as.Lhokko_core_Event(arg$1);
   return this.$$js$exported$meth$markChanges__Lhokko_core_Event__O(preparg$1)
@@ -6836,6 +6899,12 @@ ScalaJS.c.Lhokko_core_Event$$anon$1.prototype.init___ = (function() {
 ScalaJS.c.Lhokko_core_Event$$anon$1.prototype.$$js$exported$meth$collect__F1__O = (function(fb) {
   return ScalaJS.s.Lhokko_core_Event$class__collect__Lhokko_core_Event__F1__Lhokko_core_Event(this, fb)
 });
+ScalaJS.c.Lhokko_core_Event$$anon$1.prototype.$$js$exported$meth$unionRight__Lhokko_core_Event__O = (function(other) {
+  return ScalaJS.s.Lhokko_core_Event$class__unionRight__Lhokko_core_Event__Lhokko_core_Event__Lhokko_core_Event(this, other)
+});
+ScalaJS.c.Lhokko_core_Event$$anon$1.prototype.$$js$exported$meth$unionLeft__Lhokko_core_Event__O = (function(other) {
+  return ScalaJS.s.Lhokko_core_Event$class__unionLeft__Lhokko_core_Event__Lhokko_core_Event__Lhokko_core_Event(this, other)
+});
 ScalaJS.c.Lhokko_core_Event$$anon$1.prototype.node__Lhokko_core_Push = (function() {
   return this.node$1
 });
@@ -6850,9 +6919,6 @@ ScalaJS.c.Lhokko_core_Event$$anon$1.prototype.$$js$exported$meth$hold__O__O = (f
 });
 ScalaJS.c.Lhokko_core_Event$$anon$1.prototype.$$js$exported$meth$fold__O__F2__O = (function(initial, f) {
   return ScalaJS.m.Lhokko_core_IncrementalBehavior$().folded__Lhokko_core_Event__O__F2__Lhokko_core_IncrementalBehavior(this, initial, f)
-});
-ScalaJS.c.Lhokko_core_Event$$anon$1.prototype.$$js$exported$meth$mergeWith__sc_Seq__O = (function(events) {
-  return ScalaJS.s.Lhokko_core_Event$class__mergeWith__Lhokko_core_Event__sc_Seq__Lhokko_core_Event(this, events)
 });
 ScalaJS.c.Lhokko_core_Event$$anon$1.prototype.$$js$exported$meth$map__F1__O = (function(f) {
   return ScalaJS.s.Lhokko_core_Event$class__map__Lhokko_core_Event__F1__Lhokko_core_Event(this, f)
@@ -6877,9 +6943,13 @@ ScalaJS.c.Lhokko_core_Event$$anon$1.prototype["hold"] = (function(arg$1) {
   var preparg$1 = arg$1;
   return this.$$js$exported$meth$hold__O__O(preparg$1)
 });
-ScalaJS.c.Lhokko_core_Event$$anon$1.prototype["mergeWith"] = (function(arg$1) {
-  var preparg$1 = ScalaJS.as.sc_Seq(arg$1);
-  return this.$$js$exported$meth$mergeWith__sc_Seq__O(preparg$1)
+ScalaJS.c.Lhokko_core_Event$$anon$1.prototype["unionLeft"] = (function(arg$1) {
+  var preparg$1 = ScalaJS.as.Lhokko_core_Event(arg$1);
+  return this.$$js$exported$meth$unionLeft__Lhokko_core_Event__O(preparg$1)
+});
+ScalaJS.c.Lhokko_core_Event$$anon$1.prototype["unionRight"] = (function(arg$1) {
+  var preparg$1 = ScalaJS.as.Lhokko_core_Event(arg$1);
+  return this.$$js$exported$meth$unionRight__Lhokko_core_Event__O(preparg$1)
 });
 ScalaJS.c.Lhokko_core_Event$$anon$1.prototype["map"] = (function(arg$1) {
   var preparg$1 = ScalaJS.as.F1(arg$1);
@@ -8410,8 +8480,14 @@ ScalaJS.h.Lhokko_core_IncrementalBehavior$$anon$1.prototype = ScalaJS.c.Lhokko_c
 ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$1.prototype.$$js$exported$meth$markChanges__Lhokko_core_Event__O = (function(signals) {
   return ScalaJS.s.Lhokko_core_Behavior$class__markChanges__Lhokko_core_Behavior__Lhokko_core_Event__Lhokko_core_DiscreteBehavior(this, signals)
 });
+ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$1.prototype.initial__O = (function() {
+  return this.initial$1
+});
 ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$1.prototype.$$js$exported$meth$discreteReverseApply__Lhokko_core_DiscreteBehavior__O = (function(fb) {
   return ScalaJS.s.Lhokko_core_DiscreteBehavior$class__discreteReverseApply__Lhokko_core_DiscreteBehavior__Lhokko_core_DiscreteBehavior__Lhokko_core_DiscreteBehavior(this, fb)
+});
+ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$1.prototype.$$js$exported$meth$map__F2__F1__F1__O = (function(accumulator, fa, fb) {
+  return ScalaJS.s.Lhokko_core_IncrementalBehavior$class__map__Lhokko_core_IncrementalBehavior__F2__F1__F1__Lhokko_core_IncrementalBehavior(this, accumulator, fa, fb)
 });
 ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$1.prototype.$$js$exported$meth$changes__O = (function() {
   return this.changes$1
@@ -8426,14 +8502,20 @@ ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$1.prototype.init___O__Lhokko_cor
 ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$1.prototype.$$js$exported$meth$snapshotWith__Lhokko_core_Event__O = (function(ev) {
   return ScalaJS.m.Lhokko_core_Event$().snapshotted__Lhokko_core_Event__Lhokko_core_Behavior__Lhokko_core_Event(ev, this)
 });
+ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$1.prototype.deltas__Lhokko_core_Event = (function() {
+  return this.deltas$1
+});
 ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$1.prototype.$$js$exported$meth$withDeltas__O__Lhokko_core_Event__O = (function(init, deltas) {
   return new ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$1().init___O__Lhokko_core_DiscreteBehavior__Lhokko_core_Event(init, this, deltas)
+});
+ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$1.prototype.$$js$exported$prop$deltas__O = (function() {
+  return this.deltas$1
 });
 ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$1.prototype.node__Lhokko_core_Pull = (function() {
   return this.node$1
 });
-ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$1.prototype.$$js$exported$prop$deltas__O = (function() {
-  return this.deltas$1
+ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$1.prototype.$$js$exported$meth$sampledBy__Lhokko_core_Event__O = (function(ev) {
+  return ScalaJS.s.Lhokko_core_Behavior$class__sampledBy__Lhokko_core_Behavior__Lhokko_core_Event__Lhokko_core_Event(this, ev)
 });
 ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$1.prototype.changes__Lhokko_core_Event = (function() {
   return this.changes$1
@@ -8453,6 +8535,26 @@ Object["defineProperty"](ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$1.proto
   }),
   "enumerable": true
 });
+ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$1.prototype["map"] = (function(arg$1, arg$2, arg$3) {
+  switch (ScalaJS.uI(arguments["length"])) {
+    case 3:
+      {
+        var preparg$1 = ScalaJS.as.F2(arg$1);
+        var preparg$2 = ScalaJS.as.F1(arg$2);
+        var preparg$3 = ScalaJS.as.F1(arg$3);
+        return this.$$js$exported$meth$map__F2__F1__F1__O(preparg$1, preparg$2, preparg$3);
+        break
+      };
+    case 1:
+      {
+        var preparg$1 = ScalaJS.as.F1(arg$1);
+        return this.$$js$exported$meth$map__F1__O(preparg$1);
+        break
+      };
+    default:
+      throw "No matching overload";
+  }
+});
 ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$1.prototype["changes"] = (function() {
   return this.$$js$exported$meth$changes__O()
 });
@@ -8465,10 +8567,6 @@ ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$1.prototype["withDeltas"] = (fun
   var preparg$2 = ScalaJS.as.Lhokko_core_Event(arg$2);
   return this.$$js$exported$meth$withDeltas__O__Lhokko_core_Event__O(preparg$1, preparg$2)
 });
-ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$1.prototype["map"] = (function(arg$1) {
-  var preparg$1 = ScalaJS.as.F1(arg$1);
-  return this.$$js$exported$meth$map__F1__O(preparg$1)
-});
 ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$1.prototype["reverseApply"] = (function(arg$1) {
   var preparg$1 = ScalaJS.as.Lhokko_core_Behavior(arg$1);
   return this.$$js$exported$meth$reverseApply__Lhokko_core_Behavior__O(preparg$1)
@@ -8480,6 +8578,10 @@ ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$1.prototype["snapshotWith"] = (f
 ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$1.prototype["withChanges"] = (function(arg$1) {
   var preparg$1 = ScalaJS.as.Lhokko_core_Event(arg$1);
   return this.$$js$exported$meth$withChanges__Lhokko_core_Event__O(preparg$1)
+});
+ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$1.prototype["sampledBy"] = (function(arg$1) {
+  var preparg$1 = ScalaJS.as.Lhokko_core_Event(arg$1);
+  return this.$$js$exported$meth$sampledBy__Lhokko_core_Event__O(preparg$1)
 });
 ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$1.prototype["markChanges"] = (function(arg$1) {
   var preparg$1 = ScalaJS.as.Lhokko_core_Event(arg$1);
@@ -8513,8 +8615,14 @@ ScalaJS.h.Lhokko_core_IncrementalBehavior$$anon$2.prototype = ScalaJS.c.Lhokko_c
 ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$2.prototype.$$js$exported$meth$markChanges__Lhokko_core_Event__O = (function(signals) {
   return ScalaJS.s.Lhokko_core_Behavior$class__markChanges__Lhokko_core_Behavior__Lhokko_core_Event__Lhokko_core_DiscreteBehavior(this, signals)
 });
+ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$2.prototype.initial__O = (function() {
+  return this.initial$1
+});
 ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$2.prototype.$$js$exported$meth$discreteReverseApply__Lhokko_core_DiscreteBehavior__O = (function(fb) {
   return ScalaJS.s.Lhokko_core_DiscreteBehavior$class__discreteReverseApply__Lhokko_core_DiscreteBehavior__Lhokko_core_DiscreteBehavior__Lhokko_core_DiscreteBehavior(this, fb)
+});
+ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$2.prototype.$$js$exported$meth$map__F2__F1__F1__O = (function(accumulator, fa, fb) {
+  return ScalaJS.s.Lhokko_core_IncrementalBehavior$class__map__Lhokko_core_IncrementalBehavior__F2__F1__F1__Lhokko_core_IncrementalBehavior(this, accumulator, fa, fb)
 });
 ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$2.prototype.$$js$exported$meth$changes__O = (function() {
   return this.changes$1
@@ -8529,14 +8637,20 @@ ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$2.prototype.init___Lhokko_core_E
 ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$2.prototype.$$js$exported$meth$snapshotWith__Lhokko_core_Event__O = (function(ev) {
   return ScalaJS.m.Lhokko_core_Event$().snapshotted__Lhokko_core_Event__Lhokko_core_Behavior__Lhokko_core_Event(ev, this)
 });
+ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$2.prototype.deltas__Lhokko_core_Event = (function() {
+  return this.deltas$1
+});
 ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$2.prototype.$$js$exported$meth$withDeltas__O__Lhokko_core_Event__O = (function(init, deltas) {
   return new ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$1().init___O__Lhokko_core_DiscreteBehavior__Lhokko_core_Event(init, this, deltas)
+});
+ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$2.prototype.$$js$exported$prop$deltas__O = (function() {
+  return this.deltas$1
 });
 ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$2.prototype.node__Lhokko_core_Pull = (function() {
   return this.node$1
 });
-ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$2.prototype.$$js$exported$prop$deltas__O = (function() {
-  return this.deltas$1
+ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$2.prototype.$$js$exported$meth$sampledBy__Lhokko_core_Event__O = (function(ev) {
+  return ScalaJS.s.Lhokko_core_Behavior$class__sampledBy__Lhokko_core_Behavior__Lhokko_core_Event__Lhokko_core_Event(this, ev)
 });
 ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$2.prototype.changes__Lhokko_core_Event = (function() {
   return this.changes$1
@@ -8556,6 +8670,26 @@ Object["defineProperty"](ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$2.proto
   }),
   "enumerable": true
 });
+ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$2.prototype["map"] = (function(arg$1, arg$2, arg$3) {
+  switch (ScalaJS.uI(arguments["length"])) {
+    case 1:
+      {
+        var preparg$1 = ScalaJS.as.F1(arg$1);
+        return this.$$js$exported$meth$map__F1__O(preparg$1);
+        break
+      };
+    case 3:
+      {
+        var preparg$1 = ScalaJS.as.F2(arg$1);
+        var preparg$2 = ScalaJS.as.F1(arg$2);
+        var preparg$3 = ScalaJS.as.F1(arg$3);
+        return this.$$js$exported$meth$map__F2__F1__F1__O(preparg$1, preparg$2, preparg$3);
+        break
+      };
+    default:
+      throw "No matching overload";
+  }
+});
 ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$2.prototype["changes"] = (function() {
   return this.$$js$exported$meth$changes__O()
 });
@@ -8568,10 +8702,6 @@ ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$2.prototype["withDeltas"] = (fun
   var preparg$2 = ScalaJS.as.Lhokko_core_Event(arg$2);
   return this.$$js$exported$meth$withDeltas__O__Lhokko_core_Event__O(preparg$1, preparg$2)
 });
-ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$2.prototype["map"] = (function(arg$1) {
-  var preparg$1 = ScalaJS.as.F1(arg$1);
-  return this.$$js$exported$meth$map__F1__O(preparg$1)
-});
 ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$2.prototype["reverseApply"] = (function(arg$1) {
   var preparg$1 = ScalaJS.as.Lhokko_core_Behavior(arg$1);
   return this.$$js$exported$meth$reverseApply__Lhokko_core_Behavior__O(preparg$1)
@@ -8583,6 +8713,10 @@ ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$2.prototype["snapshotWith"] = (f
 ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$2.prototype["withChanges"] = (function(arg$1) {
   var preparg$1 = ScalaJS.as.Lhokko_core_Event(arg$1);
   return this.$$js$exported$meth$withChanges__Lhokko_core_Event__O(preparg$1)
+});
+ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$2.prototype["sampledBy"] = (function(arg$1) {
+  var preparg$1 = ScalaJS.as.Lhokko_core_Event(arg$1);
+  return this.$$js$exported$meth$sampledBy__Lhokko_core_Event__O(preparg$1)
 });
 ScalaJS.c.Lhokko_core_IncrementalBehavior$$anon$2.prototype["markChanges"] = (function(arg$1) {
   var preparg$1 = ScalaJS.as.Lhokko_core_Event(arg$1);
@@ -9451,9 +9585,9 @@ ScalaJS.c.Lhokko_core_Behavior$$anonfun$1.prototype.apply__O__O = (function(v1) 
 ScalaJS.c.Lhokko_core_Behavior$$anonfun$1.prototype.init___Lhokko_core_Behavior = (function($$outer) {
   return this
 });
-ScalaJS.c.Lhokko_core_Behavior$$anonfun$1.prototype.apply__sr_BoxedUnit__F1 = (function(x$1) {
-  return new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(x$2) {
-    return x$2
+ScalaJS.c.Lhokko_core_Behavior$$anonfun$1.prototype.apply__sr_BoxedUnit__F1 = (function(x$2) {
+  return new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(x$2$1) {
+    return x$2$1
   }))
 });
 ScalaJS.d.Lhokko_core_Behavior$$anonfun$1 = new ScalaJS.ClassTypeData({
@@ -9467,6 +9601,39 @@ ScalaJS.d.Lhokko_core_Behavior$$anonfun$1 = new ScalaJS.ClassTypeData({
   Ljava_io_Serializable: 1
 });
 ScalaJS.c.Lhokko_core_Behavior$$anonfun$1.prototype.$classData = ScalaJS.d.Lhokko_core_Behavior$$anonfun$1;
+/** @constructor */
+ScalaJS.c.Lhokko_core_Behavior$$anonfun$sampledBy$1 = (function() {
+  ScalaJS.c.sr_AbstractFunction1.call(this)
+});
+ScalaJS.c.Lhokko_core_Behavior$$anonfun$sampledBy$1.prototype = new ScalaJS.h.sr_AbstractFunction1();
+ScalaJS.c.Lhokko_core_Behavior$$anonfun$sampledBy$1.prototype.constructor = ScalaJS.c.Lhokko_core_Behavior$$anonfun$sampledBy$1;
+/** @constructor */
+ScalaJS.h.Lhokko_core_Behavior$$anonfun$sampledBy$1 = (function() {
+  /*<skip>*/
+});
+ScalaJS.h.Lhokko_core_Behavior$$anonfun$sampledBy$1.prototype = ScalaJS.c.Lhokko_core_Behavior$$anonfun$sampledBy$1.prototype;
+ScalaJS.c.Lhokko_core_Behavior$$anonfun$sampledBy$1.prototype.apply__O__O = (function(v1) {
+  return this.apply__O__F1(v1)
+});
+ScalaJS.c.Lhokko_core_Behavior$$anonfun$sampledBy$1.prototype.apply__O__F1 = (function(x$1) {
+  return new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(x$2) {
+    return x$2
+  }))
+});
+ScalaJS.c.Lhokko_core_Behavior$$anonfun$sampledBy$1.prototype.init___Lhokko_core_Behavior = (function($$outer) {
+  return this
+});
+ScalaJS.d.Lhokko_core_Behavior$$anonfun$sampledBy$1 = new ScalaJS.ClassTypeData({
+  Lhokko_core_Behavior$$anonfun$sampledBy$1: 0
+}, false, "hokko.core.Behavior$$anonfun$sampledBy$1", {
+  Lhokko_core_Behavior$$anonfun$sampledBy$1: 1,
+  sr_AbstractFunction1: 1,
+  O: 1,
+  F1: 1,
+  s_Serializable: 1,
+  Ljava_io_Serializable: 1
+});
+ScalaJS.c.Lhokko_core_Behavior$$anonfun$sampledBy$1.prototype.$classData = ScalaJS.d.Lhokko_core_Behavior$$anonfun$sampledBy$1;
 /** @constructor */
 ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2 = (function() {
   ScalaJS.c.sr_AbstractFunction1.call(this);
@@ -9494,7 +9661,7 @@ ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2.prototype.init___
 });
 ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2.prototype.apply__Lhokko_core_Thunk__s_Option = (function(bThunk) {
   var this$1 = this.context$1$2.getThunk__Lhokko_core_Pull__s_Option(this.$$outer$2.$$outer$1.fb$1.node__Lhokko_core_Pull());
-  var f = new ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2().init___Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2__Lhokko_core_Thunk(this, bThunk);
+  var f = new ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3().init___Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2__Lhokko_core_Thunk(this, bThunk);
   if (this$1.isEmpty__Z()) {
     return ScalaJS.m.s_None$()
   } else {
@@ -9514,56 +9681,60 @@ ScalaJS.d.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2 = new ScalaJS.Cla
 });
 ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2.prototype.$classData = ScalaJS.d.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2;
 /** @constructor */
-ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2 = (function() {
+ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3 = (function() {
   ScalaJS.c.sr_AbstractFunction1.call(this);
   this.bThunk$1$2 = null
 });
-ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2.prototype = new ScalaJS.h.sr_AbstractFunction1();
-ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2.prototype.constructor = ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2;
+ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3.prototype = new ScalaJS.h.sr_AbstractFunction1();
+ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3.prototype.constructor = ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3;
 /** @constructor */
-ScalaJS.h.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2 = (function() {
+ScalaJS.h.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3 = (function() {
   /*<skip>*/
 });
-ScalaJS.h.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2.prototype = ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2.prototype;
-ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2.prototype.apply__O__O = (function(v1) {
+ScalaJS.h.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3.prototype = ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3.prototype;
+ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3.prototype.apply__O__O = (function(v1) {
   return this.apply__Lhokko_core_Thunk__Lhokko_core_Thunk(ScalaJS.as.Lhokko_core_Thunk(v1))
 });
-ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2.prototype.init___Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2__Lhokko_core_Thunk = (function($$outer, bThunk$1) {
+ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3.prototype.init___Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2__Lhokko_core_Thunk = (function($$outer, bThunk$1) {
   this.bThunk$1$2 = bThunk$1;
   return this
 });
-ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2.prototype.apply__Lhokko_core_Thunk__Lhokko_core_Thunk = (function(fbThunk) {
+ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3.prototype.apply__Lhokko_core_Thunk__Lhokko_core_Thunk = (function(fbThunk) {
   var this$1 = this.bThunk$1$2;
-  var f = new ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2$$anonfun$apply$3().init___Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2__Lhokko_core_Thunk(this, fbThunk);
+  var f = new ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3$$anonfun$apply$4().init___Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3__Lhokko_core_Thunk(this, fbThunk);
   return new ScalaJS.c.Lhokko_core_Thunk$$anon$2().init___Lhokko_core_Thunk__F1(this$1, f)
 });
-ScalaJS.d.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2 = new ScalaJS.ClassTypeData({
-  Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2: 0
-}, false, "hokko.core.Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2", {
-  Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2: 1,
+ScalaJS.d.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3 = new ScalaJS.ClassTypeData({
+  Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3: 0
+}, false, "hokko.core.Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3", {
+  Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3: 1,
   sr_AbstractFunction1: 1,
   O: 1,
   F1: 1,
   s_Serializable: 1,
   Ljava_io_Serializable: 1
 });
-ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2.prototype.$classData = ScalaJS.d.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2;
+ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3.prototype.$classData = ScalaJS.d.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3;
 /** @constructor */
-ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2$$anonfun$apply$3 = (function() {
+ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3$$anonfun$apply$4 = (function() {
   ScalaJS.c.sr_AbstractFunction1.call(this);
   this.fbThunk$1$2 = null
 });
-ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2$$anonfun$apply$3.prototype = new ScalaJS.h.sr_AbstractFunction1();
-ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2$$anonfun$apply$3.prototype.constructor = ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2$$anonfun$apply$3;
+ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3$$anonfun$apply$4.prototype = new ScalaJS.h.sr_AbstractFunction1();
+ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3$$anonfun$apply$4.prototype.constructor = ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3$$anonfun$apply$4;
 /** @constructor */
-ScalaJS.h.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2$$anonfun$apply$3 = (function() {
+ScalaJS.h.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3$$anonfun$apply$4 = (function() {
   /*<skip>*/
 });
-ScalaJS.h.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2$$anonfun$apply$3.prototype = ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2$$anonfun$apply$3.prototype;
-ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2$$anonfun$apply$3.prototype.apply__O__O = (function(v1) {
+ScalaJS.h.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3$$anonfun$apply$4.prototype = ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3$$anonfun$apply$4.prototype;
+ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3$$anonfun$apply$4.prototype.apply__O__O = (function(v1) {
   return this.apply__O__Lhokko_core_Thunk(v1)
 });
-ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2$$anonfun$apply$3.prototype.apply__O__Lhokko_core_Thunk = (function(param) {
+ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3$$anonfun$apply$4.prototype.init___Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3__Lhokko_core_Thunk = (function($$outer, fbThunk$1) {
+  this.fbThunk$1$2 = fbThunk$1;
+  return this
+});
+ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3$$anonfun$apply$4.prototype.apply__O__Lhokko_core_Thunk = (function(param) {
   var this$1 = this.fbThunk$1$2;
   var f = new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(param$1) {
     return (function(fun$2) {
@@ -9573,21 +9744,17 @@ ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2$
   })(param));
   return new ScalaJS.c.Lhokko_core_Thunk$$anon$1().init___Lhokko_core_Thunk__F1(this$1, f)
 });
-ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2$$anonfun$apply$3.prototype.init___Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2__Lhokko_core_Thunk = (function($$outer, fbThunk$1) {
-  this.fbThunk$1$2 = fbThunk$1;
-  return this
-});
-ScalaJS.d.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2$$anonfun$apply$3 = new ScalaJS.ClassTypeData({
-  Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2$$anonfun$apply$3: 0
-}, false, "hokko.core.Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2$$anonfun$apply$3", {
-  Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2$$anonfun$apply$3: 1,
+ScalaJS.d.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3$$anonfun$apply$4 = new ScalaJS.ClassTypeData({
+  Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3$$anonfun$apply$4: 0
+}, false, "hokko.core.Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3$$anonfun$apply$4", {
+  Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3$$anonfun$apply$4: 1,
   sr_AbstractFunction1: 1,
   O: 1,
   F1: 1,
   s_Serializable: 1,
   Ljava_io_Serializable: 1
 });
-ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2$$anonfun$apply$3.prototype.$classData = ScalaJS.d.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$2$$anonfun$apply$3;
+ScalaJS.c.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3$$anonfun$apply$4.prototype.$classData = ScalaJS.d.Lhokko_core_Behavior$ReverseApply$$anon$2$$anonfun$2$$anonfun$apply$3$$anonfun$apply$4;
 /** @constructor */
 ScalaJS.c.Lhokko_core_Event$$anonfun$mergeWith$1 = (function() {
   ScalaJS.c.sr_AbstractFunction2.call(this)
@@ -9610,13 +9777,13 @@ ScalaJS.c.Lhokko_core_Event$$anonfun$mergeWith$1.prototype.apply__Lhokko_core_Ev
     var x = ScalaJS.as.sc_Seq(x$2);
     return x
   }));
-  var f2 = new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(x$3$2) {
-    return ScalaJS.as.sc_Seq(ScalaJS.m.sc_Seq$().apply__sc_Seq__sc_GenTraversable(new ScalaJS.c.sjs_js_WrappedArray().init___sjs_js_Array([x$3$2])))
+  var f2 = new ScalaJS.c.sjsr_AnonFunction1().init___sjs_js_Function1((function(x$5$2) {
+    return ScalaJS.as.sc_Seq(ScalaJS.m.sc_Seq$().apply__sc_Seq__sc_GenTraversable(new ScalaJS.c.sjs_js_WrappedArray().init___sjs_js_Array([x$5$2])))
   }));
-  var f3 = new ScalaJS.c.sjsr_AnonFunction2().init___sjs_js_Function2((function(x$4$2, x$5$2) {
-    var x$4 = ScalaJS.as.sc_Seq(x$4$2);
+  var f3 = new ScalaJS.c.sjsr_AnonFunction2().init___sjs_js_Function2((function(x$6$2, x$7$2) {
+    var x$6 = ScalaJS.as.sc_Seq(x$6$2);
     var this$2 = ScalaJS.m.sc_Seq$();
-    return ScalaJS.as.sc_Seq(x$4.$$colon$plus__O__scg_CanBuildFrom__O(x$5$2, this$2.ReusableCBF__scg_GenTraversableFactory$GenericCanBuildFrom()))
+    return ScalaJS.as.sc_Seq(x$6.$$colon$plus__O__scg_CanBuildFrom__O(x$7$2, this$2.ReusableCBF__scg_GenTraversableFactory$GenericCanBuildFrom()))
   }));
   return ScalaJS.s.Lhokko_core_Event$class__unionWith__Lhokko_core_Event__Lhokko_core_Event__F1__F1__F2__Lhokko_core_Event(acc, event, f1, f2, f3)
 });
@@ -11072,6 +11239,9 @@ ScalaJS.c.Lhokko_core_Behavior$ReverseApply.prototype.$$js$exported$meth$snapsho
 ScalaJS.c.Lhokko_core_Behavior$ReverseApply.prototype.node__Lhokko_core_Pull = (function() {
   return this.node$1
 });
+ScalaJS.c.Lhokko_core_Behavior$ReverseApply.prototype.$$js$exported$meth$sampledBy__Lhokko_core_Event__O = (function(ev) {
+  return ScalaJS.s.Lhokko_core_Behavior$class__sampledBy__Lhokko_core_Behavior__Lhokko_core_Event__Lhokko_core_Event(this, ev)
+});
 ScalaJS.c.Lhokko_core_Behavior$ReverseApply.prototype.$$js$exported$meth$reverseApply__Lhokko_core_Behavior__O = (function(fb) {
   return new ScalaJS.c.Lhokko_core_Behavior$ReverseApply().init___Lhokko_core_Behavior__Lhokko_core_Behavior(this, fb)
 });
@@ -11109,6 +11279,10 @@ ScalaJS.c.Lhokko_core_Behavior$ReverseApply.prototype["withChanges"] = (function
 ScalaJS.c.Lhokko_core_Behavior$ReverseApply.prototype["map"] = (function(arg$1) {
   var preparg$1 = ScalaJS.as.F1(arg$1);
   return this.$$js$exported$meth$map__F1__O(preparg$1)
+});
+ScalaJS.c.Lhokko_core_Behavior$ReverseApply.prototype["sampledBy"] = (function(arg$1) {
+  var preparg$1 = ScalaJS.as.Lhokko_core_Event(arg$1);
+  return this.$$js$exported$meth$sampledBy__Lhokko_core_Event__O(preparg$1)
 });
 ScalaJS.c.Lhokko_core_Behavior$ReverseApply.prototype["markChanges"] = (function(arg$1) {
   var preparg$1 = ScalaJS.as.Lhokko_core_Event(arg$1);

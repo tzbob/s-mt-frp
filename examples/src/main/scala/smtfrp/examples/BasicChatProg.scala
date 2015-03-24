@@ -18,14 +18,12 @@ trait BasicChatProg extends MtFrpProg {
   lazy val submit = {
     val nameV = nameE.asTextBehavior
     val msgV = msgE.asTextBehavior
+
     val entryMaker = msgV.map(fun { msg =>
       fun((name: Rep[String]) => EntryRep(name, msg))
     })
     val entry = nameV.reverseApply(entryMaker)
-    val snapshotter: ClientEvent[Entry => Entry] = sendE.map(fun { _ =>
-      identity[Rep[Entry]] _
-    })
-    entry.snapshotWith(snapshotter)
+    entry.sampledBy(sendE)
   }
 
   lazy val chat: ServerIncBehavior[List[Entry], Entry] =
@@ -43,13 +41,17 @@ trait BasicChatProg extends MtFrpProg {
     div()()(
       h1()()("Multi-tier Chat"), hr()()(),
       div()()(name, msg, send),
-      h3()()("Public"), ol()()(view.map { p => li()()(p.name, " says ", p.msg) }), hr()()()
+      h3()()("Public"),
+      ol()()(view.map {
+        p => li()()(p.name, " says ", p.msg)
+      }),
+      hr()()()
     )
   }
 
   lazy val main: ClientDiscreteBehavior[Html] = chat.toAllClients {
-    fun { (entries, entry) =>
-      entry :: entries
+    fun {
+      (entries, entry) => entry :: entries
     }
   }.map(template _)
 }
