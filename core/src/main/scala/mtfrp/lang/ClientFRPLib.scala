@@ -14,7 +14,6 @@ trait ClientFRPLib extends JS
   with DiscreteBehavior.DiscreteBehaviorLib
   with DiscreteBehavior.DiscreteBehaviorStaticLib {
 
-
   object ClientEvent {
     def apply[T: Manifest](rep: Rep[ScalaJs[HEvent[T]]], core: ReplicationCore): ClientEvent[T] =
       new ClientEvent(rep, core)
@@ -91,6 +90,12 @@ trait ClientFRPLib extends JS
     def map[B: Manifest](f: Rep[A => B]): ClientBehavior[B] =
       ClientBehavior(rep.map(ScalaJsRuntime.encodeFn1(f)), core)
 
+    def map2[B: Manifest, C: Manifest](b: ClientBehavior[B])(f: Rep[((A, B)) => C]): ClientBehavior[C] =
+      ClientBehavior(rep.map2(b.rep)(ScalaJsRuntime.encodeFn2(f)), core + b.core)
+
+    def map3[B: Manifest, C: Manifest, D: Manifest](b: ClientBehavior[B], c: ClientBehavior[C])(f: Rep[((A, B, C)) => D]): ClientBehavior[D] =
+      ClientBehavior(rep.map3(b.rep, c.rep)(ScalaJsRuntime.encodeFn3(f)), core + b.core + c.core)
+
     def markChanges(marks: ClientEvent[Unit]): ClientDiscreteBehavior[A] =
       ClientDiscreteBehavior(rep.markChanges(marks.rep), core + marks.core)
 
@@ -127,6 +132,12 @@ trait ClientFRPLib extends JS
 
     override def map[B: Manifest](f: Rep[A => B]): ClientDiscreteBehavior[B] =
       ClientDiscreteBehavior(rep.map(ScalaJsRuntime.encodeFn1(f)), core)
+
+    def discreteMap2[B: Manifest, C: Manifest](b: ClientDiscreteBehavior[B])(f: Rep[((A, B)) => C]): ClientDiscreteBehavior[C] =
+      ClientDiscreteBehavior(rep.discreteMap2(b.rep)(ScalaJsRuntime.encodeFn2(f)), core + b.core)
+
+    def discreteMap3[B: Manifest, C: Manifest, D: Manifest](b: ClientDiscreteBehavior[B], c: ClientDiscreteBehavior[C])(f: Rep[((A, B, C)) => D]): ClientDiscreteBehavior[D] =
+      ClientDiscreteBehavior(rep.discreteMap3(b.rep, c.rep)(ScalaJsRuntime.encodeFn3(f)), core + b.core)
   }
 
   object ClientIncBehavior {

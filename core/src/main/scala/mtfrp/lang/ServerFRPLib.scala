@@ -64,6 +64,12 @@ trait ServerFRPLib extends ReplicationCoreLib { selfLib =>
 
     def map[B](f: A => B): ServerBehavior[B] = ServerBehavior(rep.map(f), core)
 
+    def map2[B, C](b: ServerBehavior[B])(f: (A, B) => C): ServerBehavior[C] =
+      ServerBehavior(rep.map2(b.rep)(f), core + b.core)
+
+    def map3[B, C, D](b: ServerBehavior[B], c: ServerBehavior[C])(f: (A, B, C) => D): ServerBehavior[D] =
+      ServerBehavior(rep.map3(b.rep, c.rep)(f), core + b.core + c.core)
+
     def markChanges(marks: ServerEvent[Unit]): ServerDiscreteBehavior[A] =
       ServerDiscreteBehavior(rep.markChanges(marks.rep), core + marks.core)
   }
@@ -89,6 +95,12 @@ trait ServerFRPLib extends ReplicationCoreLib { selfLib =>
 
     override def map[B](f: A => B): ServerDiscreteBehavior[B] =
       ServerDiscreteBehavior(rep.map(f), core)
+
+    def discreteMap2[B, C](b: ServerDiscreteBehavior[B])(f: (A, B) => C): ServerDiscreteBehavior[C] =
+      ServerDiscreteBehavior(rep.discreteMap2(b.rep)(f), core + b.core)
+
+    def discreteMap3[B, C, D](b: ServerDiscreteBehavior[B], c: ServerDiscreteBehavior[C])(f: (A, B, C) => D): ServerDiscreteBehavior[D] =
+      ServerDiscreteBehavior(rep.discreteMap3(b.rep, c.rep)(f), core + b.core + c.core)
   }
 
   object ServerIncBehavior {

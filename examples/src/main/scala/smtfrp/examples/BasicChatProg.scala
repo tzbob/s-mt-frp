@@ -19,10 +19,10 @@ trait BasicChatProg extends MtFrpProg {
     val nameV = nameE.asTextBehavior
     val msgV = msgE.asTextBehavior
 
-    val entryMaker = msgV.map(fun { msg =>
-      fun((name: Rep[String]) => EntryRep(name, msg))
+    val entry = nameV.map2(msgV)(fun { (name, msg) =>
+      EntryRep(name, msg)
     })
-    val entry = nameV.reverseApply(entryMaker)
+
     entry.sampledBy(sendE)
   }
 
