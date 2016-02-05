@@ -11,13 +11,7 @@ trait MtFrpLib
 
 trait MtFrpProg
   extends MtFrpLib
-  with FrpExtensions
-  with Browser
   with Adts
-  with DocumentOpsExtended
   with DefaultJsonProtocol
-  with HtmlNodeLib
-  with JS {
-  def main: ClientDiscreteBehavior[Html]
-}
+  with JS
 
