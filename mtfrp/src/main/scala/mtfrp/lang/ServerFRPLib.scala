@@ -1,9 +1,23 @@
 package mtfrp.lang
 
-import hokko.core.{ Behavior, DiscreteBehavior, Event => HEvent, IncrementalBehavior }
+import hokko.core.{Behavior, DiscreteBehavior, Event => HEvent, IncrementalBehavior}
 import scala.annotation.implicitNotFound
 
 trait ServerFRPLib extends ReplicationCoreLib { selfLib =>
+
+  val clientEvents: ApplicationEvent[ClientStatus] =
+    ApplicationEvent(rawClientEventSource, ReplicationCore.empty)
+
+  val clientStatus: ApplicationIncBehavior[Set[Client], ClientStatus] =
+    clientEvents.fold(Set.empty[Client]) { (set, newStatus) =>
+      newStatus match {
+        // TODO: Can it that we are 'created' after a 'disconnected'?
+        case Disconnected(c) => set - c
+        case Created(c) => set + c
+        case _ => set
+      }
+    }
+
   object ApplicationEvent {
     def apply[T](rep: HEvent[T], core: ReplicationCore): ApplicationEvent[T] =
       new ApplicationEvent(rep, core)
@@ -15,7 +29,7 @@ trait ServerFRPLib extends ReplicationCoreLib { selfLib =>
     }
   }
 
-  class ApplicationEvent[+T] private(
+  class ApplicationEvent[+T] private (
     val rep: HEvent[T],
     val core: ReplicationCore
   ) {
@@ -47,7 +61,7 @@ trait ServerFRPLib extends ReplicationCoreLib { selfLib =>
       this.apply(Behavior.constant(const), ReplicationCore.empty)
   }
 
-  class ApplicationBehavior[+A] private[ServerFRPLib](
+  class ApplicationBehavior[+A] private[ServerFRPLib] (
     val rep: Behavior[A],
     val core: ReplicationCore
   ) {
@@ -81,7 +95,7 @@ trait ServerFRPLib extends ReplicationCoreLib { selfLib =>
       this.apply(DiscreteBehavior.constant(const), ReplicationCore.empty)
   }
 
-  class ApplicationDiscreteBehavior[+A] private[ServerFRPLib](
+  class ApplicationDiscreteBehavior[+A] private[ServerFRPLib] (
     override val rep: DiscreteBehavior[A],
     override val core: ReplicationCore
   ) extends ApplicationBehavior[A](rep, core) {
@@ -108,7 +122,7 @@ trait ServerFRPLib extends ReplicationCoreLib { selfLib =>
       new ApplicationIncBehavior(rep, core)
   }
 
-  class ApplicationIncBehavior[+A, +DeltaA] private(
+  class ApplicationIncBehavior[+A, +DeltaA] private (
     override val rep: IncrementalBehavior[A, DeltaA],
     override val core: ReplicationCore
   ) extends ApplicationDiscreteBehavior[A](rep, core) {

@@ -33,6 +33,7 @@ trait SessionFRPLib extends ServerFRPLib {
       SessionIncBehavior(newRep)
     }
 
+
     def unionWith[B, C, AA >: T](b: SessionEvent[B])(f1: AA => C)(f2: B => C)(f3: (AA, B) => C): SessionEvent[C] = {
       val newRep = rep.unionWith(b.rep)(_.mapValues(f1))(_.mapValues(f2)) { (aa, b) =>
         val allKeys = aa.keys ++ b.keys
@@ -172,7 +173,9 @@ trait SessionFRPLib extends ServerFRPLib {
       new SessionIncBehavior(rep)
   }
 
-  class SessionIncBehavior[+A, +DeltaA] private (override val rep: ApplicationIncBehavior[Client => A, Map[Client, DeltaA]]) extends SessionDiscreteBehavior[A](rep) {
+  class SessionIncBehavior[+A, +DeltaA] private (
+    override val rep: ApplicationIncBehavior[Client => A, Map[Client, DeltaA]]
+  ) extends SessionDiscreteBehavior[A](rep) {
     def deltas: SessionEvent[DeltaA] = SessionEvent(rep.deltas)
   }
 

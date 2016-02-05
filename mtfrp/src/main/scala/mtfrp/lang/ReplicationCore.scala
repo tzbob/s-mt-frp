@@ -2,7 +2,7 @@ package mtfrp.lang
 
 import akka.actor._
 import akka.pattern.ask
-import hokko.core.{ Behavior, Engine, Event => HEvent, EventSource => HEventSource }
+import hokko.core.{Behavior, Engine, Event => HEvent, EventSource => HEventSource, IncrementalBehavior}
 import java.net.URLEncoder
 import java.util.UUID
 import scala.concurrent.duration._
@@ -24,6 +24,19 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
   with XMLHttpRequests with DelayedEval
   with JSMaps with ListOps with ListOps2 with TupleOps with OptionOps {
 
+  trait ClientStatus { val client: Client }
+  case class Created(client: Client) extends ClientStatus
+  case class Connected(client: Client) extends ClientStatus
+  case class Disconnected(client: Client) extends ClientStatus
+
+  // TODO: Make sure this gets into the server engine
+  private[mtfrp] val rawClientEventSource = HEvent.source[ClientStatus]
+
+  private[mtfrp] val rawClientStatus =
+    rawClientEventSource.fold(Map.empty[Client, ClientStatus]) { (map, action) =>
+      map.updated(action.client, action)
+    }
+
   case class Message(name: String, json: String) extends Adt
   val MessageRep = adt[Message]
   object Message extends DefaultJsonProtocol {
@@ -41,6 +54,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
 
     class ReplicationData[A: JSJsonReader: Manifest] {
       val source: Rep[ScalaJs[HEventSource[A]]] = EventRep.source[A]
+
       val mkPulse: Rep[String => ScalaJs[(ScalaJs[HEventSource[A]], A)]] =
         fun { jsonPulse =>
           ScalaJsRuntime.encodeTup2(make_tuple2(source -> jsonPulse.convertToRep[A]))
@@ -51,8 +65,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
       name: String,
       exit: HEvent[Client => Option[A]]
     ) extends ReplicationData[A] {
-      val carrier: HEvent[Client => Option[Message]] = exit.map { fun =>
-        (c: Client) => fun(c).map(tToMessage[A](name))
+      val carrier: HEvent[Client => Option[Message]] = exit.map { fun => (c: Client) => fun(c).map(tToMessage[A](name))
       }
     }
 
@@ -60,8 +73,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
       name: String,
       behavior: Behavior[Client => Init]
     ) extends ReplicationData[Init] {
-      val carrier: Behavior[Client => Message] = behavior.map { fun =>
-        c: Client => tToMessage(name)(fun(c))
+      val carrier: Behavior[Client => Message] = behavior.map { fun => c: Client => tToMessage(name)(fun(c))
       }
     }
 
@@ -75,8 +87,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
       updates: HEvent[Client => U]
     ): ToClientDependency[Init, U] =
       new ToClientDependency[Init, U] {
-        val updateData = UpdateData(name, updates.map { fun =>
-          c: Client => Some(fun(c))
+        val updateData = UpdateData(name, updates.map { fun => c: Client => Some(fun(c))
         })
         override val stateData = Some(StateData(name, stateBehavior))
       }
@@ -135,13 +146,13 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
     lazy val initialCarrier: Behavior[Client => Seq[Message]] = {
       val carriers = toClientDeps.map(_.stateData.map(_.carrier)).flatten
       val seqCarrier = carriers.foldLeft(Behavior.constant(collection.Seq.empty[Client => Message])) { (acc, n) =>
-        val fa = n.map { newVal =>
-          seq: Seq[Client => Message] => seq :+ newVal
+        val fa = n.map { newVal => seq: Seq[Client => Message] =>
+          seq :+ newVal
         }
         acc.reverseApply(fa)
       }
-      seqCarrier.map { seq =>
-        c: Client => seq.map(_(c))
+      seqCarrier.map { seq => c: Client =>
+        seq.map(_(c))
       }
     }
 
@@ -150,8 +161,8 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
      * to-be-transfered state
      */
     lazy val serverCarrier: HEvent[Client => Seq[Message]] =
-      HEvent.merge(toClientDeps.map(_.updateData.carrier).toSeq).map { seq =>
-        c: Client => seq.map(_(c)).flatten
+      HEvent.merge(toClientDeps.map(_.updateData.carrier).toSeq).map { seq => c: Client =>
+        seq.map(_(c)).flatten
       }
 
     /**
@@ -204,11 +215,22 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
     serverEngine: Engine,
     clientEngine: Rep[ScalaJs[Engine]]
   )(implicit actorRef: ActorRefFactory) {
-
     lazy val serverCarrier = core.serverCarrier
     lazy val serverNamedPulseMakers = core.serverNamedPulseMakers
 
     lazy val clientCarrier = core.clientCarrier
+
+    private lazy val queueSnapshotter = serverCarrier.map { clientMessageFun => map: Map[Client, ClientStatus] =>
+      map.collect { case (client, Created(_)) => (client, clientMessageFun) }
+    }
+    private lazy val toBeQueued = rawClientStatus.snapshotWith(queueSnapshotter)
+
+    lazy val clientQueues =
+      toBeQueued.fold(Map.empty[Client, List[Client => Seq[Message]]]) { (currentQueue, additions) =>
+        currentQueue.map {
+          case (key, value) => (key, additions(key) :: value)
+        }
+      }
 
     def makeRoute(): Option[Route] = {
       val r1 =
@@ -268,7 +290,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
       listen(core.clientNamedUpdatePulseMakers)("update")
     }
 
-    import HttpHeaders.{ `Cache-Control`, `Connection` }
+    import HttpHeaders.{`Cache-Control`, `Connection`}
     import CacheDirectives.`no-cache`
     private def respondAsEventStream =
       respondWithHeader(`Cache-Control`(`no-cache`)) &
@@ -299,8 +321,22 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
                     ctx.responder ! MessageChunk(data)
                   }
 
+                  // Client has connected, ask all current values
                   val values = serverEngine.askCurrentValues()
+
+                  // Send the `reset` data
                   values(core.initialCarrier).foreach(sendMessageChunk("reset"))
+
+                  // Send the queued event pulses
+                  values(clientQueues).foreach { clientQueueMap =>
+                    val clientQueue = clientQueueMap(client)
+
+                    // It's a LIFO stack so reverse
+                    clientQueue.reverse.foreach(sendMessageChunk("update"))
+                  }
+
+                  // Inform that the client has been connected (this clears the queue)
+                  serverEngine.fire(Seq(rawClientEventSource -> Connected(client)))
 
                   val subscription = serverEngine.subscribeForPulses { pulses =>
                     pulses(serverCarrier).foreach(sendMessageChunk("update"))

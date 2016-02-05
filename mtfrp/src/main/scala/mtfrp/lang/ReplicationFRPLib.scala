@@ -1,16 +1,15 @@
 package mtfrp.lang
 
-import hokko.core.Engine
-import hokko.core.Behavior
+import hokko.core.{Behavior, Engine}
 import spray.json._
 
 trait ReplicationFRPLib
-    extends ClientFRPLib
-    with ServerFRPLib
-    with SessionFRPLib
-    with ConversionFRPLib
-    with JSJsonFormatLib
-    with EventSources {
+  extends ClientFRPLib
+  with ServerFRPLib
+  with SessionFRPLib
+  with ConversionFRPLib
+  with JSJsonFormatLib
+  with EventSources {
 
   // Event Replications
 
@@ -33,8 +32,8 @@ trait ReplicationFRPLib
   // toClient
   implicit class EventToClient[T: JsonWriter: JSJsonReader: Manifest](evt: SessionEvent[T]) {
     def toClient: ClientEvent[T] = {
-      val toClientDep = ToClientDependency.update(evt.rep.rep.map(_.get))
-      ClientEvent(toClientDep.updateData.source, evt.core + toClientDep)
+      val toClientDep = ToClientDependency.update(evt.rep.rep.map(_.get _))
+      ClientEvent(toClientDep.updateData.source, evt.rep.core + toClientDep)
     }
   }
 
@@ -52,6 +51,11 @@ trait ReplicationFRPLib
 
   // toClient
   implicit class DiscreteBehaviorToClient[T: JsonWriter: JSJsonReader: Manifest](beh: SessionDiscreteBehavior[T]) {
+
+    /**
+     * Replicate a discrete Session behavior onto the client tier
+     *
+     */
     def toClient: ClientDiscreteBehavior[T] = {
       val toClientDep = ToClientDependency.stateUpdate(beh.rep.rep, beh.rep.rep.changes)
 
@@ -73,9 +77,23 @@ trait ReplicationFRPLib
 
   // Incremental Behavior Replications
 
-  implicit class IncBehaviorToClient[A: JsonWriter: JSJsonReader: Manifest, DeltaA: JsonWriter: JSJsonReader: Manifest](beh: ApplicationIncBehavior[Client => A, Client => DeltaA]) {
+  // toClient
+  implicit class IncBehaviorToClient[A: JsonWriter: JSJsonReader: Manifest, DeltaA: JsonWriter: JSJsonReader: Manifest](
+    incBeh: SessionIncBehavior[A, DeltaA]
+  ) {
+
+    /**
+     * Replicate a Session incremental behavior onto the Client tier (SessionIncBehavior)
+     *
+     * Replicates updates incrementally.
+     *
+     * @param clientFold client-side function that is used to re-construct the behavior client-side,
+     * this should mimic its server-side behavior
+     *
+     */
     def toClient(clientFold: Rep[((A, DeltaA)) => A]): ClientIncBehavior[A, DeltaA] = {
-      val toClientDep = ToClientDependency.stateUpdate(beh.rep, beh.rep.deltas)
+      val appIncBeh = incBeh.rep
+      val toClientDep = ToClientDependency.stateUpdate(appIncBeh.rep, appIncBeh.rep.deltas)
 
       val stateSource = toClientDep.stateData.map(_.source).getOrElse(EventRep.empty)
       val updateSource = toClientDep.updateData.source
@@ -93,9 +111,10 @@ trait ReplicationFRPLib
       val resettableSource = stateSource.unionWith(updateSource)(f1)(f2)(
         ScalaJsRuntime.encodeFn2 { (x: Rep[A], y: Rep[DeltaA]) =>
           make_tuple2(some(x) -> some(y))
-        })
+        }
+      )
 
-      val currentState = delay(calculateCurrentState(beh.rep)).convertToRep[A]
+      val currentState = delay(calculateCurrentState(appIncBeh.rep)).convertToRep[A]
       val incBehavior = resettableSource.fold(currentState)(
         ScalaJsRuntime.encodeFn2 { (acc: Rep[A], n: Rep[(Option[A], Option[DeltaA])]) =>
           val reset = n._1
@@ -106,61 +125,34 @@ trait ReplicationFRPLib
           })
 
           reset.fold(resetEmpty, resetData => resetData)
-        })
+        }
+      )
 
       ClientIncBehavior(
         incBehavior.withDeltas(currentState, updateSource),
-        beh.core + toClientDep)
+        appIncBeh.core + toClientDep
+      )
     }
   }
 
   implicit class IncBehaviorToAllClients[A: JsonWriter: JSJsonReader: Manifest, DeltaA: JsonWriter: JSJsonReader: Manifest](
-      beh: ApplicationIncBehavior[A, DeltaA]) {
+    behavior: ApplicationIncBehavior[A, DeltaA]
+  ) {
     def toAllClients(clientFold: Rep[((A, DeltaA)) => A]): ClientIncBehavior[A, DeltaA] = {
-      val mappedDeltas = beh.deltas.map(clientThunk)
-      val mappedBehavior = beh.map(clientThunk)
-      val mappedInit = clientThunk(beh.rep.initial)
+      val mappedDeltas = behavior.deltas.map(Map.empty[Client, DeltaA].withDefaultValue)
+      val mappedBehavior = behavior.map(clientThunk)
+      val mappedInit = clientThunk(behavior.rep.initial)
       val mappedIncBehavior = mappedBehavior.withDeltas(mappedInit, mappedDeltas)
-      mappedIncBehavior.toClient(clientFold)
+      SessionIncBehavior(mappedIncBehavior).toClient(clientFold)
     }
   }
 
-  private def calculateCurrentState[T: Manifest](beh: Behavior[Client => T])(c: Client, e: Engine): T = {
-    val values = e.askCurrentValues()
-    val current = values(beh)
-    if (current.isDefined) current.get(c)
-    else throw new RuntimeException(s"${beh} is not present in $e")
+  private def calculateCurrentState[T: Manifest](behavior: Behavior[Client => T])(client: Client, event: Engine): T = {
+    val values = event.askCurrentValues()
+    val current = values(behavior)
+    if (current.isDefined) current.get(client)
+    else throw new RuntimeException(s"${behavior} is not present in $event")
   }
 
   private def clientThunk[T]: T => Client => T = t => c => t
-
-  // implicit class IncBehaviorToClient[D: JsonWriter: JSJsonReader: Manifest, T: JsonWriter: JSJsonReader: Manifest]
-  // (beh: ServerIncBehavior[Client => D, Client => T]) {
-  //   def toClient(app: ClientDeltaApplicator[T, D]): ClientIncBehavior[D, T] = {
-  //     val ticket = beh.rep.markExit
-  //     def insertCurrentState(client: Client) = {
-  //       unit(ticket.now()(client).toJson.compactPrint)
-  //     }
-  //     val currentState = delayForClient(insertCurrentState).convertToRep[T]
-  //     val targetedChanges = beh.increments.map { fun =>
-  //       client: Client => Some(fun(client))
-  //     }
-  //     targetedChanges.toClient.incFold(currentState)(app)
-  //   }
-  // }
-
-  // implicit class IncBehaviorToAllClients[D: JsonWriter: JSJsonReader: Manifest, T: JsonWriter: JSJsonReader:
-  // Manifest](beh: ServerIncBehavior[D, T]) {
-  //   // TODO: REWRITE WHEN MAP IS IMPLEMENTED ON INCs
-  //   def toAllClients(app: ClientDeltaApplicator[T, D]): ClientIncBehavior[D, T] = {
-  //     val ticket = beh.rep.markExit
-  //     def insertCurrentState() = {
-  //       unit(ticket.now().toJson.compactPrint)
-  //     }
-  //     val currentState = delay(insertCurrentState).convertToRep[T]
-  //     val increments = beh.increments
-
-  //     increments.toAllClients.incFold(currentState)(app)
-  //   }
-  // }
 }
