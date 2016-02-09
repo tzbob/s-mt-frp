@@ -59,9 +59,9 @@ trait GenMtFrpLib
   val IR: MtFrpLibExp
 }
 
-trait GenMtFrp[Main]
+trait GenMtFrp
   extends GenMtFrpLib
   with GenAdts
   with GenNonRecJS {
-  val IR: MtFrpProgExp[Main]
+  val IR: MtFrpProgExp
 }

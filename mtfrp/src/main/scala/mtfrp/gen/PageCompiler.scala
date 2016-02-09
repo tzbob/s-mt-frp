@@ -16,12 +16,13 @@ object PageCompiler {
   import Directives._
 
   def makeRoute[Main](csses: Seq[String] = Seq.empty, scripts: Seq[String] = Seq.empty)(
-    prog: MtFrpProgRunner[Main] with MtFrpProgExp[Main]
+    prog: MtFrpProgRunner with MtFrpProgExp
+  )(
+    gen: GenMtFrp { val IR: prog.type }
   )(
     url: String
   )(implicit f: ActorRefFactory): Route = {
     lazy val (rep, route, engine) = prog.run
-    val gen = new GenMtFrp[Main] { val IR: prog.type = prog }
     val block = gen.reifyBlock(rep)
 
     val scriptsD = "smtfrp-js-bundle.js" +: scripts

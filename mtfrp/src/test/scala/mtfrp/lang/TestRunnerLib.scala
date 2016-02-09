@@ -2,7 +2,8 @@ package mtfrp.lang
 
 import hokko.core.Engine
 
-abstract class TestRunnerLib[TestData: Manifest] extends MtFrpProgRunner[List[String]] {
+abstract class TestRunnerLib[TestData: Manifest] extends MtFrpProgRunner {
+  override type Main = List[String]
 
   def draw(lines: Rep[List[String]]) = {
     val line = "########################"
@@ -17,7 +18,7 @@ abstract class TestRunnerLib[TestData: Manifest] extends MtFrpProgRunner[List[St
 
   override def clientExitEvents = input.rep :: super.clientExitEvents
 
-  override def postEngineOperations(main: ClientDiscreteBehavior[List[String]], serverEngine: Engine, clientEngine: Rep[ScalaJs[Engine]]) = {
+  override def postEngineOperations(main: ClientDiscreteBehavior[Main], serverEngine: Engine, clientEngine: Rep[ScalaJs[Engine]]) = {
     val clientState = clientEngine.askCurrentValues()
 
     ScalaJsRuntime.decodeOptions(clientState(main.rep)).foreach(draw)

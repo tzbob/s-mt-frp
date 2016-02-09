@@ -8,10 +8,11 @@ trait MtFrpLib
   with ServerFRPLib
   with ReplicationFRPLib
 
-trait MtFrpProg[Main]
+trait MtFrpProg
   extends MtFrpLib
   with Adts
   with DefaultJsonProtocol
   with JS {
+  type Main
   def main(): ClientDiscreteBehavior[Main]
 }

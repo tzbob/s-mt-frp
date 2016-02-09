@@ -8,6 +8,8 @@ import scala.concurrent.ExecutionContext
 import spray.routing.SimpleRoutingApp
 import org.scalatest.FunSuite
 
+import mtfrp.gen.GenTestRunnerLib
+
 object Test {
 
   val prog = new TestRunnerLib[Int] {
@@ -44,7 +46,7 @@ object Test {
 
 class MtFrpProgRunnerTest extends FunSuite with SimpleRoutingApp {
   test("This should run without errors") {
-    def testRoute = PageCompiler.makeRoute()(Test.prog)("test")
+    def testRoute = PageCompiler.makeRoute()(Test.prog)(GenTestRunnerLib(Test.prog))("test")
 
     val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(1))
     implicit val system = ActorSystem("simple-apps", None, None, Some(ec))

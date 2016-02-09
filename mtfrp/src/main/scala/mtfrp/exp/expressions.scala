@@ -62,8 +62,8 @@ trait MtFrpLibExp
   with ServerFRPLibExp
   with ReplicationFRPLibExp
 
-trait MtFrpProgExp[Main]
-  extends MtFrpProg[Main]
+trait MtFrpProgExp
+  extends MtFrpProg
   with MtFrpLibExp
   with JSJsonFormatLibExp
   with AdtsExp

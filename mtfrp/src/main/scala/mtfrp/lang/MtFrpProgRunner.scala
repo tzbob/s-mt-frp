@@ -6,9 +6,9 @@ import mtfrp.exp.MtFrpProgExp
 import spray.routing.{Route, Directives}
 import spray.routing.Directives._
 
-trait MtFrpProgRunner[Main]
-  extends MtFrpProgExp[Main]
-  with RouteCreatorLib { self: MtFrpProg[Main] =>
+trait MtFrpProgRunner
+  extends MtFrpProgExp
+  with RouteCreatorLib { self: MtFrpProg =>
 
   def serverExitEvents: Seq[HEvent[_]] = Seq.empty
   def serverExitBehaviors: Seq[HBehavior[_]] = Seq.empty
