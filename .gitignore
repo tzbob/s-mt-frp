@@ -16,4 +16,7 @@ project/plugins/project/
 .settings
 .worksheet
 
+# Project specific
 .idea
+.ensime
+.ensime_cache

@@ -1,7 +1,6 @@
 package mtfrp.lang
 
 import scala.js.language._
-import scala.js.language.dom.Browser
 import spray.json.DefaultJsonProtocol
 
 trait MtFrpLib
@@ -9,9 +8,10 @@ trait MtFrpLib
   with ServerFRPLib
   with ReplicationFRPLib
 
-trait MtFrpProg
+trait MtFrpProg[Main]
   extends MtFrpLib
   with Adts
   with DefaultJsonProtocol
-  with JS
-
+  with JS {
+  def main(): ClientDiscreteBehavior[Main]
+}

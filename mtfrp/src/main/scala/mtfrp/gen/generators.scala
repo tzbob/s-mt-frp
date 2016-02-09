@@ -29,7 +29,8 @@ trait GenJSJsonFormat extends GenJSJsonReaderContext with GenJSJsonWriterContext
 trait GenReplicationCoreLib
   extends GenJSJsonFormat
   with GenDelegator
-  with GenDelayedEval {
+  with GenDelayedEval
+  with GenJSMaps {
   val IR: ReplicationCoreLibExp
 }
 
@@ -58,9 +59,9 @@ trait GenMtFrpLib
   val IR: MtFrpLibExp
 }
 
-trait GenMtFrp
+trait GenMtFrp[Main]
   extends GenMtFrpLib
   with GenAdts
   with GenNonRecJS {
-  val IR: MtFrpProgExp
+  val IR: MtFrpProgExp[Main]
 }

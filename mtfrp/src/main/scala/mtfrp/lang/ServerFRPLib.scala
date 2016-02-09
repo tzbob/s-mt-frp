@@ -13,8 +13,7 @@ trait ServerFRPLib extends ReplicationCoreLib { selfLib =>
       newStatus match {
         // TODO: Can it that we are 'created' after a 'disconnected'?
         case Disconnected(c) => set - c
-        case Created(c) => set + c
-        case _ => set
+        case status => set + status.client
       }
     }
 

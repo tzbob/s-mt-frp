@@ -38,6 +38,7 @@ trait ReplicationCoreLibExp
   with ListOps2Exp
   with TupleOpsExp
   with OptionOpsExp
+  with JSMapsExp
 
 trait ClientFRPLibExp
   extends ClientFRPLib
@@ -61,8 +62,8 @@ trait MtFrpLibExp
   with ServerFRPLibExp
   with ReplicationFRPLibExp
 
-trait MtFrpProgExp
-  extends MtFrpProg
+trait MtFrpProgExp[Main]
+  extends MtFrpProg[Main]
   with MtFrpLibExp
   with JSJsonFormatLibExp
   with AdtsExp
