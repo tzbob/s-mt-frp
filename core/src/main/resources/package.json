@@ -1,9 +1,0 @@
-{
-    "name": "",
-    "version": "",
-    "description": "",
-    "dependencies": {
-        "vtree": "*",
-        "vdom": "*"
-    }
-}
