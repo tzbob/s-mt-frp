@@ -1,14 +1,15 @@
 package mtfrp.html.lang
 
 import hokko.core.Engine
+import mtfrp.html.exp.{DocumentOpsExtendedExp, HtmlNodeBuilderLibExp}
 import mtfrp.lang.MtFrpProgRunner
-import mtfrp.html.exp.HtmlNodeBuilderLibExp
 import scala.js.exp.dom.BrowserExp
 
-trait HtmlRunnerLib extends MtFrpProgRunner
+trait HtmlRunnerLib
+  extends MtFrpProgRunner
   with HtmlNodeLib
   with HtmlNodeBuilderLibExp
-  with BrowserExp {
+  with DocumentOpsExtendedExp {
 
   override type Main = Html
 

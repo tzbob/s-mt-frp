@@ -34,8 +34,11 @@ sunt in culpa qui officia deserunt mollit anim id est laborum."""
     }
   }
 
+  val chat = new BasicChat
+
   startServer("0.0.0.0", port = 8080)(
     getFromResourceDirectory("")
       ~ makeRoute(helloWorld, "helloWorld")
+      ~ makeRoute(chat, "chat")
   )
 }
