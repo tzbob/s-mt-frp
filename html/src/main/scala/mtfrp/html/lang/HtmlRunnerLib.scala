@@ -6,6 +6,7 @@ import mtfrp.html.exp.HtmlNodeBuilderLibExp
 import scala.js.exp.dom.BrowserExp
 
 trait HtmlRunnerLib extends MtFrpProgRunner
+  with HtmlNodeLib
   with HtmlNodeBuilderLibExp
   with BrowserExp {
 

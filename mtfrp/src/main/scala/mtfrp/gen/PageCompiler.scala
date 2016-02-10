@@ -16,7 +16,7 @@ object PageCompiler {
   import Directives._
 
   def makeRoute[Main](csses: Seq[String] = Seq.empty, scripts: Seq[String] = Seq.empty)(
-    prog: MtFrpProgRunner with MtFrpProgExp
+    prog: MtFrpProgRunner
   )(
     gen: GenMtFrp { val IR: prog.type }
   )(
