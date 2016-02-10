@@ -1,7 +1,9 @@
 package mtfrp.lang
 
 import hokko.core.{Behavior, Engine}
-import spray.json._
+
+import io.circe.Decoder
+import io.circe.Encoder
 
 trait ReplicationFRPLib
   extends ClientFRPLib
@@ -14,11 +16,9 @@ trait ReplicationFRPLib
   // Event Replications
 
   // toServer
-  implicit class EventToServer[T: JsonReader: JSJsonWriter: Manifest](evt: ClientEvent[T]) {
+  implicit class EventToServer[T: Decoder: JSJsonWriter: Manifest](evt: ClientEvent[T]) {
     /**
      * Replicate a Client event onto the Session tier (Session event)
-     *
-     * @return
      */
     def toServer: SessionEvent[T] = {
       val source = hokko.core.Event.source[(Client, T)]
@@ -27,10 +27,20 @@ trait ReplicationFRPLib
       val mapAppEvent = appEvent.map(Map.empty[Client, T] + _)
       SessionEvent(mapAppEvent)
     }
+
+    /**
+      * Replicate a Client event directly onto the Application tier, discarding its identity
+      */
+    def toServerAnon: ApplicationEvent[T] = {
+      val sessionEvent = evt.toServer
+      val appEvent = sessionEvent.toApplication
+      // This is fine since we know that we're coming from a client event
+      appEvent.map { evtMap => evtMap.collectFirst { case (_, v) => v }.getOrElse(???) }
+    }
   }
 
   // toClient
-  implicit class EventToClient[T: JsonWriter: JSJsonReader: Manifest](evt: SessionEvent[T]) {
+  implicit class EventToClient[T: Encoder: JSJsonReader: Manifest](evt: SessionEvent[T]) {
     def toClient: ClientEvent[T] = {
       val toClientDep = ToClientDependency.update(evt.rep.rep.map(_.get _))
       ClientEvent(toClientDep.updateData.source, evt.rep.core + toClientDep)
@@ -38,7 +48,7 @@ trait ReplicationFRPLib
   }
 
   // toAllClients
-  implicit class EventToAllClients[T: JsonWriter: JSJsonReader: Manifest](evt: ApplicationEvent[T]) {
+  implicit class EventToAllClients[T: Encoder: JSJsonReader: Manifest](evt: ApplicationEvent[T]) {
     /**
      * Broadcast the application event to all clients
      *
@@ -50,7 +60,7 @@ trait ReplicationFRPLib
   // Discrete Behavior Replications
 
   // toClient
-  implicit class DiscreteBehaviorToClient[T: JsonWriter: JSJsonReader: Manifest](beh: SessionDiscreteBehavior[T]) {
+  implicit class DiscreteBehaviorToClient[T: Encoder: JSJsonReader: Manifest](beh: SessionDiscreteBehavior[T]) {
 
     /**
      * Replicate a discrete Session behavior onto the client tier
@@ -71,14 +81,14 @@ trait ReplicationFRPLib
   }
 
   // toAllClients
-  implicit class DiscreteBehaviorToAllClients[T: JsonWriter: JSJsonReader: Manifest](beh: ApplicationDiscreteBehavior[T]) {
+  implicit class DiscreteBehaviorToAllClients[T: Encoder: JSJsonReader: Manifest](beh: ApplicationDiscreteBehavior[T]) {
     def toAllClients: ClientDiscreteBehavior[T] = beh.map(clientThunk).toSession.toClient
   }
 
   // Incremental Behavior Replications
 
   // toClient
-  implicit class IncBehaviorToClient[A: JsonWriter: JSJsonReader: Manifest, DeltaA: JsonWriter: JSJsonReader: Manifest](
+  implicit class IncBehaviorToClient[A: Encoder: JSJsonReader: Manifest, DeltaA: Encoder: JSJsonReader: Manifest](
     incBeh: SessionIncBehavior[A, DeltaA]
   ) {
 
@@ -91,7 +101,7 @@ trait ReplicationFRPLib
      * this should mimic its server-side behavior
      *
      */
-    def toClient(clientFold: Rep[((A, DeltaA)) => A]): ClientIncBehavior[A, DeltaA] = {
+    def toClient(clientFold: (Rep[A], Rep[DeltaA]) => Rep[A]): ClientIncBehavior[A, DeltaA] = {
       val appIncBeh = incBeh.rep
       val toClientDep = ToClientDependency.stateUpdate(appIncBeh.rep, appIncBeh.rep.deltas)
 
@@ -135,10 +145,10 @@ trait ReplicationFRPLib
     }
   }
 
-  implicit class IncBehaviorToAllClients[A: JsonWriter: JSJsonReader: Manifest, DeltaA: JsonWriter: JSJsonReader: Manifest](
+  implicit class IncBehaviorToAllClients[A: Encoder: JSJsonReader: Manifest, DeltaA: Encoder: JSJsonReader: Manifest](
     behavior: ApplicationIncBehavior[A, DeltaA]
   ) {
-    def toAllClients(clientFold: Rep[((A, DeltaA)) => A]): ClientIncBehavior[A, DeltaA] = {
+    def toAllClients(clientFold: (Rep[A], Rep[DeltaA]) => Rep[A]): ClientIncBehavior[A, DeltaA] = {
       val mappedDeltas = behavior.deltas.map(Map.empty[Client, DeltaA].withDefaultValue)
       val mappedBehavior = behavior.map(clientThunk)
       val mappedInit = clientThunk(behavior.rep.initial)

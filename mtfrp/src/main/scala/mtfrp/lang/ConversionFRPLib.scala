@@ -1,7 +1,6 @@
 package mtfrp.lang
 
 import hokko.core.{Behavior, Engine}
-import spray.json._
 
 trait ConversionFRPLib
   extends ClientFRPLib

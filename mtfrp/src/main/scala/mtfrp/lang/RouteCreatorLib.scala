@@ -1,21 +1,25 @@
 package mtfrp.lang
 
+import scala.language.implicitConversions
+import scala.language.reflectiveCalls
+import scala.language.postfixOps
+
 import akka.actor._
 import akka.pattern.ask
 import hokko.core.{Behavior, Engine, Event => HEvent, EventSource => HEventSource}
 import java.net.URLEncoder
 import java.util.UUID
 import scala.concurrent.duration._
-import scala.js.language._
-import scala.virtualization.lms.common._
 import spray.can.Http
 import spray.http._
-import spray.http.HttpHeaders._
-import spray.http.MediaTypes._
-import spray.json._
 import spray.routing._
 import spray.routing.Directives._
 import spray.routing.RequestContext
+
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.parser._
+import io.circe.syntax._
 
 trait RouteCreatorLib extends ReplicationCoreLib {
   /**
@@ -118,7 +122,7 @@ trait RouteCreatorLib extends ReplicationCoreLib {
 
                   def sendMessageChunk(evt: String)(msgsForClient: Client => Seq[Message]) = {
                     val msgs = msgsForClient(client)
-                    val data = s"event: $evt\ndata:${msgs.toJson.compactPrint}\n\n"
+                    val data = s"event: $evt\ndata:${msgs.asJson.noSpaces}\n\n"
                     ctx.responder ! MessageChunk(data)
                   }
 
@@ -204,7 +208,8 @@ trait RouteCreatorLib extends ReplicationCoreLib {
           post {
             entity(as[String]) { data =>
               complete {
-                val messages = data.parseJson.convertTo[List[Message]]
+                // TODO: Make this safe? Log the errors and ignore wrong formats?
+                val messages = decode[List[Message]](data).toOption.get
                 val pulses = messages.map { message =>
                   serverNamedPulseMakers(message.name)(message.json, id)
                 }

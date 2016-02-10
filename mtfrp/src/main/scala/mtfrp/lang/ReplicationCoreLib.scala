@@ -1,5 +1,9 @@
 package mtfrp.lang
 
+import scala.language.existentials
+import scala.language.implicitConversions
+import scala.language.reflectiveCalls
+
 import akka.pattern.ask
 import hokko.core.{Behavior, Engine, Event => HEvent, EventSource => HEventSource, IncrementalBehavior}
 import java.util.UUID
@@ -7,8 +11,12 @@ import scala.js.language._
 import scala.virtualization.lms.common._
 import spray.http.HttpHeaders._
 import spray.http.MediaTypes._
-import spray.json._
 import spray.routing.Directives._
+
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.parser._
+import io.circe.syntax._
 
 trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
   with HEvent.EventLib with HEvent.EventStaticLib
@@ -32,9 +40,6 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
 
   case class Message(name: String, json: String) extends Adt
   val MessageRep = adt[Message]
-  object Message extends DefaultJsonProtocol {
-    implicit val messageFormat = jsonFormat2(Message.apply)
-  }
 
   trait ToClientDependency[Res, U] {
     val name = UUID.randomUUID.toString
@@ -43,7 +48,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
   }
 
   object ToClientDependency {
-    private def tToMessage[F: JsonWriter](name: String)(t: F) = Message(name, t.toJson.compactPrint)
+    private def tToMessage[F: Encoder](name: String)(t: F) = Message(name, t.asJson.noSpaces)
 
     class ReplicationData[A: JSJsonReader: Manifest] {
       val source: Rep[ScalaJs[HEventSource[A]]] = EventRep.source[A]
@@ -54,7 +59,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
         }
     }
 
-    case class UpdateData[A: JsonWriter: JSJsonReader: Manifest](
+    case class UpdateData[A: Encoder: JSJsonReader: Manifest](
       name: String,
       exit: HEvent[Client => Option[A]]
     ) extends ReplicationData[A] {
@@ -62,7 +67,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
       }
     }
 
-    case class StateData[Init: JsonWriter: JSJsonReader: Manifest](
+    case class StateData[Init: Encoder: JSJsonReader: Manifest](
       name: String,
       behavior: Behavior[Client => Init]
     ) extends ReplicationData[Init] {
@@ -70,12 +75,12 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
       }
     }
 
-    def update[U: JsonWriter: JSJsonReader: Manifest](exit: HEvent[Client => Option[U]]): ToClientDependency[U, U] =
+    def update[U: Encoder: JSJsonReader: Manifest](exit: HEvent[Client => Option[U]]): ToClientDependency[U, U] =
       new ToClientDependency[U, U] {
         val updateData = UpdateData(name, exit)
       }
 
-    def stateUpdate[Init: JsonWriter: JSJsonReader: Manifest, U: JsonWriter: JSJsonReader: Manifest](
+    def stateUpdate[Init: Encoder: JSJsonReader: Manifest, U: Encoder: JSJsonReader: Manifest](
       stateBehavior: Behavior[Client => Init],
       updates: HEvent[Client => U]
     ): ToClientDependency[Init, U] =
@@ -86,7 +91,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
       }
   }
 
-  class ToServerDependency[T: JsonReader: JSJsonWriter: Manifest](
+  class ToServerDependency[T: Decoder: JSJsonWriter: Manifest](
     exit: Rep[ScalaJs[HEvent[T]]],
     entry: HEventSource[(Client, T)]
   ) {
@@ -98,7 +103,8 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
       }))
 
     def pulse(jsonPulse: String, clientId: String): (HEventSource[(Client, T)], (Client, T)) = {
-      val newPulse = Client(clientId) -> jsonPulse.parseJson.convertTo[T]
+      // TODO: Make this safe? Log the errors and ignore wrong formats?
+      val newPulse = Client(clientId) -> decode[T](jsonPulse).toOption.get
       (entry, newPulse)
     }
   }
