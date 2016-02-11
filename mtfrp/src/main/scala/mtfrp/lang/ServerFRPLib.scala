@@ -11,7 +11,7 @@ trait ServerFRPLib extends ReplicationCoreLib { selfLib =>
   val clientStatus: ApplicationIncBehavior[Set[Client], ClientStatus] =
     clientEvents.fold(Set.empty[Client]) { (set, newStatus) =>
       newStatus match {
-        // TODO: Can it that we are 'created' after a 'disconnected'?
+        // TODO: Can it be that we are 'created' after a 'disconnected'?
         case Disconnected(c) => set - c
         case status => set + status.client
       }
@@ -70,9 +70,6 @@ trait ServerFRPLib extends ReplicationCoreLib { selfLib =>
     def snapshotWith[B, AA >: A](ev: ApplicationEvent[AA => B]): ApplicationEvent[B] =
       ApplicationEvent(rep.snapshotWith(ev.rep), core + ev.core)
 
-    def withChanges[AA >: A](changes: ApplicationEvent[AA]): ApplicationDiscreteBehavior[AA] =
-      ApplicationDiscreteBehavior(rep.withChanges(changes.rep), core + changes.core)
-
     // Derived ops
 
     def map[B](f: A => B): ApplicationBehavior[B] = ApplicationBehavior(rep.map(f), core)
@@ -82,9 +79,6 @@ trait ServerFRPLib extends ReplicationCoreLib { selfLib =>
 
     def map3[B, C, D](b: ApplicationBehavior[B], c: ApplicationBehavior[C])(f: (A, B, C) => D): ApplicationBehavior[D] =
       ApplicationBehavior(rep.map3(b.rep, c.rep)(f), core + b.core + c.core)
-
-    def markChanges(marks: ApplicationEvent[Unit]): ApplicationDiscreteBehavior[A] =
-      ApplicationDiscreteBehavior(rep.markChanges(marks.rep), core + marks.core)
   }
 
   object ApplicationDiscreteBehavior {

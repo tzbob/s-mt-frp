@@ -118,9 +118,6 @@ trait SessionFRPLib extends ServerFRPLib {
       SessionEvent(rep.snapshotWith(newEv))
     }
 
-    def withChanges[AA >: A](changes: SessionEvent[AA]): SessionDiscreteBehavior[AA] =
-      SessionDiscreteBehavior(rep.withChanges(changes.rep))
-
     // Derived ops
 
     def map[B](f: A => B): SessionBehavior[B] = this.reverseApply(SessionBehavior.constant(f))

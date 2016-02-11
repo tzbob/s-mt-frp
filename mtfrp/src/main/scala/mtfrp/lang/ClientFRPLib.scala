@@ -39,7 +39,7 @@ trait ClientFRPLib extends JS
     def unionWith[B: Manifest, C: Manifest, AA >: T: Manifest](b: ClientEvent[B])(f1: Rep[AA] => Rep[C])(f2: Rep[B] => Rep[C])(f3: (Rep[AA], Rep[B]) => Rep[C]): ClientEvent[C] =
       ClientEvent(rep.unionWith(b.rep)(ScalaJsRuntime.encodeFn1(fun(f1)))(ScalaJsRuntime.encodeFn1(fun(f2)))(ScalaJsRuntime.encodeFn2(fun(f3))), core + b.core)
 
-    def collect[B: Manifest, AA >: T: Manifest](fb: Rep[T => Option[B]]): ClientEvent[B] = {
+    def collect[B: Manifest, AA >: T: Manifest](fb: Rep[T] => Rep[Option[B]]): ClientEvent[B] = {
       val scalaJsFun = ScalaJsRuntime.encodeFn1(fun { (p: Rep[T]) =>
         ScalaJsRuntime.encodeOptions(fb(p))
       })
@@ -82,22 +82,16 @@ trait ClientFRPLib extends JS
       ClientEvent(rep.snapshotWith(evB.rep), core + evB.core)
     }
 
-    def withChanges[AA >: A: Manifest](changes: ClientEvent[AA]): ClientDiscreteBehavior[AA] =
-      ClientDiscreteBehavior(rep.withChanges(changes.rep), core + changes.core)
-
     // Derived ops
 
     def map[B: Manifest](f: Rep[A => B]): ClientBehavior[B] =
       ClientBehavior(rep.map(ScalaJsRuntime.encodeFn1(f)), core)
 
-    def map2[B: Manifest, C: Manifest](b: ClientBehavior[B])(f: Rep[((A, B)) => C]): ClientBehavior[C] =
+    def map2[B: Manifest, C: Manifest](b: ClientBehavior[B])(f: (Rep[A], Rep[B]) => Rep[C]): ClientBehavior[C] =
       ClientBehavior(rep.map2(b.rep)(ScalaJsRuntime.encodeFn2(f)), core + b.core)
 
-    def map3[B: Manifest, C: Manifest, D: Manifest](b: ClientBehavior[B], c: ClientBehavior[C])(f: Rep[((A, B, C)) => D]): ClientBehavior[D] =
+    def map3[B: Manifest, C: Manifest, D: Manifest](b: ClientBehavior[B], c: ClientBehavior[C])(f: (Rep[A], Rep[B], Rep[C]) => Rep[D]): ClientBehavior[D] =
       ClientBehavior(rep.map3(b.rep, c.rep)(ScalaJsRuntime.encodeFn3(f)), core + b.core + c.core)
-
-    def markChanges(marks: ClientEvent[Unit]): ClientDiscreteBehavior[A] =
-      ClientDiscreteBehavior(rep.markChanges(marks.rep), core + marks.core)
 
     def sampledBy(ev: ClientEvent[_]): ClientEvent[A] =
       ClientEvent(rep.sampledBy(ev.rep), core + ev.core)
@@ -133,10 +127,10 @@ trait ClientFRPLib extends JS
     override def map[B: Manifest](f: Rep[A => B]): ClientDiscreteBehavior[B] =
       ClientDiscreteBehavior(rep.map(ScalaJsRuntime.encodeFn1(f)), core)
 
-    def discreteMap2[B: Manifest, C: Manifest](b: ClientDiscreteBehavior[B])(f: Rep[((A, B)) => C]): ClientDiscreteBehavior[C] =
+    def discreteMap2[B: Manifest, C: Manifest](b: ClientDiscreteBehavior[B])(f: (Rep[A], Rep[B]) => Rep[C]): ClientDiscreteBehavior[C] =
       ClientDiscreteBehavior(rep.discreteMap2(b.rep)(ScalaJsRuntime.encodeFn2(f)), core + b.core)
 
-    def discreteMap3[B: Manifest, C: Manifest, D: Manifest](b: ClientDiscreteBehavior[B], c: ClientDiscreteBehavior[C])(f: Rep[((A, B, C)) => D]): ClientDiscreteBehavior[D] =
+    def discreteMap3[B: Manifest, C: Manifest, D: Manifest](b: ClientDiscreteBehavior[B], c: ClientDiscreteBehavior[C])(f: (Rep[A], Rep[B], Rep[C]) => Rep[D]): ClientDiscreteBehavior[D] =
       ClientDiscreteBehavior(rep.discreteMap3(b.rep, c.rep)(ScalaJsRuntime.encodeFn3(f)), core + b.core)
   }
 
@@ -151,7 +145,7 @@ trait ClientFRPLib extends JS
   ) extends ClientDiscreteBehavior[A](rep, core) {
     def deltas: ClientEvent[DeltaA] = ClientEvent(rep.deltas, core)
 
-    def map[B: Manifest, DeltaB: Manifest](accumulator: Rep[((B, DeltaB)) => B])(fa: Rep[A => B])(fb: Rep[DeltaA => DeltaB]) =
+    def map[B: Manifest, DeltaB: Manifest](accumulator: (Rep[B], Rep[DeltaB]) => Rep[B])(fa: Rep[A] => Rep[B])(fb: Rep[DeltaA] => Rep[DeltaB]) =
       ClientIncBehavior(rep.map(ScalaJsRuntime.encodeFn2(accumulator))(ScalaJsRuntime.encodeFn1(fa))(ScalaJsRuntime.encodeFn1(fb)), core)
   }
 }

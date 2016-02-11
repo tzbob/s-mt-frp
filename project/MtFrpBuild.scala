@@ -42,7 +42,7 @@ object MtFrpBuild extends Build {
         // "org.scala-lang.virtualized" % "scala-reflect" % "2.10.2",
         "EPFL" %% "lms" % "0.3-SNAPSHOT",
         "EPFL" %% "js-scala" % "0.4-SNAPSHOT",
-        "com.github.tzbob" %% "hokko" % "0.1-SNAPSHOT",
+        "com.github.tzbob" %% "hokko" % "0.3-SNAPSHOT",
         "io.spray" %% "spray-can" % "1.3.2",
         "io.spray" %% "spray-routing-shapeless2" % "1.3.2",
 
