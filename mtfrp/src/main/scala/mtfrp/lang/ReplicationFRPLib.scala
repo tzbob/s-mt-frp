@@ -42,7 +42,7 @@ trait ReplicationFRPLib
   // toClient
   implicit class EventToClient[T: Encoder: JSJsonReader: Manifest](evt: SessionEvent[T]) {
     def toClient: ClientEvent[T] = {
-      val toClientDep = ToClientDependency.update(evt.rep.rep.map(_.get _))
+      val toClientDep = EventToClientDependency(evt.rep.rep.map(_.get _))
       ClientEvent(toClientDep.updateData.source, evt.rep.core + toClientDep)
     }
   }
@@ -67,9 +67,9 @@ trait ReplicationFRPLib
      *
      */
     def toClient: ClientDiscreteBehavior[T] = {
-      val toClientDep = ToClientDependency.stateUpdate(beh.rep.rep, beh.rep.rep.changes)
+      val toClientDep = BehaviorToClientDependency(beh.rep.rep, beh.rep.rep.changes)
 
-      val stateSource = toClientDep.stateData.map(_.source).getOrElse(EventRep.empty)
+      val stateSource = toClientDep.stateData.source
       val source = stateSource.unionLeft(toClientDep.updateData.source)
 
       // inject the `current` state, TODO: when this is executed we need to start caching pulses
@@ -103,9 +103,9 @@ trait ReplicationFRPLib
      */
     def toClient(clientFold: (Rep[A], Rep[DeltaA]) => Rep[A]): ClientIncBehavior[A, DeltaA] = {
       val appIncBeh = incBeh.rep
-      val toClientDep = ToClientDependency.stateUpdate(appIncBeh.rep, appIncBeh.rep.deltas)
+      val toClientDep = BehaviorToClientDependency(appIncBeh.rep, appIncBeh.rep.deltas)
 
-      val stateSource = toClientDep.stateData.map(_.source).getOrElse(EventRep.empty)
+      val stateSource = toClientDep.stateData.source
       val updateSource = toClientDep.updateData.source
 
       def mkFn1[F: Manifest](f: Rep[F] => Rep[(Option[A], Option[DeltaA])]): Rep[ScalaJs[F => (Option[A], Option[DeltaA])]] =
@@ -125,7 +125,7 @@ trait ReplicationFRPLib
       )
 
       val currentState = delay(calculateCurrentState(appIncBeh.rep)).convertToRep[A]
-      val incBehavior = resettableSource.fold(currentState)(
+      val discBehavior = resettableSource.fold(currentState)(
         ScalaJsRuntime.encodeFn2 { (acc: Rep[A], n: Rep[(Option[A], Option[DeltaA])]) =>
           val reset = n._1
           val update = n._2
@@ -139,7 +139,7 @@ trait ReplicationFRPLib
       )
 
       ClientIncBehavior(
-        incBehavior.withDeltas(currentState, updateSource),
+        discBehavior.withDeltas(currentState, updateSource),
         appIncBeh.core + toClientDep
       )
     }

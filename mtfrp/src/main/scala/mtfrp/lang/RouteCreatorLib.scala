@@ -129,7 +129,7 @@ trait RouteCreatorLib extends ReplicationCoreLib {
                   // Client has connected, ask all current values
                   val values = serverEngine.askCurrentValues()
 
-                  // Send the `reset` data: TODO remove this; it might be useful to 'reset' after errors though!
+                  // Send the `reset` data: TODO: this is only useful after a 'reconnect' not after an 'initial' connect
                   // values(core.initialCarrier).foreach(sendMessageChunk("reset"))
 
                   // Send the queued event pulses
