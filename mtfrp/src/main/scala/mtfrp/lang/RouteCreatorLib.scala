@@ -80,7 +80,7 @@ trait RouteCreatorLib extends ReplicationCoreLib {
 
       val sseSource = EventSource(includeClientIdParam(url))
 
-      def listen(rep: Rep[NamedClientPulseMaker])(evt: String) =
+      def listen(rep: Rep[NamedClientPulseMaker])(evt: String): Unit = {
         EventSource.listen(sseSource)(unit(evt)) {
           fun { (ev: Rep[Dataliteral]) =>
             val messages = implicitly[JSJsonReader[List[Message]]].read(ev.data)
@@ -90,6 +90,8 @@ trait RouteCreatorLib extends ReplicationCoreLib {
             clientEngine.fire(ScalaJsRuntime.encodeListAsSeq(pulses))
           }
         }
+        () // ignore the event source, it will live as long as the client will
+      }
 
       listen(core.clientNamedResetPulseMakers)("reset")
       listen(core.clientNamedUpdatePulseMakers)("update")
@@ -184,7 +186,7 @@ trait RouteCreatorLib extends ReplicationCoreLib {
      *  i.e., subscribe to the clientCarrier and push new values
      *  to the server using XMLHttpRequest
      */
-    private def initClientSideToServer(url: String): Unit =
+    private def initClientSideToServer(url: String): Unit = {
       clientEngine.subscribeForPulses(ScalaJsRuntime.encodeFn1(
         fun { pulses: Rep[ScalaJs[Engine.Pulses]] =>
           val pulse = pulses(clientCarrier)
@@ -196,6 +198,8 @@ trait RouteCreatorLib extends ReplicationCoreLib {
           }
         }
       ))
+      () // Ignore the subscription, it will live as long as the client will
+      }
 
     /**
      * initialize the server section of 'toServer' calls
