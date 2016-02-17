@@ -4,6 +4,8 @@
     "description": "",
     "dependencies": {
         "vtree": "*",
-        "vdom": "*"
+        "vdom": "*",
+        "q": "*",
+        "q-xhr": "*"
     }
 }
