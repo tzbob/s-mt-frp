@@ -33,12 +33,17 @@ trait ReplicationCoreLibExp
   with EventSourcesExp
   with DelegatorExp
   with DelayedEvalExp
-  with XMLHttpRequestsExp
+  with MiniXhrLibExp
   with ListOpsExp
   with ListOps2Exp
   with TupleOpsExp
   with OptionOpsExp
   with JSMapsExp
+  with FFIExp
+  with StringOpsExp {
+  def encodeURIComponent(str: Rep[String]): Rep[String] =
+    foreign"window.encodeURIComponent($str)"[String].withEffect()
+}
 
 trait ClientFRPLibExp
   extends ClientFRPLib

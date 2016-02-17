@@ -20,10 +20,13 @@ import io.circe.syntax._
 
 trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
   with HEvent.EventLib with HEvent.EventStaticLib
+  with Behavior.BehaviorLib with Behavior.BehaviorStaticLib
   with Engine.EngineLib with Engine.EngineStaticLib
   with Engine.Pulses.PulsesLib with Engine.Values.ValuesLib
-  with XMLHttpRequests with DelayedEval
-  with JSMaps with ListOps with ListOps2 with TupleOps with OptionOps {
+  with MiniXhrLib with DelayedEval
+  with JSMaps with ListOps with ListOps2 with TupleOps with OptionOps with StringOps {
+
+  def encodeURIComponent(str: Rep[String]): Rep[String]
 
   trait ClientStatus { val client: Client }
   case class Created(client: Client) extends ClientStatus
@@ -31,6 +34,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
   case class Disconnected(client: Client) extends ClientStatus
 
   // TODO: make sure the pagecompiler pushes the 'created' status in here
+  // THIS IS USED FOR QUEUING EVENTS
   private[mtfrp] val rawClientEventSource = HEvent.source[ClientStatus]
 
   private[mtfrp] val rawClientStatus =

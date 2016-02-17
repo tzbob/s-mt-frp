@@ -1,10 +1,11 @@
 package mtfrp.gen
 
+import scala.js.gen.js.GenFFI
 import scala.js.gen.js.dom.GenEventOps
 import scala.js.gen.js.{GenAdts, GenJSLiteral, GenProxy}
 import mtfrp.exp.EventSourcesExp
 
-trait GenEventSources extends GenEventOps with GenJSLiteral with GenProxy with GenAdts {
+trait GenEventSources extends GenEventOps with GenAdts with GenFFI {
   val IR: EventSourcesExp
   import IR._
 
