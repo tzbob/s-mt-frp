@@ -24,15 +24,20 @@ trait SessionFRPLib extends ServerFRPLib {
 
   class SessionEvent[+T] private (val rep: ApplicationEvent[Map[Client, T]]) {
     def fold[B, AA >: T](initial: Client => B)(f: (B, AA) => B): SessionIncBehavior[B, AA] = {
-      val newRep = rep.fold(initial) { (bf, af) =>
-        af.map {
-          case (key, value) => key -> f(bf(key), value)
+      val newRep = rep.fold(Map.empty[Client, B].withDefault(initial)) { (stateMap, newPulses) =>
+        (stateMap.keys ++ newPulses.keys).foldLeft(stateMap) { (currentStateMap, key) =>
+          val oldState = currentStateMap.get(key)
+          val pulse = newPulses.get(key)
+
+          pulse match {
+            case Some(newPulseValue) => stateMap + (key -> f(currentStateMap(key), newPulseValue))
+            case _ => stateMap
+          }
         }
       }
 
       SessionIncBehavior(newRep)
     }
-
 
     def unionWith[B, C, AA >: T](b: SessionEvent[B])(f1: AA => C)(f2: B => C)(f3: (AA, B) => C): SessionEvent[C] = {
       val newRep = rep.unionWith(b.rep)(_.mapValues(f1))(_.mapValues(f2)) { (aa, b) =>
@@ -52,7 +57,7 @@ trait SessionFRPLib extends ServerFRPLib {
             // right value present: apply the second function
             case (None, Some(bV)) => f2(bV)
 
-            // no value present (is be impossible)
+            // no value present (should be impossible)
             case _ => sys.error(s"No value found with key: $key")
           }
 

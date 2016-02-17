@@ -15,31 +15,54 @@ object Test {
   val prog = new TestRunnerLib[Int] {
     override def inputList = List(3, 6, 9)
 
-    lazy val inputBehavior = input.fold(2) { (acc: Rep[Int], n: Rep[Int]) =>
-      acc + n
-    }
+    lazy val discB  = input.toServer.fold(_ => 0) { _ + _ }
 
-    lazy val clientDoubles = inputBehavior.map { (i: Rep[Int]) => i * 2 }
-    lazy val clientAlwaysTrue = inputBehavior.discreteMap2(clientDoubles)(fun { (i: Rep[Int], i2: Rep[Int]) =>
-      i < i2
-    })
+    override lazy val main: ClientDiscreteBehavior[Assertion] =
+      discB.toClient.map { x: Rep[Int] => assert(x == x) }
 
-    lazy val sessionInput = input.toServer
-    lazy val sessionBehavior = sessionInput.fold(_ => 2)(_ + _)
-    lazy val sessionDoubles = sessionBehavior.map { i =>
-      i * 2
-    }
-    lazy val sessionAlwaysTrue = sessionBehavior.discreteMap2(sessionDoubles)(_ < _)
+    // beh to server test
 
-    lazy val clientAssert = clientAlwaysTrue.map { (bool: Rep[Boolean]) =>
-      "Client value: " + bool
-    }
-    lazy val sessionAssert = sessionAlwaysTrue.map("Session value: " + _)
+    // lazy val inputBehavior = input.fold(0) { (acc: Rep[Int], n: Rep[Int]) =>
+    //   acc + n
+    // }
 
-    override lazy val main: ClientDiscreteBehavior[List[String]] =
-      clientAssert.discreteMap2(sessionAssert.toClient)(fun { (c: Rep[String], s: Rep[String]) =>
-        List(c, s)
-      })
+    // lazy val sessInputBehavior = inputBehavior.toServer(_ => -1)
+
+    // override lazy val main: ClientDiscreteBehavior[List[String]] =
+    //   sessInputBehavior.toClient.map { x: Rep[Int] => List[String](x + "") }
+
+
+
+
+
+
+
+
+
+
+
+
+    // lazy val clientDoubles = inputBehavior.map { (i: Rep[Int]) => i * 2 }
+    // lazy val clientAlwaysTrue = inputBehavior.discreteMap2(clientDoubles){ (i: Rep[Int], i2: Rep[Int]) =>
+    //   i < i2
+    // }
+
+    // lazy val sessionInput = input.toServer
+    // lazy val sessionBehavior = sessionInput.fold(_ => 2)(_ + _)
+    // lazy val sessionDoubles = sessionBehavior.map { i =>
+    //   i * 2
+    // }
+    // lazy val sessionAlwaysTrue = sessionBehavior.discreteMap2(sessionDoubles)(_ < _)
+
+    // lazy val clientAssert = clientAlwaysTrue.toServer(_ => false).toClient.map { (bool: Rep[Boolean]) =>
+    //   "Client value: " + bool
+    // }
+    // lazy val sessionAssert = sessionAlwaysTrue.map("Session value: " + _)
+
+    // override lazy val main: ClientDiscreteBehavior[List[String]] =
+    //   clientAssert.discreteMap2(sessionAssert.toClient){ (c: Rep[String], s: Rep[String]) =>
+    //     List(c, s)
+    //   }
   }
 
 }

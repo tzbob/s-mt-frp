@@ -31,15 +31,6 @@ trait DocumentOpsExtended
 
   trait Button extends Element
 
-  // implicit class ReactiveTargetOps(et: Rep[EventTarget]) {
-  //   def toStream(ev: EventDef)(implicit m: Manifest[ev.Type]): ClientEvent[ev.Type] = {
-  //     val bus = FRP.eventSource[ev.Type](FRP.global)
-  //     def pusher(event: Rep[ev.Type]) = bus.fire(event)
-  //     eventtarget_on(et, new EventName[ev.Type](ev.name), unit(false), pusher)
-  //     ClientEvent(bus, ReplicationCore())
-  //   }
-  // }
-
   trait KeyboardEvent extends Event {
     def keyCode: Rep[Int]
   }
@@ -59,24 +50,18 @@ trait DocumentOpsExtended
 
   implicit class InputEvt(rep: Rep[InputEvent]) {
     def target: Rep[EventTarget] = targetImpl(rep)
-    def value: Rep[String] = target.asInstanceOf[Rep[Input]].value
+    def input: Rep[Input] = target.asInstanceOf[Rep[Input]]
+    def value: Rep[String] = input.value
+    def checked: Rep[Boolean] = input.checked
   }
   protected[html] def targetImpl(r: Rep[InputEvent]): Rep[EventTarget]
 
   case object Input extends EventName[InputEvent]("input")
 
-  // implicit class ReactiveInputOps(e: Rep[Input]) extends Serializable {
-  //   def values: ClientBehavior[String] = {
-  //     val evt = e.toStream(KeyUp).map(_ => ())
-  //       .or(e.toStream(Click).map(_ => ()))
-  //       .or(e.toStream(Change).map(_ => ()))
-  //     evt.map(_ => e.value).hold("")
-  //   }
-  // }
-
-  implicit class ValueEvent(e: ClientEvent[InputEvent]) extends Serializable {
-    def asTextBehavior: ClientBehavior[String] = asTextBehaviorImpl(e)
+  implicit class ValueEvent(e: ClientEvent[InputEvent]) {
+    def asTextBehavior: ClientDiscreteBehavior[String] =
+      e.map(_.value).hold("")
+    def asCheckedBehavior(startWith: Rep[Boolean]): ClientDiscreteBehavior[Boolean] =
+      e.map(_.checked).hold(startWith)
   }
-  private def asTextBehaviorImpl(e: ClientEvent[InputEvent]): ClientBehavior[String] =
-    e.map(fun(_.value)).hold("")
 }

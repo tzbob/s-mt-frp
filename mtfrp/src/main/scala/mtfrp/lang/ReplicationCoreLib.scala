@@ -44,41 +44,36 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
 
   case class Message(name: String, json: String) extends Adt
   val MessageRep = adt[Message]
-
-  abstract class ToClientDependency[U: Encoder: JSJsonReader: Manifest] {
-    val name = UUID.randomUUID.toString
-    def updateCarrier: HEvent[Client => Option[Message]]
-    def updateData: ReplicationData[U]
-  }
-
   private def tToMessage[F: Encoder](name: String)(t: F) = Message(name, t.asJson.noSpaces)
+  private def tToRepMessage[F: JSJsonWriter](name: String)(t: Rep[F]) = MessageRep(unit(name), t.toJSONString)
 
-  case class EventToClientDependency[U: Encoder: JSJsonReader: Manifest](exit: HEvent[Client => Option[U]])
-    extends ToClientDependency[U] {
-
-    override val updateCarrier: HEvent[Client => Option[Message]] = exit.map { fun => (c: Client) =>
+  abstract class ToClientDependency[U: Encoder: JSJsonReader: Manifest](
+    exit: HEvent[Client => Option[U]]
+  ) {
+    val name = UUID.randomUUID.toString
+    val updateCarrier: HEvent[Client => Option[Message]] = exit.map { fun => (c: Client) =>
       fun(c).map(tToMessage[U](name))
     }
-    override val updateData: ReplicationData[U] = new ReplicationData
+
+    val updateData: ClientReplicationData[U] = new ClientReplicationData
   }
+
+  case class EventToClientDependency[U: Encoder: JSJsonReader: Manifest](
+    exit: HEvent[Client => Option[U]]
+  ) extends ToClientDependency[U](exit)
 
   case class BehaviorToClientDependency[U: Encoder: JSJsonReader: Manifest, Init: Encoder: JSJsonReader: Manifest](
     behavior: Behavior[Client => Init],
     exit: HEvent[Client => U]
-  ) extends ToClientDependency[U] {
-    private val eventDependency = EventToClientDependency(exit.map(_ andThen Some.apply))
-
-    override val updateCarrier = eventDependency.updateCarrier
-    override val updateData: ReplicationData[U] = eventDependency.updateData
-
+  ) extends ToClientDependency[U](exit.map(_ andThen Some.apply)) {
     val stateCarrier: Behavior[Client => Message] = behavior.map { fun => c: Client =>
       tToMessage(name)(fun(c))
     }
 
-    val stateData: ReplicationData[Init] = new ReplicationData
+    val stateData: ClientReplicationData[Init] = new ClientReplicationData
   }
 
-  class ReplicationData[A: JSJsonReader: Manifest] {
+  class ClientReplicationData[A: JSJsonReader: Manifest] {
     val source: Rep[ScalaJs[HEventSource[A]]] = EventRep.source[A]
 
     val mkPulse: Rep[String => ScalaJs[(ScalaJs[HEventSource[A]], A)]] =
@@ -87,21 +82,41 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
       }
   }
 
-  class ToServerDependency[T: Decoder: JSJsonWriter: Manifest](
-    exit: Rep[ScalaJs[HEvent[T]]],
-    entry: HEventSource[(Client, T)]
+  abstract class ToServerDependency[T: Decoder: JSJsonWriter: Manifest](
+    exit: Rep[ScalaJs[HEvent[T]]]
   ) {
     val name = UUID.randomUUID.toString
 
-    val messageCarrier: Rep[ScalaJs[HEvent[Message]]] =
+    val updateCarrier: Rep[ScalaJs[HEvent[Message]]] =
       exit.map(ScalaJsRuntime.encodeFn1(fun { (t: Rep[T]) =>
         MessageRep(unit(name), t.toJSONString)
       }))
+    val updateData: ServerReplicationData[T] = new ServerReplicationData
+  }
 
-    def pulse(jsonPulse: String, clientId: String): (HEventSource[(Client, T)], (Client, T)) = {
+  case class EventToServerDependency[T: Decoder: JSJsonWriter: Manifest](
+    exit: Rep[ScalaJs[HEvent[T]]]
+  ) extends ToServerDependency[T](exit)
+
+  case class BehaviorToServerDependency[U: Decoder: JSJsonWriter: Manifest, Init: Decoder: JSJsonWriter: Manifest](
+    exit: Rep[ScalaJs[HEvent[U]]],
+    behavior: Rep[ScalaJs[Behavior[Init]]]
+  ) extends ToServerDependency[U](exit) {
+    val initialsData: ServerReplicationData[Init] = new ServerReplicationData
+
+    val initialsCarrier: Rep[ScalaJs[Behavior[Message]]] =
+      behavior.map(ScalaJsRuntime.encodeFn1 { v: Rep[Init] =>
+        tToRepMessage(name)(v)
+      })
+  }
+
+  class ServerReplicationData[A: Decoder] {
+    val source = hokko.core.Event.source[(Client, A)]
+
+    def pulse(jsonPulse: String, client: Client): (hokko.core.EventSource[(Client, A)], (Client, A)) = {
       // TODO: Make this safe? Log the errors and ignore wrong formats?
-      val newPulse = Client(clientId) -> decode[T](jsonPulse).toOption.get
-      (entry, newPulse)
+      val newPulse = client -> decode[A](jsonPulse).toOption.get
+      (source, newPulse)
     }
   }
 
@@ -113,7 +128,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
       }
   }
 
-  type NamedServerPulseMaker = Map[String, (String, String) => (HEventSource[(Client, T)], (Client, T)) forSome { type T }]
+  type NamedServerPulseMaker = Map[String, (String, Client) => (HEventSource[(Client, T)], (Client, T)) forSome { type T }]
   type NamedClientPulseMaker = Map[String, String => ScalaJs[(ScalaJs[HEventSource[T]], T)] forSome { type T }]
 
   case class ReplicationCore(
@@ -138,8 +153,8 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
      * @returns an initial message carrier from which the client specific
      * to-be-transfered state can be pulled
      */
-    lazy val initialCarrier: Behavior[Client => Seq[Message]] = {
-      val carriers = toClientDeps.map {
+    lazy val serverInitialCarrier: Behavior[Client => Seq[Message]] = {
+      val carriers = toClientDeps.collect {
         case b @ BehaviorToClientDependency(_, _) => b.stateCarrier
       }
 
@@ -168,9 +183,32 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
      * @returns a message carrier that pushes to-be-transfered state
      */
     lazy val clientCarrier: Rep[ScalaJs[HEvent[ScalaJs[Seq[Message]]]]] = {
-      val carriers = toServerDeps.map(_.messageCarrier).toSeq
+      System.out.println(s"serverdepppsss ${toServerDeps}")
+      val carriers = toServerDeps.map{ x =>
+        println(x)
+        x.updateCarrier }.toSeq
       val lst = ScalaJsRuntime.encodeListAsSeq(List(carriers: _*))
       EventRep.merge(lst)
+    }
+
+    /**
+      * @returns an initial message carrier from which the
+      * to-be-transfered state can be pulled
+      */
+    lazy val clientInitialCarrier: Rep[ScalaJs[Behavior[List[Message]]]] = {
+      val carriers = toServerDeps.collect {
+        case b @ BehaviorToServerDependency(_, _) => b.initialsCarrier
+      }
+
+      val seqCarrier = carriers.foldLeft(BehaviorRep.constant(List[Message]())) { (acc, n) =>
+        val fa = n.map( ScalaJsRuntime.encodeFn1(fun { newVal: Rep[Message] =>
+                                                   ScalaJsRuntime.encodeFn1( fun {list: Rep[List[Message]] =>
+          list ++ List[Message](newVal)
+                                                                            })
+                                                 }))
+        acc.reverseApply(fa)
+      }
+      seqCarrier
     }
 
     def namedPulseMaker(select: ToClientDependency[_] => Option[Rep[String => ScalaJs[(ScalaJs[HEventSource[T]], T)] forSome { type T }]]): Rep[NamedClientPulseMaker] = {
@@ -205,7 +243,12 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
      */
     lazy val serverNamedPulseMakers: NamedServerPulseMaker =
       toServerDeps.map { d =>
-        (d.name, d.pulse _)
+        (d.name, d.updateData.pulse _)
+      }.toMap
+
+    lazy val serverNamedInitialsPulseMakers: NamedServerPulseMaker =
+      toServerDeps.collect {
+        case b @ BehaviorToServerDependency(_, _) => b.name -> b.initialsData.pulse _
       }.toMap
 
   }

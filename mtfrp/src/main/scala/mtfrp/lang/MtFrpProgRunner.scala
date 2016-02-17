@@ -16,14 +16,14 @@ trait MtFrpProgRunner
   def clientExitEvents: Rep[List[ScalaJs[HEvent[Any]]]] = List()
   def clientExitBehaviors: Rep[List[ScalaJs[HBehavior[Any]]]] = List()
 
-  def preEngineOperations() = ()
+  def preEngineOperations(main: ClientDiscreteBehavior[Main]) = ()
   def postEngineOperations(main: ClientDiscreteBehavior[Main], serverEngine: Engine, clientEngine: Rep[ScalaJs[Engine]]) = ()
 
   private[mtfrp] def run(implicit f: ActorRefFactory): (Rep[Any], Option[Route], Engine) = {
 
-    preEngineOperations()
-
     val executedMain = this.main()
+
+    preEngineOperations(executedMain)
 
     val clientMain = executedMain.rep
     val core = executedMain.core
@@ -33,7 +33,7 @@ trait MtFrpProgRunner
     // compile the FRP networks (this has all the bottom nodes of the graph)
     val serverEngine = Engine.compile(
       core.serverCarrier +: serverExitEvents,
-      core.initialCarrier +: clientQueues +: serverExitBehaviors
+      core.serverInitialCarrier +: clientQueues +: serverExitBehaviors
     )
 
     val clientEngine = EngineRep.compile(

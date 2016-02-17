@@ -21,16 +21,16 @@ trait ReplicationFRPLib
      * Replicate a Client event onto the Session tier (Session event)
      */
     def toServer: SessionEvent[T] = {
-      val source = hokko.core.Event.source[(Client, T)]
-      val toServerDep = new ToServerDependency(evt.rep, source)
+      val toServerDep = EventToServerDependency(evt.rep)
+      val source = toServerDep.updateData.source
       val appEvent = ApplicationEvent(source, evt.core + toServerDep)
       val mapAppEvent = appEvent.map(Map.empty[Client, T] + _)
       SessionEvent(mapAppEvent)
     }
 
     /**
-      * Replicate a Client event directly onto the Application tier, discarding its identity
-      */
+     * Replicate a Client event directly onto the Application tier, discarding its identity
+     */
     def toServerAnon: ApplicationEvent[T] = {
       val sessionEvent = evt.toServer
       val appEvent = sessionEvent.toApplication
@@ -59,6 +59,48 @@ trait ReplicationFRPLib
 
   // Discrete Behavior Replications
 
+  // toServer
+  implicit class DiscreteBehaviorToServer[T: Decoder: JSJsonWriter: Manifest](beh: ClientDiscreteBehavior[T]) {
+    /**
+      * Replicate a Client behavior onto the Session tier
+      *
+      */
+    def toServer(undefined: Client => T): SessionDiscreteBehavior[T] = {
+      val changes = beh.changes()
+      val toServerDep = BehaviorToServerDependency(changes.rep, beh.rep)
+
+      val serverChangesApp = changes.toServer.toApplication
+      val serverChanges = serverChangesApp.rep
+
+      val initialValues =
+        toServerDep.initialsData.source.fold(Map.empty[Client, T])(_ + _)
+
+      val snapshotter = serverChanges.map { updates => initialValues: Map[Client, T] =>
+        (initialValues, updates)
+      }
+
+      val initialValuesWithUpdates = initialValues.snapshotWith(snapshotter)
+
+      val currentState = initialValuesWithUpdates.fold(Map.empty[Client, T].withDefault(undefined)) {
+        case (currentValues, (initialValues, updates)) =>
+          // Overwrite currentValues with initialValues and finally updates
+          val test = currentValues ++ initialValues ++ updates
+          // TODO
+          // initial values don't work
+          // updates don't come through either...
+          System.out.println(s"updates and stuff: $test")
+          test
+      }
+
+      // TODO: should we do this? this is correct since we give the illusion that the initial value was always available
+      // However, changes will be observable even if there are none on this.changes
+      // val currentStateJustChanges = currentState.withChanges(serverChanges)
+
+      val applicationState = ApplicationDiscreteBehavior(currentState, serverChangesApp.core + toServerDep)
+      applicationState.toSession
+    }
+  }
+
   // toClient
   implicit class DiscreteBehaviorToClient[T: Encoder: JSJsonReader: Manifest](beh: SessionDiscreteBehavior[T]) {
 
@@ -72,7 +114,7 @@ trait ReplicationFRPLib
       val stateSource = toClientDep.stateData.source
       val source = stateSource.unionLeft(toClientDep.updateData.source)
 
-      // inject the `current` state, TODO: when this is executed we need to start caching pulses
+      // inject the `current` state
       val currentState = delay(calculateCurrentState(beh.rep.rep))
       val behavior = source.hold(currentState.convertToRep[T])
 
@@ -101,7 +143,7 @@ trait ReplicationFRPLib
      * this should mimic its server-side behavior
      *
      */
-    def toClient(clientFold: (Rep[A], Rep[DeltaA]) => Rep[A]): ClientIncBehavior[A, DeltaA] = {
+    def toClientWithFold(clientFold: (Rep[A], Rep[DeltaA]) => Rep[A]): ClientIncBehavior[A, DeltaA] = {
       val appIncBeh = incBeh.rep
       val toClientDep = BehaviorToClientDependency(appIncBeh.rep, appIncBeh.rep.deltas)
 
@@ -153,7 +195,7 @@ trait ReplicationFRPLib
       val mappedBehavior = behavior.map(clientThunk)
       val mappedInit = clientThunk(behavior.rep.initial)
       val mappedIncBehavior = mappedBehavior.withDeltas(mappedInit, mappedDeltas)
-      SessionIncBehavior(mappedIncBehavior).toClient(clientFold)
+      SessionIncBehavior(mappedIncBehavior).toClientWithFold(clientFold)
     }
   }
 

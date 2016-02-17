@@ -8,6 +8,10 @@ object MtFrpBuild extends Build {
     organization := "mtfrp",
     version := "0.3-SNAPSHOT",
 
+    fork in (Test, run) := true,
+    connectInput in (Test, run) := true,
+    cancelable := true,
+
     scalaVersion := "2.11.2",
     scalaOrganization := "org.scala-lang.virtualized",
 
@@ -21,11 +25,12 @@ object MtFrpBuild extends Build {
       "-feature",
       "-deprecation",
       "-Xlint",
+      "-language:implicitConversions",
       "-Yinline-warnings",
       "-Yno-adapted-args",
       "-Ywarn-dead-code",
       "-Ywarn-numeric-widen", // bad implicit widening somewhere
-      "-Ywarn-value-discard", // will require a lot of work
+      // "-Ywarn-value-discard", // will require a lot of work
       "-Xfuture"
     )
   )
@@ -46,14 +51,17 @@ object MtFrpBuild extends Build {
         "io.spray" %% "spray-can" % "1.3.2",
         "io.spray" %% "spray-routing-shapeless2" % "1.3.2",
 
-        "io.circe" %% "circe-core" % "0.3.0-SNAPSHOT",
-        "io.circe" %% "circe-generic" % "0.3.0-SNAPSHOT",
-        "io.circe" %% "circe-parser" % "0.3.0-SNAPSHOT",
+        "io.circe" %% "circe-core" % "0.3.0",
+        "io.circe" %% "circe-generic" % "0.3.0",
+        "io.circe" %% "circe-parser" % "0.3.0",
 
         "com.typesafe.akka" %% "akka-actor" % "2.3.6",
         "org.slf4j" % "slf4j-nop" % "1.6.4",
-        "org.scalatest" %% "scalatest" % "2.2.6" % "test"
+
+        "org.scalatest" %% "scalatest" % "2.2.6" % Test,
+        "com.lihaoyi" %% "sourcecode" % "0.1.0" % Test
       )
+
     )
 
   lazy val html = Project("html", file("html"))

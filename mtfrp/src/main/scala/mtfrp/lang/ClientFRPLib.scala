@@ -1,6 +1,6 @@
 package mtfrp.lang
 
-import hokko.core.{ Behavior, DiscreteBehavior, Event => HEvent, IncrementalBehavior }
+import hokko.core.{Behavior, DiscreteBehavior, Event => HEvent, IncrementalBehavior}
 import scala.js.language.JS
 
 trait ClientFRPLib extends JS
@@ -26,7 +26,7 @@ trait ClientFRPLib extends JS
     }
 
     def toBoxedFuns[A: Manifest, B: Manifest](f: ClientEvent[A => B]): ClientEvent[ScalaJs[A => B]] =
-      f.map(fun { (p: Rep[A => B]) => ScalaJsRuntime.encodeFn1(p) })
+      f.map { (p: Rep[A => B]) => ScalaJsRuntime.encodeFn1(p) }
   }
 
   class ClientEvent[+T: Manifest] private (
@@ -51,7 +51,7 @@ trait ClientFRPLib extends JS
     def hold[U >: T: Manifest](initial: Rep[U]): ClientDiscreteBehavior[U] =
       ClientDiscreteBehavior(rep.hold(initial), core)
 
-    def map[A: Manifest](modifier: Rep[T => A]): ClientEvent[A] =
+    def map[A: Manifest](modifier: Rep[T] => Rep[A]): ClientEvent[A] =
       ClientEvent(rep.map(ScalaJsRuntime.encodeFn1(modifier)), core)
 
     def dropIf(pred: Rep[T => Boolean]): ClientEvent[T] =
@@ -65,7 +65,7 @@ trait ClientFRPLib extends JS
       this.apply(BehaviorRep.constant(const), ReplicationCore.empty)
 
     def toBoxedFuns[A: Manifest, B: Manifest](f: ClientBehavior[A => B]): ClientBehavior[ScalaJs[A => B]] =
-      f.map(fun { (p: Rep[A => B]) => ScalaJsRuntime.encodeFn1(p) })
+      f.map { (p: Rep[A => B]) => ScalaJsRuntime.encodeFn1(p) }
   }
 
   class ClientBehavior[+A: Manifest] private[ClientFRPLib] (
@@ -84,7 +84,7 @@ trait ClientFRPLib extends JS
 
     // Derived ops
 
-    def map[B: Manifest](f: Rep[A => B]): ClientBehavior[B] =
+    def map[B: Manifest](f: Rep[A] => Rep[B]): ClientBehavior[B] =
       ClientBehavior(rep.map(ScalaJsRuntime.encodeFn1(f)), core)
 
     def map2[B: Manifest, C: Manifest](b: ClientBehavior[B])(f: (Rep[A], Rep[B]) => Rep[C]): ClientBehavior[C] =
@@ -104,7 +104,7 @@ trait ClientFRPLib extends JS
       this.apply(DiscreteBehaviorRep.constant(const), ReplicationCore.empty)
 
     def toBoxedFuns[A: Manifest, B: Manifest](f: ClientDiscreteBehavior[A => B]): ClientDiscreteBehavior[ScalaJs[A => B]] =
-      f.map(fun { (p: Rep[A => B]) => ScalaJsRuntime.encodeFn1(p) })
+      f.map { (p: Rep[A => B]) => ScalaJsRuntime.encodeFn1(p) }
   }
 
   class ClientDiscreteBehavior[+A: Manifest] private[ClientFRPLib] (
@@ -124,7 +124,7 @@ trait ClientFRPLib extends JS
     def withDeltas[DeltaA: Manifest, AA >: A: Manifest](init: Rep[AA], deltas: ClientEvent[DeltaA]): ClientIncBehavior[AA, DeltaA] =
       ClientIncBehavior(rep.withDeltas(init, deltas.rep), deltas.core + core)
 
-    override def map[B: Manifest](f: Rep[A => B]): ClientDiscreteBehavior[B] =
+    override def map[B: Manifest](f: Rep[A] => Rep[B]): ClientDiscreteBehavior[B] =
       ClientDiscreteBehavior(rep.map(ScalaJsRuntime.encodeFn1(f)), core)
 
     def discreteMap2[B: Manifest, C: Manifest](b: ClientDiscreteBehavior[B])(f: (Rep[A], Rep[B]) => Rep[C]): ClientDiscreteBehavior[C] =

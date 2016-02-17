@@ -34,11 +34,28 @@ sunt in culpa qui officia deserunt mollit anim id est laborum."""
     }
   }
 
+  val testEquivalent = new HtmlRunnerLib {
+    lazy val (buttonTemplate, buttonEv) = button(Click)
+
+    lazy val ones = buttonEv.map(_ => 1)
+
+    lazy val discB: SessionDiscreteBehavior[Int] = ones.toServer.fold(_ => 0)(_+_)
+
+    def template(i: Rep[Int]) =
+      div()()(
+        p()()(i + ""),
+        buttonTemplate()("Test me")
+      )
+
+    def main = discB.toClient.map(template)
+  }
+
   val chat = new BasicChat
 
   startServer("0.0.0.0", port = 8080)(
     getFromResourceDirectory("")
       ~ makeRoute(helloWorld, "helloWorld")
       ~ makeRoute(chat, "chat")
+      ~ makeRoute(testEquivalent, "test")
   )
 }

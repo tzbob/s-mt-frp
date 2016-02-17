@@ -24,7 +24,7 @@ trait HtmlRunnerLib
       val rootElem = createElement(initialNode)
       document.body.appendChild(rootElem)
 
-      // Create differences and patch them on the root element
+      // Create differences and patch the root element
       var currentNode = initialNode
       clientEngine.subscribeForPulses(ScalaJsRuntime.encodeFn1(fun { (pulses: Rep[ScalaJs[Engine.Pulses]]) =>
         val pulsesOpt = ScalaJsRuntime.decodeOptions(pulses(rep.changes))
