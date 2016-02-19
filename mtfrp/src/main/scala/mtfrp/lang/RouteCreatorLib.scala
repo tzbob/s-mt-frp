@@ -35,8 +35,7 @@ trait RouteCreatorLib extends ReplicationCoreLib with MiscOps with IfThenElse {
   class RouteCreator(
     core: ReplicationCore,
     serverEngine: Engine,
-    clientEngine: Rep[ScalaJs[Engine]],
-    clientQueues: Behavior[Map[Client, List[Client => Seq[Message]]]]
+    clientEngine: Rep[ScalaJs[Engine]]
   )(implicit actorRef: ActorRefFactory) {
     lazy val serverCarrier = core.serverCarrier
     lazy val serverNamedPulseMakers = core.serverNamedPulseMakers
@@ -167,17 +166,7 @@ trait RouteCreatorLib extends ReplicationCoreLib with MiscOps with IfThenElse {
                   // Send the `reset` data: TODO: this is only useful after a 'reconnect' not after an 'initial' connect
                   // values(core.initialCarrier).foreach(sendMessageChunk("reset"))
 
-                  // Send the queued event pulses
-                  values(clientQueues).foreach { clientQueueMap =>
-                    val clientQueueOpt = clientQueueMap.get(client)
-
-                    clientQueueOpt.foreach { clientQueue =>
-                      // It's a LIFO stack so reverse
-                      clientQueue.reverse.foreach(sendMessageChunk("update"))
-                    }
-                  }
-
-                  // Inform that the client has been connected and send out all the initial data
+                  // Inform that the client has been connected
                   serverEngine.fire(rawClientEventSource -> Connected(client) :: pulses)
 
                   val subscription = serverEngine.subscribeForPulses { pulses =>

@@ -29,12 +29,9 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
   def encodeURIComponent(str: Rep[String]): Rep[String]
 
   trait ClientStatus { val client: Client }
-  case class Created(client: Client) extends ClientStatus
   case class Connected(client: Client) extends ClientStatus
   case class Disconnected(client: Client) extends ClientStatus
 
-  // TODO: make sure the pagecompiler pushes the 'created' status in here
-  // THIS IS USED FOR QUEUING EVENTS
   private[mtfrp] val rawClientEventSource = HEvent.source[ClientStatus]
 
   private[mtfrp] val rawClientStatus =

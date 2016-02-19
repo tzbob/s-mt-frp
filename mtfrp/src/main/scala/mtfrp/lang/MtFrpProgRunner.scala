@@ -28,12 +28,10 @@ trait MtFrpProgRunner
     val clientMain = executedMain.rep
     val core = executedMain.core
 
-    val clientQueues = buildClientQueues(core)
-
     // compile the FRP networks (this has all the bottom nodes of the graph)
     val serverEngine = Engine.compile(
       core.serverCarrier +: serverExitEvents,
-      core.serverInitialCarrier +: clientQueues +: serverExitBehaviors
+      core.serverInitialCarrier +: serverExitBehaviors
     )
 
     val clientEngine = EngineRep.compile(
@@ -43,37 +41,7 @@ trait MtFrpProgRunner
 
     postEngineOperations(executedMain, serverEngine, clientEngine)
 
-    val routeMaker = new RouteCreator(core, serverEngine, clientEngine, clientQueues)
+    val routeMaker = new RouteCreator(core, serverEngine, clientEngine)
     (clientMain, routeMaker.makeRoute(), serverEngine)
-  }
-
-  private[this] def buildClientQueues(core: ReplicationCore) = {
-    val queueSnapshotter = core.serverCarrier.map { clientMessageFun => map: Map[Client, ClientStatus] =>
-      map.map {
-        case (client, status) => (client, status, clientMessageFun)
-      }
-    }
-    val queueEvents = rawClientStatus.snapshotWith(queueSnapshotter)
-
-    val clientQueues: HBehavior[Map[Client, List[Client => Seq[Message]]]] =
-      queueEvents.fold(Map.empty[Client, List[Client => Seq[Message]]]) { (currentQueue, eventMap) =>
-        // Each event affects the queue
-        eventMap.foldLeft(currentQueue) { (queue, event) =>
-          val (client, clientStatus, clientMessageFunction) = event
-          clientStatus match {
-            // The client is in its 'created' phase -> queue gets expanded
-            case Created(client) =>
-              val updatedQueueValue = clientMessageFunction :: queue.get(client).getOrElse(Nil)
-              queue + (client -> updatedQueueValue)
-            // The client is in its 'connected' phase -> queue gets reset
-            case Connected(client) =>
-              queue + (client -> Nil)
-            // The client is in its 'disconnected' phase -> queue gets removed
-            case Disconnected(client) =>
-              queue - client
-          }
-        }
-      }
-    clientQueues
   }
 }

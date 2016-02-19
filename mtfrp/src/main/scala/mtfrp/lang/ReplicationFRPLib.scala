@@ -81,6 +81,7 @@ trait ReplicationFRPLib
 
       val initialValuesWithUpdates = initialValues.snapshotWith(snapshotter)
 
+      // undefined as default for the bootstrap problem
       val currentState = initialValuesWithUpdates.fold(Map.empty[Client, T].withDefault(undefined)) {
         case (currentValues, (initialValues, updates)) =>
           // Overwrite currentValues with initialValues and finally updates
@@ -199,11 +200,11 @@ trait ReplicationFRPLib
     }
   }
 
-  private def calculateCurrentState[T: Manifest](behavior: Behavior[Client => T])(client: Client, event: Engine): T = {
-    val values = event.askCurrentValues()
+  private def calculateCurrentState[T: Manifest](behavior: Behavior[Client => T])(client: Client, engine: Engine): T = {
+    val values = engine.askCurrentValues()
     val current = values(behavior)
     if (current.isDefined) current.get(client)
-    else throw new RuntimeException(s"${behavior} is not present in $event")
+    else throw new RuntimeException(s"${behavior} is not present in $engine")
   }
 
   private def clientThunk[T]: T => Client => T = t => c => t
