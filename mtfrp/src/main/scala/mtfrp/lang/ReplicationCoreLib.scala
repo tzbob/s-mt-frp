@@ -28,14 +28,14 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
 
   def encodeURIComponent(str: Rep[String]): Rep[String]
 
-  trait ClientStatus { val client: Client }
-  case class Connected(client: Client) extends ClientStatus
-  case class Disconnected(client: Client) extends ClientStatus
+  trait ClientChanges { val client: Client }
+  case class Connected(client: Client) extends ClientChanges
+  case class Disconnected(client: Client) extends ClientChanges
 
-  private[mtfrp] val rawClientEventSource = HEvent.source[ClientStatus]
+  private[mtfrp] val rawClientEventSource = HEvent.source[ClientChanges]
 
   private[mtfrp] val rawClientStatus =
-    rawClientEventSource.fold(Map.empty[Client, ClientStatus]) { (map, action) =>
+    rawClientEventSource.fold(Map.empty[Client, ClientChanges]) { (map, action) =>
       map.updated(action.client, action)
     }
 
@@ -180,9 +180,7 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
      * @returns a message carrier that pushes to-be-transfered state
      */
     lazy val clientCarrier: Rep[ScalaJs[HEvent[ScalaJs[Seq[Message]]]]] = {
-      System.out.println(s"serverdepppsss ${toServerDeps}")
       val carriers = toServerDeps.map{ x =>
-        println(x)
         x.updateCarrier }.toSeq
       val lst = ScalaJsRuntime.encodeListAsSeq(List(carriers: _*))
       EventRep.merge(lst)

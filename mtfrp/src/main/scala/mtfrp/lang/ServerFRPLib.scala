@@ -5,13 +5,12 @@ import scala.annotation.implicitNotFound
 
 trait ServerFRPLib extends ReplicationCoreLib { selfLib =>
 
-  val clientEvents: ApplicationEvent[ClientStatus] =
+  val clientChanges: ApplicationEvent[ClientChanges] =
     ApplicationEvent(rawClientEventSource, ReplicationCore.empty)
 
-  val clientStatus: ApplicationIncBehavior[Set[Client], ClientStatus] =
-    clientEvents.fold(Set.empty[Client]) { (set, newStatus) =>
+  val clientStatus: ApplicationIncBehavior[Set[Client], ClientChanges] =
+    clientChanges.fold(Set.empty[Client]) { (set, newStatus) =>
       newStatus match {
-        // TODO: Can it be that we are 'created' after a 'disconnected'?
         case Disconnected(c) => set - c
         case status => set + status.client
       }
@@ -79,6 +78,11 @@ trait ServerFRPLib extends ReplicationCoreLib { selfLib =>
 
     def map3[B, C, D](b: ApplicationBehavior[B], c: ApplicationBehavior[C])(f: (A, B, C) => D): ApplicationBehavior[D] =
       ApplicationBehavior(rep.map3(b.rep, c.rep)(f), core + b.core + c.core)
+
+    def sampledWith[B, C](ev: ApplicationEvent[B])(f: (A, B) => C): ApplicationEvent[C] = {
+      val evB = ev.map { b: B => a: A => f(a, b) }
+      this.snapshotWith(evB)
+    }
   }
 
   object ApplicationDiscreteBehavior {

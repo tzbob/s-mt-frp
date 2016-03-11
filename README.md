@@ -27,7 +27,7 @@ Please follow the install guide on the official [scala-sbt.org](http://www.scala
 
     git clone https://github.com/TiarkRompf/virtualization-lms-core.git
     cd virtualization-lms-core
-    git checkout fabff2a64983cfb7a787db186d51c249228b9ffc
+    git checkout a6ae135
     sbt publish-local
     cd ..
 
@@ -35,11 +35,11 @@ Please follow the install guide on the official [scala-sbt.org](http://www.scala
 
     git clone https://github.com/js-scala/js-scala.git
     cd js-scala
-    git checkout febdc39e3e1da7803ec51268781bc883da2dcda6
+    git checkout 0b5771853a35a37d011f0ddebf770fdcd7fc8bc1
     sbt publish-local
     cd ..
 
-### Install [S-FRP](https://github.com/Tzbob/s-frp)
+### Install [Hokko](https://github.com/Tzbob/hokko)
 
     git clone https://github.com/Tzbob/s-frp.git
     cd s-frp

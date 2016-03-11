@@ -8,10 +8,6 @@ object MtFrpBuild extends Build {
     organization := "mtfrp",
     version := "0.3-SNAPSHOT",
 
-    fork in (Test, run) := true,
-    connectInput in (Test, run) := true,
-    cancelable := true,
-
     scalaVersion := "2.11.2",
     scalaOrganization := "org.scala-lang.virtualized",
 

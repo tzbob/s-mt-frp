@@ -24,7 +24,7 @@ trait ConversionFRPLib
     /**
      * Convert between an Application event and a Session event
      *
-     * This function will evaluate the function within `this` on every pulse for all the currently active clients in
+     * This function evaluates the function within `this` on every pulse for all the currently active clients in
      * order to make a Session event
      *
      * @return
@@ -43,6 +43,19 @@ trait ConversionFRPLib
 
   // Discrete Behavior (server)-tier conversions
 
+  // toApplication
+  implicit class DiscreteBehaviorSessionToApplication[T](beh: SessionDiscreteBehavior[T]) {
+    /**
+     * Convert between a Session discrete behavior and an Application discrete behavior
+     *
+     * @return
+     */
+    def toApplication: ApplicationDiscreteBehavior[Client => T] = {
+      // TODO !
+      ???
+    }
+  }
+
   // toSession
   implicit class DiscreteBehaviorApplicationToSession[T](beh: ApplicationDiscreteBehavior[Client => T]) {
     /**
@@ -54,6 +67,21 @@ trait ConversionFRPLib
   }
 
   // Incremental Behavior (server)-tier conversions
+
+  object FRPConversion {
+    def toSession[T, DeltaT, C, DeltaC](
+      beh: ApplicationIncBehavior[T, Option[DeltaT]])(
+      valueNarrow: (Client, T) => C)(
+      deltaNarrow: (Client, DeltaT) => Option[DeltaC])(
+      narrowFold: (Client, C, DeltaC) => C
+    ): SessionIncBehavior[T, DeltaT] = {
+      ???
+    }
+  }
+
+  implicit class IncrementalBehaviorApplicationToSession2[T, DeltaT](beh: ApplicationIncBehavior[T, DeltaT]) {
+    def toSession: SessionIncBehavior[T, DeltaT] = ???
+    }
 
   // toSession
   implicit class IncrementalBehaviorApplicationToSession[T, DeltaT](beh: ApplicationIncBehavior[Client => T, Client => Option[DeltaT]]) {

@@ -65,41 +65,32 @@ trait ReplicationFRPLib
       * Replicate a Client behavior onto the Session tier
       *
       */
-    def toServer(undefined: Client => T): SessionDiscreteBehavior[T] = {
-      val changes = beh.changes()
-      val toServerDep = BehaviorToServerDependency(changes.rep, beh.rep)
+    // def toServer: SessionDiscreteBehavior[T] = {
+    //   ???
+    //   // val changes = beh.changes()
+    //   // val toServerDep = BehaviorToServerDependency(changes.rep, beh.rep)
 
-      val serverChangesApp = changes.toServer.toApplication
-      val serverChanges = serverChangesApp.rep
+    //   // val serverChanges = toServerDep.updateData.source
 
-      val initialValues =
-        toServerDep.initialsData.source.fold(Map.empty[Client, T])(_ + _)
+    //   // val initialValues =
+    //   //   toServerDep.initialsData.source.fold(Map.empty[Client, T])(_ + _)
 
-      val snapshotter = serverChanges.map { updates => initialValues: Map[Client, T] =>
-        (initialValues, updates)
-      }
+    //   // val snapshotter = serverChanges.map { updates => initialValues: Map[Client, T] =>
+    //   //   (initialValues, updates)
+    //   // }
 
-      val initialValuesWithUpdates = initialValues.snapshotWith(snapshotter)
+    //   // val initialValuesWithUpdates = initialValues.snapshotWith(snapshotter)
 
-      // undefined as default for the bootstrap problem
-      val currentState = initialValuesWithUpdates.fold(Map.empty[Client, T].withDefault(undefined)) {
-        case (currentValues, (initialValues, updates)) =>
-          // Overwrite currentValues with initialValues and finally updates
-          val test = currentValues ++ initialValues ++ updates
-          // TODO
-          // initial values don't work
-          // updates don't come through either...
-          System.out.println(s"updates and stuff: $test")
-          test
-      }
+    //   // // undefined as default for the bootstrap problem
+    //   // val currentState = initialValuesWithUpdates.fold(Map.empty[Client, T].withDefault(undefined)) {
+    //   //   case (currentValues, (initialValues, updates)) =>
+    //   //     // Overwrite currentValues with initialValues and finally updates
+    //   //     (currentValues ++ initialValues) + updates
+    //   // }
 
-      // TODO: should we do this? this is correct since we give the illusion that the initial value was always available
-      // However, changes will be observable even if there are none on this.changes
-      // val currentStateJustChanges = currentState.withChanges(serverChanges)
-
-      val applicationState = ApplicationDiscreteBehavior(currentState, serverChangesApp.core + toServerDep)
-      applicationState.toSession
-    }
+    //   // val applicationState = ApplicationDiscreteBehavior(currentState, beh.core + toServerDep)
+    //   // applicationState.toSession
+    // }
   }
 
   // toClient

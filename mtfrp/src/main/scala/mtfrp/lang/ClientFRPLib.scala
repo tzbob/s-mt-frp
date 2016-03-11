@@ -93,6 +93,11 @@ trait ClientFRPLib extends JS
     def map3[B: Manifest, C: Manifest, D: Manifest](b: ClientBehavior[B], c: ClientBehavior[C])(f: (Rep[A], Rep[B], Rep[C]) => Rep[D]): ClientBehavior[D] =
       ClientBehavior(rep.map3(b.rep, c.rep)(ScalaJsRuntime.encodeFn3(f)), core + b.core + c.core)
 
+    def sampledWith[B: Manifest, C: Manifest](ev: ClientEvent[B])(f: (Rep[A], Rep[B]) => Rep[C]): ClientEvent[C] = {
+      val evB = ev.map { b: Rep[B] => a: Rep[A] => f(a, b) }
+      this.snapshotWith(evB)
+    }
+
     def sampledBy(ev: ClientEvent[_]): ClientEvent[A] =
       ClientEvent(rep.sampledBy(ev.rep), core + ev.core)
   }

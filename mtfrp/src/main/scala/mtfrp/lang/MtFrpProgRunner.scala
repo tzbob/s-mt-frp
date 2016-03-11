@@ -36,7 +36,7 @@ trait MtFrpProgRunner
 
     val clientEngine = EngineRep.compile(
       ScalaJsRuntime.encodeListAsSeq(core.clientCarrier :: clientExitEvents),
-      ScalaJsRuntime.encodeListAsSeq(clientMain :: clientExitBehaviors)
+      ScalaJsRuntime.encodeListAsSeq(clientMain :: core.clientInitialCarrier :: clientExitBehaviors)
     )
 
     postEngineOperations(executedMain, serverEngine, clientEngine)

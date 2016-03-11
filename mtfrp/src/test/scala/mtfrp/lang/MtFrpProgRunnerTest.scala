@@ -12,71 +12,46 @@ import mtfrp.gen.GenTestRunnerLib
 
 object Test {
 
-  val prog = new TestRunnerLib[Int] {
+  val e2sb2c = new TestRunnerLib[Int] {
     override def inputList = List(3, 6, 9)
 
-    lazy val discB  = input.toServer.fold(_ => 0) { _ + _ }
+    lazy val b1 = input.toServer.fold(_ => 0) { _ + _ }
+    lazy val b2 = b1.map(_ * 2)
 
     override lazy val main: ClientDiscreteBehavior[Assertion] =
-      discB.toClient.map { x: Rep[Int] => assert(x == x) }
+      b1.toClient.discreteMap2(b2.toClient.map(_ / 2)) { _ === _ }
+  }
 
-    // beh to server test
+  val b2sb2c = new TestRunnerLib[Int] {
+    override def inputList = List(3, 6, 9)
 
-    // lazy val inputBehavior = input.fold(0) { (acc: Rep[Int], n: Rep[Int]) =>
-    //   acc + n
-    // }
+    lazy val bStart = input.fold(0){ _ + _ }
+    lazy val b2Start = input.hold(0).map(_ * 2)
 
-    // lazy val sessInputBehavior = inputBehavior.toServer(_ => -1)
+    lazy val bServer = bStart.toServer(_ => 0)
+    lazy val b2Server = b2Start.toServer(_ => 0)
 
-    // override lazy val main: ClientDiscreteBehavior[List[String]] =
-    //   sessInputBehavior.toClient.map { x: Rep[Int] => List[String](x + "") }
+    lazy val bEnd = bServer.toClient
+    lazy val b2End = b2Server.toClient.map(_ / 2)
 
-
-
-
-
-
-
-
-
-
-
-
-    // lazy val clientDoubles = inputBehavior.map { (i: Rep[Int]) => i * 2 }
-    // lazy val clientAlwaysTrue = inputBehavior.discreteMap2(clientDoubles){ (i: Rep[Int], i2: Rep[Int]) =>
-    //   i < i2
-    // }
-
-    // lazy val sessionInput = input.toServer
-    // lazy val sessionBehavior = sessionInput.fold(_ => 2)(_ + _)
-    // lazy val sessionDoubles = sessionBehavior.map { i =>
-    //   i * 2
-    // }
-    // lazy val sessionAlwaysTrue = sessionBehavior.discreteMap2(sessionDoubles)(_ < _)
-
-    // lazy val clientAssert = clientAlwaysTrue.toServer(_ => false).toClient.map { (bool: Rep[Boolean]) =>
-    //   "Client value: " + bool
-    // }
-    // lazy val sessionAssert = sessionAlwaysTrue.map("Session value: " + _)
-
-    // override lazy val main: ClientDiscreteBehavior[List[String]] =
-    //   clientAssert.discreteMap2(sessionAssert.toClient){ (c: Rep[String], s: Rep[String]) =>
-    //     List(c, s)
-    //   }
+    override lazy val main: ClientDiscreteBehavior[Assertion] =
+      bEnd.discreteMap2(b2End) { _ === _ }
   }
 
 }
 
 class MtFrpProgRunnerTest extends FunSuite with SimpleRoutingApp {
   test("This should run without errors") {
-    def testRoute = PageCompiler.makeRoute()(Test.prog)(GenTestRunnerLib(Test.prog))("test")
+    def e2sb2cRoute = PageCompiler.makeRoute()(Test.e2sb2c)(GenTestRunnerLib(Test.e2sb2c))("e2sb2c")
+    def b2sb2cRoute = PageCompiler.makeRoute()(Test.b2sb2c)(GenTestRunnerLib(Test.b2sb2c))("b2sb2c")
 
     val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(1))
     implicit val system = ActorSystem("simple-apps", None, None, Some(ec))
 
     startServer("0.0.0.0", port = 8080)(
       getFromResourceDirectory("")
-        ~ testRoute
+        ~ e2sb2cRoute
+        ~ b2sb2cRoute
     )
   }
 }

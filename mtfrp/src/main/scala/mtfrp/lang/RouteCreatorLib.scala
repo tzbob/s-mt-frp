@@ -39,7 +39,7 @@ trait RouteCreatorLib extends ReplicationCoreLib with MiscOps with IfThenElse {
   )(implicit actorRef: ActorRefFactory) {
     lazy val serverCarrier = core.serverCarrier
     lazy val serverNamedPulseMakers = core.serverNamedPulseMakers
-    lazy val serverNamedInitialsPulseMakers = core.serverNamedPulseMakers
+    lazy val serverNamedInitialsPulseMakers = core.serverNamedInitialsPulseMakers
 
     lazy val clientCarrier = core.clientCarrier
 
@@ -49,13 +49,13 @@ trait RouteCreatorLib extends ReplicationCoreLib with MiscOps with IfThenElse {
 
     def makeRoute(): Option[Route] = {
       val r1 =
-        if (!core.toClientDeps.isEmpty)
-          Some(initializeToClientDependencies())
+        if (!core.toServerDeps.isEmpty)
+          Some(initializeToServerDependencies())
         else None
 
       val r2 =
-        if (!core.toServerDeps.isEmpty)
-          Some(initializeToServerDependencies())
+        if (!core.toClientDeps.isEmpty)
+          Some(initializeToClientDependencies())
         else None
 
       r1 match {
@@ -115,7 +115,7 @@ trait RouteCreatorLib extends ReplicationCoreLib with MiscOps with IfThenElse {
         () // ignore the event source, it will live as long as the client will
       }
 
-      // listen(core.clientNamedResetPulseMakers)("reset")
+      listen(core.clientNamedResetPulseMakers)("reset")
       listen(core.clientNamedUpdatePulseMakers)("update")
     }
 
@@ -147,7 +147,18 @@ trait RouteCreatorLib extends ReplicationCoreLib with MiscOps with IfThenElse {
                   def sendMessageChunk(evt: String)(msgsForClient: Client => Seq[Message]) = {
                     val msgs = msgsForClient(client)
                     val data = s"event: $evt\ndata:${msgs.asJson.noSpaces}\n\n"
-                    ctx.responder ! MessageChunk(data)
+                   def D[A](descr: String = "")(a: A): A = {
+                     // TODO: REMOVE ME
+                     System.out.println(s"$descr $a")
+                     a
+                   }
+
+                    def Drep[A](descr: Rep[String])(a: Rep[A]): Rep[A] = {
+                      // TODO: REMOVE ME
+                      println(descr + a)
+                      a
+                    }
+                    ctx.responder ! MessageChunk(D("Sending Data:")(data))
                   }
 
                   // http://stackoverflow.com/questions/2632175/java-decoding-uri-query-string
@@ -163,8 +174,8 @@ trait RouteCreatorLib extends ReplicationCoreLib with MiscOps with IfThenElse {
                   // Client has connected, ask all current values
                   val values = serverEngine.askCurrentValues()
 
-                  // Send the `reset` data: TODO: this is only useful after a 'reconnect' not after an 'initial' connect
-                  // values(core.initialCarrier).foreach(sendMessageChunk("reset"))
+                  // Send the `reset` data // TODO, does this pollute beh.changes ?
+                  values(core.serverInitialCarrier).foreach(sendMessageChunk("reset"))
 
                   // Inform that the client has been connected
                   serverEngine.fire(rawClientEventSource -> Connected(client) :: pulses)
@@ -256,7 +267,6 @@ trait RouteCreatorLib extends ReplicationCoreLib with MiscOps with IfThenElse {
                 val pulses = messages.map { message =>
                   serverNamedPulseMakers(message.name)(message.json, Client(id))
                 }
-                System.out.println("############# NEW EVENT: " + messages)
                 serverEngine.fire(pulses)
                 "OK"
               }

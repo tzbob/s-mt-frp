@@ -87,7 +87,7 @@ trait SessionFRPLib extends ServerFRPLib {
     // Derived ops
 
     def hold[U >: T](initial: U): SessionDiscreteBehavior[U] =
-      this.fold(_ => initial) { (x, _) => x }
+      this.fold(_ => initial) { (_, x) => x }
 
     def map[A](modifier: T => A): SessionEvent[A] =
       this.collect(modifier andThen Some.apply)
@@ -132,6 +132,11 @@ trait SessionFRPLib extends ServerFRPLib {
 
     def map3[B, C, D](b: SessionBehavior[B], c: SessionBehavior[C])(f: (A, B, C) => D): SessionBehavior[D] =
       c.reverseApply(b.reverseApply(this.reverseApply(SessionBehavior.constant(f.curried))))
+
+    def sampledWith[B, C](ev: SessionEvent[B])(f: (A, B) => C): SessionEvent[C] = {
+      val evB = ev.map { b: B => a: A => f(a, b) }
+      this.snapshotWith(evB)
+    }
   }
 
   object SessionDiscreteBehavior {
