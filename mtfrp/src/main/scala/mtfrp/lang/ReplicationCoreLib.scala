@@ -61,8 +61,8 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
 
   case class BehaviorToClientDependency[U: Encoder: JSJsonReader: Manifest, Init: Encoder: JSJsonReader: Manifest](
     behavior: Behavior[Client => Init],
-    exit: HEvent[Client => U]
-  ) extends ToClientDependency[U](exit.map(_ andThen Some.apply)) {
+    exit: HEvent[Client => Option[U]]
+  ) extends ToClientDependency[U](exit) {
     val stateCarrier: Behavior[Client => Message] = behavior.map { fun => c: Client =>
       tToMessage(name)(fun(c))
     }

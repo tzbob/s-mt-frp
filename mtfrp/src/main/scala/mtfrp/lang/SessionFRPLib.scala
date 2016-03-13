@@ -8,36 +8,31 @@ case class All[DeltaA, DeltaB](da: DeltaA, db: DeltaB) extends Increment[DeltaA,
 trait SessionFRPLib extends ServerFRPLib {
 
   object SessionEvent {
-    def apply[T](wrappee: ApplicationEvent[Map[Client, T]]): SessionEvent[T] =
+    def apply[T](wrappee: ApplicationEvent[Client => Option[T]]): SessionEvent[T] =
       new SessionEvent(wrappee)
 
     def merge[A](events: SessionEvent[A]*): SessionEvent[Seq[A]] = {
       val evts = events.map(_.rep)
       val merged = ApplicationEvent.merge(evts: _*)
 
-      val mergedSessionEvents = merged.map { seq =>
-        seq.foldLeft(Map.empty[Client, Seq[A]]) { (result, n) =>
-          result.map {
-            case (key, value) => key -> (value :+ n(key))
-          }
-        }
+      val mergedSessionEvents = merged.map { seq => c: Client =>
+        val actualPulses = seq.map { clientFun => clientFun(c) }.flatten
+        if (actualPulses.isEmpty) None
+        else Some(actualPulses)
       }
 
       SessionEvent(mergedSessionEvents)
     }
   }
 
-  class SessionEvent[+T] private (val rep: ApplicationEvent[Map[Client, T]]) {
+  class SessionEvent[+T] private (val rep: ApplicationEvent[Client => Option[T]]) {
     def fold[B, AA >: T](initial: B)(f: (B, AA) => B): SessionIncBehavior[B, AA] = {
-      val newRep = rep.fold(Map.empty[Client, B].withDefaultValue(initial)) { (stateMap, newPulses) =>
-        (stateMap.keys ++ newPulses.keys).foldLeft(stateMap) { (currentStateMap, key) =>
-          val oldState = currentStateMap.get(key)
-          val pulse = newPulses.get(key)
 
-          pulse match {
-            case Some(newPulseValue) => stateMap + (key -> f(currentStateMap(key), newPulseValue))
-            case _ => stateMap
-          }
+      val newRep = rep.fold { _: Client => initial } { (stateFun, newEvent) => c: Client =>
+        val state = stateFun(c)
+        newEvent(c) match {
+          case Some(pulse) => f(state, pulse)
+          case None => state
         }
       }
 
@@ -45,45 +40,26 @@ trait SessionFRPLib extends ServerFRPLib {
     }
 
     def unionWith[B, C, AA >: T](b: SessionEvent[B])(f1: AA => C)(f2: B => C)(f3: (AA, B) => C): SessionEvent[C] = {
-      val newRep = rep.unionWith(b.rep)(_.mapValues(f1))(_.mapValues(f2)) { (aa, b) =>
-        val allKeys = aa.keys ++ b.keys
-        val result = allKeys.map { key =>
-          val aaV = aa.get(key)
-          val bV = b.get(key)
-
-          val value = (aaV, bV) match {
-
-            // both values present: apply the third function
-            case (Some(aaV), Some(bV)) => f3(aaV, bV)
-
-            // left value present: apply the first function
-            case (Some(aaV), None) => f1(aaV)
-
-            // right value present: apply the second function
-            case (None, Some(bV)) => f2(bV)
-
-            // no value present (should be impossible)
-            case _ => sys.error(s"No value found with key: $key")
-          }
-
-          key -> value
+      val newRep = rep.unionWith(b.rep) { clientFun => c: Client =>
+        clientFun(c).map(f1)
+      } { clientFun => c: Client =>
+        clientFun(c).map(f2)
+      } { (aaClientFun, bClientFun) => c: Client =>
+        (aaClientFun(c), bClientFun(c)) match {
+          case (None, _) => None
+          case (_, None) => None
+          case (Some(aa), Some(b)) => Some(f3(aa, b))
+          case _ => sys.error("Can't happen, unionWith f3 no events")
         }
-
-        result.toMap
       }
 
       SessionEvent(newRep)
     }
 
     def collect[B, AA >: T](fb: T => Option[B]): SessionEvent[B] = {
-      val newRep = rep.collect { map =>
-        val mappedMap = map.mapValues(fb)
-        val filteredMap = mappedMap.collect { case (key, (Some(v))) => key -> v }
-
-        // if there are no clients with values after this round -- return None
-        if (filteredMap.isEmpty) None
-        // else, return whatever client has a value left
-        else Some(filteredMap)
+      val newRep = rep.collect { clientFun =>
+        // TODO: this always fires an update even if there wasn't actually any work to be done for any clients
+        Some { c: Client => clientFun(c).flatMap(fb) }
       }
 
       SessionEvent(newRep)
@@ -120,12 +96,11 @@ trait SessionFRPLib extends ServerFRPLib {
     }
 
     def snapshotWith[B, AA >: A](ev: SessionEvent[AA => B]): SessionEvent[B] = {
-      val newEv = ev.rep.map { maps => cf: (Client => A) =>
-        maps.map {
-          case (key, value) => key -> value(cf(key))
-        }
+      val newRep = rep.sampledWith(ev.rep) { (clientFun, partialClientFun) => c: Client =>
+        partialClientFun(c).map(_(clientFun(c)))
       }
-      SessionEvent(rep.snapshotWith(newEv))
+
+      SessionEvent(newRep)
     }
 
     // Derived ops
@@ -155,7 +130,7 @@ trait SessionFRPLib extends ServerFRPLib {
   class SessionDiscreteBehavior[+A] private[SessionFRPLib] (override val rep: ApplicationDiscreteBehavior[Client => A])
     extends SessionBehavior[A](rep) {
 
-    def changes(): SessionEvent[A] = SessionEvent(rep.changes().map(Map.empty.withDefault))
+    def changes(): SessionEvent[A] = SessionEvent(rep.changes().map(_ andThen Some.apply))
 
     def discreteReverseApply[B, AA >: A](fb: SessionDiscreteBehavior[A => B]): SessionDiscreteBehavior[B] = {
       val newFb = fb.rep.map { f => cf: (Client => A) =>
@@ -181,13 +156,13 @@ trait SessionFRPLib extends ServerFRPLib {
   }
 
   object SessionIncBehavior {
-    def apply[T, DeltaT](init: T, rep: ApplicationIncBehavior[Client => T, Map[Client, DeltaT]]): SessionIncBehavior[T, DeltaT] =
+    def apply[T, DeltaT](init: T, rep: ApplicationIncBehavior[Client => T, Client => Option[DeltaT]]): SessionIncBehavior[T, DeltaT] =
       new SessionIncBehavior(init, rep)
   }
 
   class SessionIncBehavior[+A, +DeltaA] private (
     val init: A,
-    override val rep: ApplicationIncBehavior[Client => A, Map[Client, DeltaA]]
+    override val rep: ApplicationIncBehavior[Client => A, Client => Option[DeltaA]]
   ) extends SessionDiscreteBehavior[A](rep) {
     def deltas: SessionEvent[DeltaA] = SessionEvent(rep.deltas)
 
@@ -202,9 +177,9 @@ trait SessionFRPLib extends ServerFRPLib {
       val newInit = valueFun(init, b.init)
 
       val newDelta: SessionEvent[DeltaC] = {
-        val abs = this.discreteMap2(b) { (_, _)}
+        val abs = this.discreteMap2(b) { (_, _) }
         val increments = this.deltas.unionWith(b.deltas)(Left(_): Increment[DeltaA, DeltaB])(Right(_))(All(_, _))
-        val tupled = abs.sampledWith(increments){
+        val tupled = abs.sampledWith(increments) {
           case ((a, b), inc) => (a, b, inc)
         }
         tupled.collect(deltaFun.tupled)

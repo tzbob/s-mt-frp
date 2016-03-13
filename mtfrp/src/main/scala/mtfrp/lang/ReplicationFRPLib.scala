@@ -25,7 +25,8 @@ trait ReplicationFRPLib
       val source = toServerDep.updateData.source
       val appEvent = ApplicationEvent(source, evt.core + toServerDep)
       val mapAppEvent = appEvent.map(Map.empty[Client, T] + _)
-      SessionEvent(mapAppEvent)
+
+      SessionEvent(mapAppEvent.map(_.get _))
     }
 
     /**
@@ -42,7 +43,7 @@ trait ReplicationFRPLib
   // toClient
   implicit class EventToClient[T: Encoder: JSJsonReader: Manifest](evt: SessionEvent[T]) {
     def toClient: ClientEvent[T] = {
-      val toClientDep = EventToClientDependency(evt.rep.rep.map(_.get _))
+      val toClientDep = EventToClientDependency(evt.rep.rep)
       ClientEvent(toClientDep.updateData.source, evt.rep.core + toClientDep)
     }
   }
@@ -101,7 +102,7 @@ trait ReplicationFRPLib
      *
      */
     def toClient: ClientDiscreteBehavior[T] = {
-      val toClientDep = BehaviorToClientDependency(beh.rep.rep, beh.rep.rep.changes)
+      val toClientDep = BehaviorToClientDependency(beh.rep.rep, beh.rep.rep.changes.map(_ andThen Some.apply))
 
       val stateSource = toClientDep.stateData.source
       val source = stateSource.unionLeft(toClientDep.updateData.source)
@@ -183,10 +184,11 @@ trait ReplicationFRPLib
     behavior: ApplicationIncBehavior[A, DeltaA]
   ) {
     def toAllClients(clientFold: (Rep[A], Rep[DeltaA]) => Rep[A]): ClientIncBehavior[A, DeltaA] = {
-      val mappedDeltas = behavior.deltas.map(Map.empty[Client, DeltaA].withDefaultValue)
+      val mappedDeltas = behavior.deltas.map { t => c: Client => Some(t) }
       val mappedBehavior = behavior.map(clientThunk)
       val mappedInit = clientThunk(behavior.rep.initial)
       val mappedIncBehavior = mappedBehavior.withDeltas(mappedInit, mappedDeltas)
+
       SessionIncBehavior(behavior.rep.initial, mappedIncBehavior).toClientWithFold(clientFold)
     }
   }

@@ -16,17 +16,19 @@ trait ConversionFRPLib
      *
      * @return
      */
-    def toApplication: ApplicationEvent[Map[Client, T]] = evt.rep
+    def toApplication: ApplicationEvent[Map[Client, T]] =
+      clientStatus.sampledWith(evt.rep) { (clients, partialClientFun) =>
+        val newClients = clients.map { client =>
+          client -> partialClientFun(client)
+        }
+        newClients.collect { case (client, Some(t)) => (client, t) }.toMap
+      }
     def toAppAnon: ApplicationEvent[List[T]] = toApplication.map(_.values.toList)
   }
 
   // toSession
   implicit class EventApplicationToSession[T](evt: ApplicationEvent[T]) {
-    def toSession: SessionEvent[T] = {
-      SessionEvent(clientStatus.sampledWith(evt) { (clients, ts) =>
-        clients.map(_ -> ts).toMap
-      })
-    }
+    def toSession: SessionEvent[T] = SessionEvent(evt.map { t => c: Client => Some(t) })
   }
 
   // Discrete Behavior (server)-tier conversions
