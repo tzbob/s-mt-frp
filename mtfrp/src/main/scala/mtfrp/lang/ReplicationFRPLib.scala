@@ -54,7 +54,7 @@ trait ReplicationFRPLib
      *
      * @return
      */
-    def toAllClients: ClientEvent[T] = evt.map { t => c: Client => Some(t) }.toSession.toClient
+    def toAllClients: ClientEvent[T] = evt.toSession.toClient
   }
 
   // Discrete Behavior Replications
@@ -187,7 +187,7 @@ trait ReplicationFRPLib
       val mappedBehavior = behavior.map(clientThunk)
       val mappedInit = clientThunk(behavior.rep.initial)
       val mappedIncBehavior = mappedBehavior.withDeltas(mappedInit, mappedDeltas)
-      SessionIncBehavior(mappedIncBehavior).toClientWithFold(clientFold)
+      SessionIncBehavior(behavior.rep.initial, mappedIncBehavior).toClientWithFold(clientFold)
     }
   }
 

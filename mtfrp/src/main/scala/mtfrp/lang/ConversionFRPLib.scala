@@ -17,27 +17,15 @@ trait ConversionFRPLib
      * @return
      */
     def toApplication: ApplicationEvent[Map[Client, T]] = evt.rep
+    def toAppAnon: ApplicationEvent[List[T]] = toApplication.map(_.values.toList)
   }
 
   // toSession
-  implicit class EventApplicationToSession[T](evt: ApplicationEvent[Client => Option[T]]) {
-    /**
-     * Convert between an Application event and a Session event
-     *
-     * This function evaluates the function within `this` on every pulse for all the currently active clients in
-     * order to make a Session event
-     *
-     * @return
-     */
+  implicit class EventApplicationToSession[T](evt: ApplicationEvent[T]) {
     def toSession: SessionEvent[T] = {
-      val mapMaker = evt.map { cf => clients: Set[Client] =>
-        clients.foldLeft(Map.empty[Client, T]) { (clientToT, client) =>
-          val optT = cf(client)
-          val expandedMapOpt = optT.map(t => clientToT + (client -> t))
-          expandedMapOpt.getOrElse(clientToT)
-        }
-      }
-      SessionEvent(clientStatus.snapshotWith(mapMaker))
+      SessionEvent(clientStatus.sampledWith(evt) { (clients, ts) =>
+        clients.map(_ -> ts).toMap
+      })
     }
   }
 
@@ -68,36 +56,28 @@ trait ConversionFRPLib
 
   // Incremental Behavior (server)-tier conversions
 
-  object FRPConversion {
-    def toSession[T, DeltaT, C, DeltaC](
-      beh: ApplicationIncBehavior[T, Option[DeltaT]])(
-      valueNarrow: (Client, T) => C)(
-      deltaNarrow: (Client, DeltaT) => Option[DeltaC])(
-      narrowFold: (Client, C, DeltaC) => C
-    ): SessionIncBehavior[T, DeltaT] = {
-      ???
-    }
-  }
-
   implicit class IncrementalBehaviorApplicationToSession2[T, DeltaT](beh: ApplicationIncBehavior[T, DeltaT]) {
-    def toSession: SessionIncBehavior[T, DeltaT] = ???
-    }
-
-  // toSession
-  implicit class IncrementalBehaviorApplicationToSession[T, DeltaT](beh: ApplicationIncBehavior[Client => T, Client => Option[DeltaT]]) {
-
-    /**
-     * Convert between an Application incremental behavior and a Session incremental behavior
-     *
-     * @return
-     */
     def toSession: SessionIncBehavior[T, DeltaT] = {
-      val sessionDeltas = beh.deltas.toSession
-      val sessionBehavior = new DiscreteBehaviorApplicationToSession(beh).toSession
-
-      sessionBehavior.withDeltas(beh.rep.initial, sessionDeltas)
+      val sessDeltas = beh.deltas.toSession
+      SessionDiscreteBehavior(beh.map { x => c: Client => x }).withDeltas(beh.rep.initial, sessDeltas)
     }
   }
+
+  // // toSession
+  // implicit class IncrementalBehaviorApplicationToSession[T, DeltaT](beh: ApplicationIncBehavior[Client => T, Client => Option[DeltaT]]) {
+
+  //   /**
+  //    * Convert between an Application incremental behavior and a Session incremental behavior
+  //    *
+  //    * @return
+  //    */
+  //   def toSession: SessionIncBehavior[T, DeltaT] = {
+  //     val sessionDeltas = SessionFilterConversion.toSession(beh.deltas)
+  //     val sessionBehavior = new DiscreteBehaviorApplicationToSession(beh).toSession
+
+  //     sessionBehavior.withDeltas(beh.initial, sessionDeltas)
+  //   }
+  // }
 
   private def clientThunk[T]: T => Client => T = t => c => t
 }

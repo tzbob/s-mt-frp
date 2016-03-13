@@ -154,10 +154,15 @@ trait ReplicationCoreLib extends JSJsonFormatLib with EventSources
       val carriers = toClientDeps.collect {
         case b @ BehaviorToClientDependency(_, _) => b.stateCarrier
       }
+def D[A](descr: String = "")(a: A): A = {
+  // TODO: REMOVE ME
+  System.out.println(s"$descr $a")
+  a
+}
 
-      val seqCarrier = carriers.foldLeft(Behavior.constant(collection.Seq.empty[Client => Message])) { (acc, n) =>
+      val seqCarrier = D("Carriers:")(carriers).foldLeft(Behavior.constant(collection.Seq.empty[Client => Message])) { (acc, n) =>
         val fa = n.map { newVal => seq: Seq[Client => Message] =>
-          seq :+ newVal
+          seq :+ D("newVal")(newVal)
         }
         acc.reverseApply(fa)
       }

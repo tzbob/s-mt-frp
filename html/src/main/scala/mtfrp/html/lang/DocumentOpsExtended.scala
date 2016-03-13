@@ -61,6 +61,8 @@ trait DocumentOpsExtended
   implicit class ValueEvent(e: ClientEvent[InputEvent]) {
     def asTextBehavior: ClientDiscreteBehavior[String] =
       e.asTextEvent.hold("")
+    def asTextIncBehavior: ClientIncBehavior[String, String] =
+      e.asTextEvent.fold("") { (_, x) => x }
     def asTextEvent: ClientEvent[String] =
       e.map(_.value)
     def asCheckedBehavior(startWith: Rep[Boolean]): ClientDiscreteBehavior[Boolean] =

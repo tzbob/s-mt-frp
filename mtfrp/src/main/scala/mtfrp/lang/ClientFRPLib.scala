@@ -48,8 +48,8 @@ trait ClientFRPLib extends JS
 
     // Derived ops
 
-    def hold[U >: T: Manifest](initial: Rep[U]): ClientDiscreteBehavior[U] =
-      ClientDiscreteBehavior(rep.hold(initial), core)
+    def hold[U >: T: Manifest](initial: Rep[U]): ClientIncBehavior[U, U] =
+      this.fold(initial) { (_, x) => x }
 
     def map[A: Manifest](modifier: Rep[T] => Rep[A]): ClientEvent[A] =
       ClientEvent(rep.map(ScalaJsRuntime.encodeFn1(modifier)), core)

@@ -166,19 +166,30 @@ trait RouteCreatorLib extends ReplicationCoreLib with MiscOps with IfThenElse {
                     .replace("%2B", "+")
 
                   // TODO: Make this safe? Log the errors and ignore wrong formats?
-                  val initialData = decode[List[Message]](decodedInitials).toOption.get
-                  val pulses = initialData.map { message =>
-                    serverNamedInitialsPulseMakers(message.name)(message.json, client)
-                  }
+                  // val initialData = decode[List[Message]](decodedInitials).toOption.get
+                  // val pulses = initialData.map { message =>
+                  //   serverNamedInitialsPulseMakers(message.name)(message.json, client)
+                  // }
+
+                  // Inform that the client has been connected
+                  serverEngine.fire(rawClientEventSource -> Connected(client) :: Nil)
+
 
                   // Client has connected, ask all current values
                   val values = serverEngine.askCurrentValues()
+def D[A](descr: String = "")(a: A): A = {
+  // TODO: REMOVE ME
+  System.out.println(s"$descr $a")
+  a
+}
 
+                  def Drep[A](descr: Rep[String])(a: Rep[A]): Rep[A] = {
+                    // TODO: REMOVE ME
+                    println(descr + a)
+                    a
+                  }
                   // Send the `reset` data // TODO, does this pollute beh.changes ?
-                  values(core.serverInitialCarrier).foreach(sendMessageChunk("reset"))
-
-                  // Inform that the client has been connected
-                  serverEngine.fire(rawClientEventSource -> Connected(client) :: pulses)
+                  D("values: ")(values(core.serverInitialCarrier)).foreach(sendMessageChunk("reset"))
 
                   val subscription = serverEngine.subscribeForPulses { pulses =>
                     pulses(serverCarrier).foreach(sendMessageChunk("update"))

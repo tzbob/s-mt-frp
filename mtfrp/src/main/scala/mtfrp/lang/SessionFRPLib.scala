@@ -1,5 +1,10 @@
 package mtfrp.lang
 
+sealed trait Increment[+DeltaA, +DeltaB]
+case class Left[DeltaA](da: DeltaA) extends Increment[DeltaA, Nothing]
+case class Right[DeltaB](db: DeltaB) extends Increment[Nothing, DeltaB]
+case class All[DeltaA, DeltaB](da: DeltaA, db: DeltaB) extends Increment[DeltaA, DeltaB]
+
 trait SessionFRPLib extends ServerFRPLib {
 
   object SessionEvent {
@@ -23,8 +28,8 @@ trait SessionFRPLib extends ServerFRPLib {
   }
 
   class SessionEvent[+T] private (val rep: ApplicationEvent[Map[Client, T]]) {
-    def fold[B, AA >: T](initial: Client => B)(f: (B, AA) => B): SessionIncBehavior[B, AA] = {
-      val newRep = rep.fold(Map.empty[Client, B].withDefault(initial)) { (stateMap, newPulses) =>
+    def fold[B, AA >: T](initial: B)(f: (B, AA) => B): SessionIncBehavior[B, AA] = {
+      val newRep = rep.fold(Map.empty[Client, B].withDefaultValue(initial)) { (stateMap, newPulses) =>
         (stateMap.keys ++ newPulses.keys).foldLeft(stateMap) { (currentStateMap, key) =>
           val oldState = currentStateMap.get(key)
           val pulse = newPulses.get(key)
@@ -36,7 +41,7 @@ trait SessionFRPLib extends ServerFRPLib {
         }
       }
 
-      SessionIncBehavior(newRep)
+      SessionIncBehavior(initial, newRep)
     }
 
     def unionWith[B, C, AA >: T](b: SessionEvent[B])(f1: AA => C)(f2: B => C)(f3: (AA, B) => C): SessionEvent[C] = {
@@ -86,8 +91,8 @@ trait SessionFRPLib extends ServerFRPLib {
 
     // Derived ops
 
-    def hold[U >: T](initial: U): SessionDiscreteBehavior[U] =
-      this.fold(_ => initial) { (_, x) => x }
+    def hold[U >: T](initial: U): SessionIncBehavior[U, U] =
+      this.fold(initial) { (_, x) => x }
 
     def map[A](modifier: T => A): SessionEvent[A] =
       this.collect(modifier andThen Some.apply)
@@ -161,8 +166,8 @@ trait SessionFRPLib extends ServerFRPLib {
       SessionDiscreteBehavior(fbNew)
     }
 
-    def withDeltas[DeltaA, AA >: A](init: Client => AA, deltas: SessionEvent[DeltaA]): SessionIncBehavior[AA, DeltaA] =
-      SessionIncBehavior(rep.withDeltas(init, deltas.rep))
+    def withDeltas[DeltaA, AA >: A](init: AA, deltas: SessionEvent[DeltaA]): SessionIncBehavior[AA, DeltaA] =
+      SessionIncBehavior(init, rep.withDeltas(_ => init, deltas.rep))
 
     override def map[B](f: A => B): SessionDiscreteBehavior[B] =
       this.discreteReverseApply(SessionDiscreteBehavior.constant(f))
@@ -176,14 +181,37 @@ trait SessionFRPLib extends ServerFRPLib {
   }
 
   object SessionIncBehavior {
-    def apply[T, DeltaT](rep: ApplicationIncBehavior[Client => T, Map[Client, DeltaT]]): SessionIncBehavior[T, DeltaT] =
-      new SessionIncBehavior(rep)
+    def apply[T, DeltaT](init: T, rep: ApplicationIncBehavior[Client => T, Map[Client, DeltaT]]): SessionIncBehavior[T, DeltaT] =
+      new SessionIncBehavior(init, rep)
   }
 
   class SessionIncBehavior[+A, +DeltaA] private (
+    val init: A,
     override val rep: ApplicationIncBehavior[Client => A, Map[Client, DeltaA]]
   ) extends SessionDiscreteBehavior[A](rep) {
     def deltas: SessionEvent[DeltaA] = SessionEvent(rep.deltas)
+
+    def incMap2[B, DeltaB, C, DeltaC](b: SessionIncBehavior[B, DeltaB])(
+      valueFun: (A, B) => C
+    )(
+      deltaFun: (A, B, Increment[DeltaA, DeltaB]) => Option[DeltaC]
+    )(
+      foldFun: (C, DeltaC) => C
+    ): SessionIncBehavior[C, DeltaC] = {
+
+      val newInit = valueFun(init, b.init)
+
+      val newDelta: SessionEvent[DeltaC] = {
+        val abs = this.discreteMap2(b) { (_, _)}
+        val increments = this.deltas.unionWith(b.deltas)(Left(_): Increment[DeltaA, DeltaB])(Right(_))(All(_, _))
+        val tupled = abs.sampledWith(increments){
+          case ((a, b), inc) => (a, b, inc)
+        }
+        tupled.collect(deltaFun.tupled)
+      }
+
+      newDelta.fold(newInit)(foldFun)
+    }
   }
 
 }

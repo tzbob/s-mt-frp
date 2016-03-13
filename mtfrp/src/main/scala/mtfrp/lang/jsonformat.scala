@@ -1,8 +1,9 @@
 package mtfrp.lang
 
+import scala.js.exp.FFIExp
 import scala.js.language.Adts
 
-trait JSJsonReaderLib extends Adts {
+trait JSJsonReaderLib extends Adts with FFIExp {
 
   def parse[T: Manifest](raw: Rep[String]): Rep[T]
 
@@ -40,6 +41,13 @@ trait JSJsonReaderLib extends Adts {
 
   implicit def arrayJSJsonReader[T: JSJsonReader] = new JSJsonReader[Array[T]] {
     def read(raw: Rep[String]) = parse(raw)
+  }
+
+  implicit def tupleJSJsonReader[A: JSJsonReader, B: JSJsonReader] = new JSJsonReader[(A, B)] {
+    def read(raw: Rep[String]) = {
+      val list = parse(raw)
+      foreign"""{ '_1': $list[0], '_2': $list[1] }""".withEffect()
+    }
   }
 }
 
