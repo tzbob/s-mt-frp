@@ -42,7 +42,7 @@ trait ServerFRPLib extends ReplicationCoreLib { selfLib =>
 
     // Derived ops
 
-    def hold[U >: T](initial: U): ApplicationIncBehavior[U, U] =
+    def hold[U >: T](initial: U): ApplicationDiscreteBehavior[U] =
       this.fold(initial) { (_, x) => x }
 
     def map[A](modifier: T => A): ApplicationEvent[A] =

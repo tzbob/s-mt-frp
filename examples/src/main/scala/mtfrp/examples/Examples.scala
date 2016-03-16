@@ -38,6 +38,7 @@ sunt in culpa qui officia deserunt mollit anim id est laborum."""
     getFromResourceDirectory("")
       ~ makeRoute(helloWorld, "helloWorld")
       ~ makeRoute(new BasicChat, "chat")
-      ~ makeRoute(new ChirperInc, "chirper")
+      ~ makeRoute(new Chirper, "chirper")
+      ~ makeRoute(new ChirperInc, "chirperInc")
   )
 }

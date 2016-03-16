@@ -38,9 +38,6 @@ object MtFrpBuild extends Build {
     .settings(
       name := "smtfrp-core",
       libraryDependencies ++= Seq(
-        // "org.scala-lang.virtualized" % "scala-compiler" % "2.10.2",
-        // "org.scala-lang.virtualized" % "scala-library" % "2.10.2",
-        // "org.scala-lang.virtualized" % "scala-reflect" % "2.10.2",
         "EPFL" %% "lms" % "0.3-SNAPSHOT",
         "EPFL" %% "js-scala" % "0.4-SNAPSHOT",
         "com.github.tzbob" %% "hokko" % "0.3-SNAPSHOT",

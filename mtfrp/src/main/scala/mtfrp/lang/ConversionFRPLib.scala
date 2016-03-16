@@ -65,21 +65,5 @@ trait ConversionFRPLib
     }
   }
 
-  // // toSession
-  // implicit class IncrementalBehaviorApplicationToSession[T, DeltaT](beh: ApplicationIncBehavior[Client => T, Client => Option[DeltaT]]) {
-
-  //   /**
-  //    * Convert between an Application incremental behavior and a Session incremental behavior
-  //    *
-  //    * @return
-  //    */
-  //   def toSession: SessionIncBehavior[T, DeltaT] = {
-  //     val sessionDeltas = SessionFilterConversion.toSession(beh.deltas)
-  //     val sessionBehavior = new DiscreteBehaviorApplicationToSession(beh).toSession
-
-  //     sessionBehavior.withDeltas(beh.initial, sessionDeltas)
-  //   }
-  // }
-
   private def clientThunk[T]: T => Client => T = t => c => t
 }

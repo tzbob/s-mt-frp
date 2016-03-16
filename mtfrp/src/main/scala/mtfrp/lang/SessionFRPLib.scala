@@ -67,7 +67,7 @@ trait SessionFRPLib extends ServerFRPLib {
 
     // Derived ops
 
-    def hold[U >: T](initial: U): SessionIncBehavior[U, U] =
+    def hold[U >: T](initial: U): SessionDiscreteBehavior[U] =
       this.fold(initial) { (_, x) => x }
 
     def map[A](modifier: T => A): SessionEvent[A] =
