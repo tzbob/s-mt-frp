@@ -7,6 +7,8 @@ case class All[DeltaA, DeltaB](da: DeltaA, db: DeltaB) extends Increment[DeltaA,
 
 trait SessionFRPLib extends ServerFRPLib {
 
+  val client: SessionBehavior[Client] = SessionBehavior(ApplicationBehavior.constant(identity))
+
   object SessionEvent {
     def apply[T](wrappee: ApplicationEvent[Client => Option[T]]): SessionEvent[T] =
       new SessionEvent(wrappee)

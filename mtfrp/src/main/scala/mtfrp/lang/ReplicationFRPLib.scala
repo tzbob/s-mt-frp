@@ -115,11 +115,6 @@ trait ReplicationFRPLib
     }
   }
 
-  // toAllClients
-  implicit class DiscreteBehaviorToAllClients[T: Encoder: JSJsonReader: Manifest](beh: ApplicationDiscreteBehavior[T]) {
-    def toAllClients: ClientDiscreteBehavior[T] = beh.map(clientThunk).toSession.toClient
-  }
-
   // Incremental Behavior Replications
 
   // toClient
